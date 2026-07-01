@@ -1,583 +1,801 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import { createApiClient } from '@vqr/shared';
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import {
-  ShieldAlert,
-  Search,
+  ArrowLeft,
   Camera,
-  Compass,
-  AlertTriangle,
-  Play,
-  CheckCircle,
-  ChevronRight,
-  Info,
   Car,
-  Layers
-} from 'lucide-react';
+  Check,
+  ChevronRight,
+  Circle,
+  Clock3,
+  Eye,
+  EyeOff,
+  FileImage,
+  Fingerprint,
+  Flashlight,
+  Home,
+  KeyRound,
+  Lock,
+  Mail,
+  MapPin,
+  Menu,
+  Phone,
+  Play,
+  Radio,
+  ScanLine,
+  Search,
+  ShieldAlert,
+  Siren,
+  SlidersHorizontal,
+  Upload,
+  UserRound,
+  X,
+} from "lucide-react";
 
-const API_BASE_URL = 'http://localhost:8000';
-const apiClient = createApiClient(API_BASE_URL);
+// ─── Data ────────────────────────────────────────────────────────────────────
+// TODO: Reconnect these static lists to the live apiClient data loader later.
+const vehicles = [
+  { name: "Toyota Camry", year: "2024", match: "98%", vin: "VQR-7C2-941", color: "bg-blue-600" },
+  { name: "Honda Accord", year: "2023", match: "86%", vin: "VQR-2AF-108", color: "bg-slate-700" },
+  { name: "Ford F-150 Lightning", year: "2022", match: "79%", vin: "VQR-EV-512", color: "bg-amber-500" },
+];
 
-// Standard navigation wrapper layout
-function Layout({ children }: { children: React.ReactNode }) {
+const savedTravels = [
+  { route: "Bay Bridge incident response", date: "Today, 08:42", vehicle: "Toyota Camry 2024", scans: "3 scans" },
+  { route: "I-280 northbound assist", date: "Yesterday, 19:18", vehicle: "F-150 Lightning", scans: "1 scan" },
+  { route: "Mission St. vehicle check", date: "Jun 27, 14:06", vehicle: "Honda Accord", scans: "2 scans" },
+];
+
+const safety = [
+  {
+    title: "High-Voltage Battery",
+    priority: "Critical",
+    body: "Avoid orange cabling. Stabilize vehicle and isolate 12V before cutting pillars or floor pan.",
+    color: "bg-red-600 text-white",
+  },
+  {
+    title: "Emergency Shutoff",
+    priority: "High",
+    body: "Primary service disconnect is beneath rear passenger seat; secondary is under hood left rail.",
+    color: "bg-amber-500 text-slate-950",
+  },
+  {
+    title: "Airbag Inflators",
+    priority: "Medium",
+    body: "Side curtain inflators run along roof rail. Maintain 10 inch clearance during extrication.",
+    color: "bg-blue-600 text-white",
+  },
+];
+
+// ─── Atoms ────────────────────────────────────────────────────────────────────
+
+function PhoneShell({ children, title }: { children: React.ReactNode; title?: string }) {
   return (
-    <div className="min-h-screen bg-[#0a0b0d] text-gray-100 flex flex-col antialiased">
-      {/* Header navbar */}
-      <header className="sticky top-0 z-50 glass-panel border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="bg-purple-600 p-2 rounded-lg group-hover:bg-purple-500 transition-colors shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-            <ShieldAlert className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white m-0 leading-none">VQR Rescue Hub</h1>
-            <span className="text-xs text-purple-400 font-medium tracking-wide uppercase">Emergency Response</span>
-          </div>
-        </Link>
-
-        <nav className="flex gap-6">
-          <Link
-            to="/"
-            className="text-sm font-medium text-gray-300 hover:text-white hover:underline decoration-purple-500 underline-offset-8 transition-all"
-          >
-            Dashboard
-          </Link>
-          <Link
-            to="/vehicles"
-            className="text-sm font-medium text-gray-300 hover:text-white hover:underline decoration-purple-500 underline-offset-8 transition-all"
-          >
-            Catalog
-          </Link>
-        </nav>
-      </header>
-
-      {/* Main container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-12 box-border">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="py-6 border-t border-white/5 text-center text-xs text-gray-500">
-        &copy; {new Date().getFullYear()} VQR Emergency Response System. Licensed for rescue responders in the field.
-      </footer>
+    <div className="relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-slate-900/10 bg-card shadow-2xl shadow-slate-900/20 ring-8 ring-slate-900/5">
+      <div className="flex h-8 items-center justify-center border-b bg-slate-950 text-[10px] font-semibold tracking-[0.28em] text-white/70">
+        {title || "VQR FIELD"}
+      </div>
+      {children}
     </div>
   );
 }
 
-// Dashboard Page
-function Dashboard() {
-  const [vehicles, setVehicles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [scanInput, setScanInput] = useState('toyota-camry-2024');
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<any>(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    apiClient
-      .listVehicles()
-      .then((data) => {
-        setVehicles(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, []);
-
-  const handleSimulateScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!scanInput.trim()) return;
-
-    setScanning(true);
-    setScanResult(null);
-
-    try {
-      // Simulate geolocation
-      const mockCoords = {
-        latitude: 37.7749,
-        longitude: -122.4194,
-        scannedBy: 'Station 4 Dispatcher'
-      };
-
-      const result = await apiClient.scanVehicle(scanInput, mockCoords);
-      setScanResult(result);
-    } catch (err: any) {
-      console.error(err);
-      setScanResult({
-        success: false,
-        message: 'Network error connecting to vehicle scan service'
-      });
-    } finally {
-      setScanning(false);
-    }
+function Badge({
+  children,
+  tone = "blue",
+}: {
+  children: React.ReactNode;
+  tone?: "blue" | "red" | "amber" | "green" | "slate";
+}) {
+  const tones = {
+    blue: "bg-blue-600 text-white",
+    red: "bg-red-600 text-white",
+    amber: "bg-amber-400 text-slate-950",
+    green: "bg-green-600 text-white",
+    slate: "bg-slate-900 text-white",
   };
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${tones[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+// ─── Login Screen (Kept as secondary mockup screen) ───────────────────────────
+
+type AuthMethod = "phone" | "email";
+type AuthFlow = "otp" | "password" | "passkey";
+
+function LoginScreen() {
+  const [method, setMethod] = useState<AuthMethod>("phone");
+  const [flow, setFlow] = useState<AuthFlow>("otp");
+  const [otpSent, setOtpSent] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [passkeyState, setPasskeyState] = useState<"idle" | "scanning" | "done">("idle");
+
+  function handlePasskey() {
+    setPasskeyState("scanning");
+    setTimeout(() => setPasskeyState("done"), 2200);
+  }
 
   return (
-    <div className="space-y-10">
-      {/* Hero Welcome banner */}
-      <div className="rounded-2xl p-8 bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-950/20 border border-purple-500/10 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_0_50px_rgba(99,102,241,0.08)]">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white m-0">Rescuer Field Terminal</h2>
-          <p className="text-gray-400 max-w-xl text-sm leading-relaxed">
-            Instantly identify vehicle make, battery positions, structural components, and high-voltage cutout zones using QR codes.
-          </p>
+    <PhoneShell title="SECURE SIGN IN">
+      <div className="min-h-[720px] bg-gradient-to-b from-slate-950 via-slate-900 to-blue-950 p-5 text-white">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="grid size-12 place-items-center rounded-2xl bg-blue-600">
+            <KeyRound />
+          </div>
+          <Badge tone="green">Encrypted</Badge>
         </div>
-        <div className="flex gap-4">
-          <Link
-            to="/vehicles"
-            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-all shadow-[0_4px_20px_rgba(168,85,247,0.3)] flex items-center gap-2"
+
+        {/* Title */}
+        <div className="mt-8">
+          <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-blue-300">VQR account</p>
+          <h2 className="mt-3 text-3xl font-black leading-[1.05] tracking-[-0.02em]">
+            Save every scan, trip and preference.
+          </h2>
+        </div>
+
+        {/* Contact method tabs */}
+        <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl bg-white/10 p-1">
+          <button
+            onClick={() => setMethod("phone")}
+            className={`flex items-center justify-center gap-2 rounded-xl py-3 font-bold transition ${
+              method === "phone" ? "bg-white text-slate-950" : "text-white/70"
+            }`}
           >
-            <Compass className="w-4 h-4" /> Explore Catalog
-          </Link>
+            <Phone size={17} /> Phone
+          </button>
+          <button
+            onClick={() => setMethod("email")}
+            className={`flex items-center justify-center gap-2 rounded-xl py-3 font-bold transition ${
+              method === "email" ? "bg-white text-slate-950" : "text-white/70"
+            }`}
+          >
+            <Mail size={17} /> Email
+          </button>
+        </div>
+
+        {/* Contact input */}
+        <label className="mt-4 block rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
+            {method === "phone" ? "Mobile number" : "Email ID"}
+          </span>
+          <input
+            readOnly
+            value={method === "phone" ? "+1 415 555 0198" : "responder@vqr.app"}
+            className="mt-2 w-full bg-transparent text-lg font-bold text-white outline-none"
+          />
+        </label>
+
+        {/* Auth flow tabs */}
+        <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-white/10 p-1 text-[13px]">
+          {(["otp", "password", "passkey"] as AuthFlow[]).map((f) => {
+            const labels = { otp: "OTP", password: "Password", passkey: "Passkey" };
+            return (
+              <button
+                key={f}
+                onClick={() => { setFlow(f); setOtpSent(false); setPasskeyState("idle"); }}
+                className={`rounded-lg py-2 font-bold transition ${
+                  flow === f ? "bg-white text-slate-950" : "text-white/60 hover:text-white"
+                }`}
+              >
+                {labels[f]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── OTP flow ── */}
+        {flow === "otp" && (
+          <>
+            {otpSent && (
+              <div className="mt-4 grid grid-cols-6 gap-2">
+                {["4", "8", "1", "2", "9", "6"].map((n, i) => (
+                  <div
+                    key={`otp-${i}`}
+                    className="grid h-12 place-items-center rounded-xl border border-blue-300/30 bg-white text-xl font-black text-slate-950"
+                  >
+                    {n}
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => setOtpSent(true)}
+              className="mt-4 w-full rounded-2xl bg-blue-600 py-4 font-extrabold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98]"
+            >
+              {otpSent ? "Verify & continue" : `Send SMS one-time passcode`}
+            </button>
+            <p className="mt-3 text-center text-xs text-slate-400">
+              Can&apos;t receive OTP?{" "}
+              <button onClick={() => setFlow("password")} className="font-bold text-blue-300 underline">
+                Use password instead
+              </button>
+            </p>
+          </>
+        )}
+
+        {/* ── Password flow ── */}
+        {flow === "password" && (
+          <>
+            <label className="mt-4 flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
+              <Lock size={18} className="shrink-0 text-slate-300" />
+              <div className="flex-1">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">Password</span>
+                <input
+                  type={showPass ? "text" : "password"}
+                  readOnly
+                  value="••••••••••••"
+                  className="mt-1 w-full bg-transparent font-bold text-white outline-none"
+                />
+              </div>
+              <button onClick={() => setShowPass(!showPass)} className="text-slate-400">
+                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </label>
+            <button className="mt-4 w-full rounded-2xl bg-blue-600 py-4 font-extrabold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98]">
+              Sign in with password
+            </button>
+            <p className="mt-3 text-center text-xs text-slate-400">
+              <button className="font-bold text-blue-300 underline">Forgot password?</button>
+              &nbsp;&nbsp;·&nbsp;&nbsp;
+              <button onClick={() => setFlow("otp")} className="font-bold text-blue-300 underline">
+                Use OTP instead
+              </button>
+            </p>
+          </>
+        )}
+
+        {/* ── Passkey / Biometrics flow ── */}
+        {flow === "passkey" && (
+          <>
+            <div className="mt-4 flex flex-col items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-7">
+              <button
+                onClick={handlePasskey}
+                className={`grid size-24 place-items-center rounded-full border-4 transition active:scale-95 ${
+                  passkeyState === "scanning"
+                    ? "animate-pulse border-blue-400 bg-blue-600/30"
+                    : passkeyState === "done"
+                    ? "border-green-400 bg-green-600/20"
+                    : "border-white/30 bg-white/10"
+                }`}
+              >
+                {passkeyState === "done" ? (
+                  <Check size={40} className="text-green-300" />
+                ) : (
+                  <Fingerprint size={40} className={passkeyState === "scanning" ? "text-blue-300" : "text-white/80"} />
+                )}
+              </button>
+
+              <div className="text-center">
+                {passkeyState === "idle" && (
+                  <>
+                    <p className="font-bold">Touch ID · Face ID · Device PIN</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Tap the sensor above or use your device&apos;s biometric authenticator
+                    </p>
+                  </>
+                )}
+                {passkeyState === "scanning" && (
+                  <p className="font-bold text-blue-300">Verifying biometric…</p>
+                )}
+                {passkeyState === "done" && (
+                  <p className="font-bold text-green-300">Identity confirmed — signing you in</p>
+                )}
+              </div>
+
+              {passkeyState === "idle" && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {["Face ID", "Touch ID", "Windows Hello", "Security Key"].map((opt) => (
+                    <span
+                      key={opt}
+                      className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300"
+                    >
+                      {opt}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <p className="mt-3 text-center text-xs text-slate-400">
+              No passkey set up?{" "}
+              <button onClick={() => setFlow("otp")} className="font-bold text-blue-300 underline">
+                Sign in with OTP
+              </button>
+            </p>
+          </>
+        )}
+
+        {/* Why sign in */}
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="text-amber-300" />
+            <b>Why sign in?</b>
+          </div>
+          <ul className="mt-3 space-y-1.5 text-sm text-slate-300">
+            <li>• Previous travels and scan history sync across devices</li>
+            <li>• Emergency contacts, medical notes, and dark mode saved</li>
+            <li>• Offline cache restores your last vehicle guides in the field</li>
+          </ul>
         </div>
       </div>
+    </PhoneShell>
+  );
+}
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: QR Simulation */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="glass-panel rounded-2xl p-6 md:p-8 space-y-6">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-              <Camera className="w-5 h-5 text-purple-400" />
-              <h3 className="text-lg font-bold text-white m-0">QR Code Scanner Simulator</h3>
-            </div>
+// ─── Saved Profile Panel ──────────────────────────────────────────────────────
 
-            <form onSubmit={handleSimulateScan} className="flex flex-col md:flex-row gap-3">
-              <div className="flex-1 relative">
-                <select
-                  value={scanInput}
-                  onChange={(e) => setScanInput(e.target.value)}
-                  className="w-full glass-input rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer pr-10"
-                >
-                  <option value="toyota-camry-2024">Toyota Camry 2024 (Hybrid)</option>
-                  <option value="tesla-model-y-2023">Tesla Model Y 2023 (EV)</option>
-                  <option value="ford-f150-lightning-2023">Ford F-150 Lightning 2023 (EV)</option>
-                  <option value="hyundai-ioniq-5-2024">Hyundai Ioniq 5 2024 (EV)</option>
-                  <option value="chevrolet-bolt-ev-2023">Chevrolet Bolt EV 2023 (EV)</option>
-                  <option value="honda-crv-hybrid-2024">Honda CR-V Hybrid 2024 (Hybrid)</option>
-                  <option value="unknown-id">Unknown/Unregistered QR Code</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                  <ChevronRight className="w-4 h-4 rotate-90" />
+function SavedProfilePanel() {
+  return (
+    <div className="rounded-[2rem] border bg-white p-6 shadow-sm">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3">
+          <div className="grid size-12 place-items-center rounded-2xl bg-blue-600 text-white">
+            <UserRound />
+          </div>
+          <div>
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.22em] text-blue-700">
+              Signed-in workspace
+            </p>
+            <h2 className="text-2xl font-extrabold">Saved travels & preferences</h2>
+          </div>
+        </div>
+        <Badge tone="green">Auto-sync on</Badge>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
+        <div className="rounded-3xl border bg-slate-50 p-4">
+          <h3 className="font-extrabold">Previous travels</h3>
+          <div className="mt-3 space-y-3">
+            {savedTravels.map((t) => (
+              <div key={t.route} className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
+                <div className="grid size-10 place-items-center rounded-xl bg-slate-900 text-white">
+                  <MapPin size={18} />
                 </div>
+                <div className="flex-1">
+                  <b>{t.route}</b>
+                  <p className="text-sm text-slate-500">
+                    {t.date} · {t.vehicle}
+                  </p>
+                </div>
+                <span className="font-mono text-xs font-bold text-blue-700">{t.scans}</span>
               </div>
-              <button
-                type="submit"
-                disabled={scanning}
-                className="bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all shadow-[0_4px_15px_rgba(168,85,247,0.2)] flex justify-center items-center gap-2"
-              >
-                {scanning ? 'Initializing weights & analyzing...' : 'Simulate QR Scan'}
-              </button>
-            </form>
+            ))}
+          </div>
+        </div>
 
-            {/* Scan outcome panel */}
-            {scanResult && (
-              <div className="rounded-xl border border-white/5 overflow-hidden animate-fadeIn">
-                <div className={`p-4 flex items-center gap-3 ${scanResult.success ? 'bg-emerald-500/10 text-emerald-400 border-b border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-b border-red-500/20'}`}>
-                  {scanResult.success ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertTriangle className="w-5 h-5 shrink-0" />}
-                  <span className="font-semibold text-sm">{scanResult.message}</span>
+        <div className="rounded-3xl border bg-slate-950 p-4 text-white">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="text-blue-300" />
+            <h3 className="font-extrabold">Preferences saved</h3>
+          </div>
+          <div className="mt-4 grid gap-3 text-sm">
+            {["Default to Emergency Mode", "Night-use dark interface", "Metric units + GPS coordinates", "Notify emergency contacts"].map(
+              (pref, i) => (
+                <div key={pref} className="flex items-center justify-between rounded-2xl bg-white/10 p-3">
+                  <span>{pref}</span>
+                  <span className={`h-6 w-10 rounded-full p-1 ${i < 3 ? "bg-green-500" : "bg-slate-600"}`}>
+                    <span className={`block size-4 rounded-full bg-white ${i < 3 ? "translate-x-4" : ""}`} />
+                  </span>
                 </div>
-
-                <div className="p-6 bg-slate-950/45 space-y-6">
-                  {scanResult.prediction && (
-                    <div className="p-4 rounded-lg bg-indigo-950/20 border border-indigo-500/10 space-y-2">
-                      <div className="flex justify-between text-xs text-indigo-400 font-semibold tracking-wider uppercase">
-                        <span>ML Classification Node</span>
-                        <span>Lazy Loaded Weights</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mt-2">
-                        <div>
-                          <span className="text-xs text-gray-500">Detected Class</span>
-                          <p className="text-sm font-semibold text-gray-300 m-0">{scanResult.prediction.predictedClass}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">Model Confidence</span>
-                          <p className="text-sm font-semibold text-emerald-400 m-0">{(scanResult.prediction.confidence * 100).toFixed(1)}%</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {scanResult.success && scanResult.vehicle ? (
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div>
-                        <h4 className="text-lg font-bold text-white m-0">
-                          {scanResult.vehicle.year} {scanResult.vehicle.make} {scanResult.vehicle.model}
-                        </h4>
-                        <span className="text-xs text-gray-400">ID: {scanResult.vehicle.id}</span>
-                      </div>
-                      <button
-                        onClick={() => navigate(`/vehicles/${scanResult.vehicle.id}`)}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
-                      >
-                        Open Safety Guide <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-400 py-2">
-                      Please register this QR tag inside the central repository database first.
-                    </div>
-                  )}
-                </div>
-              </div>
+              )
             )}
           </div>
         </div>
-
-        {/* Right Col: Quick Catalog list */}
-        <div className="space-y-8">
-          <div className="glass-panel rounded-2xl p-6 space-y-4">
-            <h3 className="text-base font-bold text-white m-0">Rescue Catalog Overview</h3>
-            <div className="border-t border-white/5 pt-3 space-y-3">
-              {loading ? (
-                <div className="text-sm text-gray-400 py-4 text-center">Loading vehicle catalog...</div>
-              ) : vehicles.length === 0 ? (
-                <div className="text-sm text-gray-400 py-4 text-center">No vehicles loaded.</div>
-              ) : (
-                vehicles.map((v) => (
-                  <Link
-                    key={v.id}
-                    to={`/vehicles/${v.id}`}
-                    className="flex justify-between items-center p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-purple-500/20 transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Car className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                      <div>
-                        <p className="text-xs font-semibold text-gray-200 m-0">{v.make} {v.model}</p>
-                        <span className="text-[10px] text-purple-400 font-medium">{v.year} model</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
 }
 
-// Vehicles Catalog Page
-function VehiclesCatalog() {
-  const [vehicles, setVehicles] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+// ─── Home Screen ──────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    apiClient
-      .listVehicles()
-      .then((data) => {
-        setVehicles(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, []);
-
-  const filteredVehicles = vehicles.filter((v) => {
-    const term = search.toLowerCase();
-    return (
-      v.make.toLowerCase().includes(term) ||
-      v.model.toLowerCase().includes(term) ||
-      v.id.toLowerCase().includes(term)
-    );
-  });
-
+function HomeScreen({ emergency, setEmergency }: { emergency: boolean; setEmergency: (v: boolean) => void }) {
   return (
-    <div className="space-y-8">
-      {/* Header and search bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white m-0">Vehicle Rescue Directory</h2>
-          <p className="text-sm text-gray-400 m-0 mt-1">Select a vehicle from the catalog to see cutting diagrams and battery cutout guidelines.</p>
+    <PhoneShell title="VQR HOME">
+      <div className="relative min-h-[720px] bg-gradient-to-b from-white to-slate-100 p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid size-11 place-items-center rounded-2xl bg-blue-600 text-white">
+              <Siren size={22} />
+            </div>
+            <div>
+              <p className="font-mono text-xs font-bold tracking-[0.22em] text-blue-700">VQR</p>
+              <h1 className="text-xl font-extrabold leading-none">Vehicle Quick Response</h1>
+            </div>
+          </div>
+          <button
+            onClick={() => setEmergency(!emergency)}
+            className={`relative h-8 w-14 rounded-full p-1 transition ${emergency ? "bg-red-600" : "bg-slate-300"}`}
+          >
+            <span className={`block size-6 rounded-full bg-white transition ${emergency ? "translate-x-6" : ""}`} />
+          </button>
         </div>
 
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search make or model..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full glass-input rounded-xl pl-10 pr-4 py-2.5 text-sm"
-          />
+        {emergency && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">
+            <span className="size-2 animate-ping rounded-full bg-red-600" />
+            <b>Emergency Mode armed</b>
+          </div>
+        )}
+
+        <div className="mt-10 text-center">
+          <Badge tone="green">Responder ready</Badge>
+          <h2 className="mt-5 text-4xl font-extrabold leading-[1.02] tracking-[-0.02em]">
+            Identify a vehicle in seconds.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xs text-slate-600">
+            Fast safety guidance, match confidence, and future crash dispatch flows in one uncluttered field interface.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4">
+          {[
+            { icon: Search, title: "Enter Vehicle Details", sub: "Make, model, year", color: "bg-blue-600", path: "/manual-entry" },
+            { icon: Camera, title: "Camera Scan", sub: "Identify via photo", color: "bg-slate-950", path: "/scan" },
+          ].map((a) => (
+            <Link
+              key={a.title}
+              to={a.path}
+              className="group flex min-h-[7.5rem] items-center gap-4 rounded-2xl border bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
+            >
+              <div className={`grid size-14 place-items-center rounded-2xl ${a.color} text-white`}>
+                <a.icon />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold">{a.title}</h3>
+                <p className="text-slate-500">{a.sub}</p>
+              </div>
+              <ChevronRight className="text-slate-400 transition group-hover:translate-x-1" />
+            </Link>
+          ))}
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="absolute inset-x-6 bottom-4 flex justify-around rounded-2xl border bg-white/95 py-3 text-slate-500 shadow-lg">
+          <Link to="/"><Home className="text-blue-600" /></Link>
+          <Link to="/manual-entry"><Clock3 /></Link>
+          <Link to="/results"><ShieldAlert /></Link>
         </div>
       </div>
+    </PhoneShell>
+  );
+}
 
-      {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading catalog database...</div>
-      ) : filteredVehicles.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No vehicles match your search.</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVehicles.map((v) => (
+// ─── Manual Entry Screen ──────────────────────────────────────────────────────
+
+function ManualScreen() {
+  return (
+    <PhoneShell title="MANUAL ENTRY">
+      <div className="min-h-[720px] bg-slate-50 p-5 pb-24 relative">
+        <div className="flex items-center gap-3">
+          <Link to="/"><ArrowLeft className="text-slate-900" /></Link>
+          <h2 className="text-2xl font-extrabold">Manual Entry</h2>
+        </div>
+
+        {/* Inputs */}
+        <div className="mt-6 space-y-3">
+          {["Make", "Model", "Year"].map((l, i) => (
+            <label key={l} className="block rounded-2xl border bg-white px-4 py-2 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{l}</span>
+              <input
+                value={i === 0 ? "Toyota" : i === 1 ? "Camry" : "2024"}
+                readOnly
+                className="mt-1 w-full bg-transparent font-semibold outline-none"
+              />
+            </label>
+          ))}
+        </div>
+
+        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          Predictive matches updated from local rescue database.
+        </div>
+
+        {/* Matching Vehicles */}
+        <div className="mt-5 space-y-3">
+          {vehicles.map((v) => (
             <Link
-              key={v.id}
-              to={`/vehicles/${v.id}`}
-              className="glass-card hover:glass-panel rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300 group border border-white/5 hover:border-purple-500/25"
+              to="/results"
+              key={v.vin}
+              className="flex items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm text-slate-900 hover:bg-slate-50 transition block"
             >
-              {/* Thumbnail */}
-              <div className="h-44 bg-slate-900 flex justify-center items-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent z-10 opacity-60" />
-                <Car className="w-12 h-12 text-slate-800 absolute group-hover:scale-110 transition-transform duration-300" />
-                <span className="absolute bottom-3 left-4 z-20 text-xs font-semibold text-purple-400 uppercase tracking-wider bg-purple-950/60 px-2.5 py-1 rounded-md border border-purple-500/20">
-                  {v.year}
-                </span>
-              </div>
-
-              {/* Card info */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div>
-                  <h4 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors m-0">
-                    {v.make} {v.model}
-                  </h4>
-                  <p className="text-xs text-gray-500 mt-1 m-0">ID Ref: {v.id}</p>
+              <div className="flex items-center gap-3 w-full">
+                <div className={`grid size-16 place-items-center rounded-xl ${v.color} text-white`}>
+                  <Car />
                 </div>
-
-                <div className="border-t border-white/5 pt-3 flex justify-between items-center">
-                  <span className="text-xs font-medium text-purple-400 flex items-center gap-1">
-                    <Info className="w-3.5 h-3.5" /> {v.safetyGuidelines.length} safety items
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-left">
+                    {v.name} {v.year}
+                  </h3>
+                  <p className="font-mono text-xs text-slate-500 text-left">{v.vin}</p>
                 </div>
+                <Badge tone="green">{v.match}</Badge>
               </div>
             </Link>
           ))}
         </div>
-      )}
-    </div>
+
+        <div className="absolute inset-x-6 bottom-4 rounded-t-[1.5rem] bg-slate-900 p-4 text-center font-mono text-xs text-white/70">
+          keyboard active preview · content pushed above safe area
+        </div>
+      </div>
+    </PhoneShell>
   );
 }
 
-// Vehicle Detail Page
-function VehicleDetail() {
-  const { id } = useParams<{ id: string }>();
-  const [vehicle, setVehicle] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [alerting, setAlerting] = useState(false);
-  const [alertStatus, setAlertStatus] = useState<any>(null);
+// ─── Camera Scan Screen ───────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!id) return;
-    apiClient
-      .getVehicle(id)
-      .then((data) => {
-        setVehicle(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, [id]);
+function ScanScreen() {
+  return (
+    <PhoneShell title="CAMERA SCAN">
+      <div className="relative min-h-[720px] overflow-hidden bg-slate-950 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(37,99,235,.35),transparent_38%),linear-gradient(135deg,rgba(255,255,255,.08)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.08)_50%,rgba(255,255,255,.08)_75%,transparent_75%)] bg-[length:100%_100%,24px_24px]" />
 
-  const handleTriggerAlert = async (severity: 'INFO' | 'WARNING' | 'CRITICAL') => {
-    if (!vehicle) return;
-    setAlerting(true);
-    setAlertStatus(null);
+        <div className="relative flex items-center justify-between p-5">
+          <Link to="/"><Menu className="text-white" /></Link>
+          <p className="font-semibold">Align vehicle in frame</p>
+          <Flashlight />
+        </div>
 
-    try {
-      const res = await apiClient.triggerAlert({
-        vehicleId: vehicle.id,
-        severity,
-        message: `EMERGENCY ALERT: Active extrication scan triggered on ${vehicle.year} ${vehicle.make} ${vehicle.model}. Ensure HV cuts are isolate!`,
-        latitude: 37.7749,
-        longitude: -122.4194
-      });
-      setAlertStatus({ success: true, alertId: res.alertId });
-    } catch (err: any) {
-      console.error(err);
-      setAlertStatus({ success: false, message: 'Could not connect to dispatch' });
-    } finally {
-      setAlerting(false);
-    }
-  };
+        {/* Simulated Shutter Box */}
+        <div className="relative mx-8 mt-20 aspect-[4/3] animate-pulse border-2 border-white/70">
+          <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-blue-400 shadow-[0_0_24px_#60a5fa]" />
+          <span className="absolute -left-1 -top-1 size-10 border-l-4 border-t-4 border-blue-400" />
+          <span className="absolute -right-1 -top-1 size-10 border-r-4 border-t-4 border-blue-400" />
+          <span className="absolute -bottom-1 -left-1 size-10 border-b-4 border-l-4 border-blue-400" />
+          <span className="absolute -bottom-1 -right-1 size-10 border-b-4 border-r-4 border-blue-400" />
+        </div>
 
-  if (loading) {
-    return <div className="text-center py-12 text-gray-400">Loading safety guide specifications...</div>;
-  }
+        <div className="relative mx-6 mt-8 rounded-2xl border border-white/15 bg-white/10 p-4 text-center backdrop-blur">
+          <p className="font-mono text-sm">
+            Analyzing vehicle… <b className="text-green-300">72%</b>
+          </p>
+        </div>
 
-  if (!vehicle) {
-    return <div className="text-center py-12 text-red-400">Vehicle model not found inside the directory.</div>;
-  }
+        {/* Scanner Action Buttons */}
+        <div className="absolute inset-x-0 bottom-8 flex items-center justify-around">
+          <FileImage className="text-white/60" />
+          <Link
+            to="/results"
+            className="size-[72px] rounded-full border-4 border-white bg-white/10 shadow-2xl active:scale-95 block"
+          />
+          <Upload className="text-white/60" />
+        </div>
+      </div>
+    </PhoneShell>
+  );
+}
 
-  // Priority color maps
-  const getPriorityStyle = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'critical':
-        return 'bg-red-500/10 text-red-400 border border-red-500/30';
-      case 'high':
-        return 'bg-orange-500/10 text-orange-400 border border-orange-500/30';
-      case 'medium':
-        return 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30';
-      default:
-        return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
-    }
-  };
+// ─── Results Screen ───────────────────────────────────────────────────────────
+
+function ResultsScreen() {
+  const [open, setOpen] = useState(0);
 
   return (
-    <div className="space-y-10">
-      {/* Back link */}
-      <div className="flex justify-between items-center border-b border-white/5 pb-4">
-        <Link to="/vehicles" className="text-xs text-purple-400 font-semibold uppercase hover:text-purple-300 transition-colors flex items-center gap-1">
-          &larr; Back to Catalog
-        </Link>
-        <span className="text-xs text-gray-500">ID: {vehicle.id}</span>
-      </div>
-
-      {/* Main Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-white m-0">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </h2>
-          <p className="text-sm text-gray-400 m-0 mt-1">First Responder Emergency Cut and Airbag Safety Isolation Guide</p>
-        </div>
-
-        {/* Dispatch action buttons */}
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => handleTriggerAlert('CRITICAL')}
-            disabled={alerting}
-            className="bg-red-600 hover:bg-red-500 disabled:bg-red-800 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-[0_4px_15px_rgba(239,68,68,0.2)]"
-          >
-            <ShieldAlert className="w-4 h-4" /> Trigger Critical Dispatch
-          </button>
-          <button
-            onClick={() => handleTriggerAlert('WARNING')}
-            disabled={alerting}
-            className="bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <AlertTriangle className="w-4 h-4" /> Trigger Alert
-          </button>
-        </div>
-      </div>
-
-      {/* Alert outcome toast */}
-      {alertStatus && (
-        <div className={`p-4 rounded-xl border flex items-center justify-between ${alertStatus.success ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            {alertStatus.success ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-            <span>{alertStatus.success ? `Emergency dispatch alerted! ID Reference: ${alertStatus.alertId}` : alertStatus.message}</span>
+    <PhoneShell title="RESULTS">
+      <div className="relative min-h-[720px] bg-white pb-24">
+        {/* Results Header */}
+        <div className="bg-slate-950 p-5 text-white">
+          <div className="flex items-center gap-3 mb-2">
+            <Link to="/"><ArrowLeft className="text-white" size={18} /></Link>
+            <p className="font-mono text-xs text-blue-300">VQR-7C2-941</p>
           </div>
-          <button onClick={() => setAlertStatus(null)} className="text-xs font-semibold hover:underline">Dismiss</button>
+          <div className="flex items-start justify-between">
+            <h2 className="text-3xl font-extrabold leading-none">Toyota Camry 2024</h2>
+            <Badge tone="green">98% match</Badge>
+          </div>
+          <div className="mt-5 flex gap-2 overflow-hidden">
+            <Badge tone="slate">Accord 86%</Badge>
+            <Badge tone="slate">Civic 82%</Badge>
+            <Badge tone="slate">Corolla 75%</Badge>
+          </div>
         </div>
-      )}
 
-      {/* Content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Video and Guidelines */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Video Player */}
-          <div className="glass-panel rounded-2xl overflow-hidden border border-white/5 space-y-4">
-            <div className="p-5 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Play className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base font-bold text-white m-0">Video Guide: CUT and ISOLATION zones</h3>
-              </div>
-              <span className="text-xs text-gray-500 font-semibold tracking-wider uppercase">Emergency AV</span>
+        <div className="p-5">
+          <h3 className="mb-3 text-lg font-extrabold">Safety Guidelines</h3>
+          <div className="space-y-3">
+            {/* TODO: Reconnect safety guidelines dynamically from API client */}
+            {safety.map((s, i) => (
+              <button
+                onClick={() => setOpen(open === i ? -1 : i)}
+                key={s.title}
+                className="w-full rounded-2xl border bg-slate-50 p-4 text-left transition hover:bg-white cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <b>{s.title}</b>
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-widest ${s.color}`}>
+                    {s.priority}
+                  </span>
+                </div>
+                {open === i && <p className="mt-3 text-sm leading-6 text-slate-600">{s.body}</p>}
+              </button>
+            ))}
+          </div>
+
+          <h3 className="mb-3 mt-6 text-lg font-extrabold">Vehicle Features</h3>
+          <div className="flex flex-wrap gap-2">
+            {["Hybrid system", "Side curtain airbags", "Reinforced B-pillar", "Smart key", "Li-ion pack"].map((f) => (
+              <span key={f} className="rounded-full bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+                {f}
+              </span>
+            ))}
+          </div>
+
+          {/* Video briefing */}
+          <div className="mt-6 overflow-hidden rounded-2xl bg-slate-950 text-white">
+            <div className="grid aspect-video place-items-center bg-gradient-to-br from-slate-800 to-blue-950">
+              {/* TODO: Reconnect live video playback from backend API (formerly vehicle.videoUrl) */}
+              <Play className="size-14 rounded-full bg-white/15 p-3 cursor-pointer" />
             </div>
-
-            <div className="px-5 pb-5">
-              <div className="aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/5 flex justify-center items-center relative">
-                {/* Embedded HTML5 Video Player */}
-                <video
-                  src={`${API_BASE_URL}/public${vehicle.videoUrl}`}
-                  controls
-                  poster={`${API_BASE_URL}/public${vehicle.thumbnailUrl}`}
-                  className="w-full h-full object-contain"
-                >
-                  Your browser does not support HTML5 video streaming tags.
-                </video>
+            <div className="p-4">
+              <b>Safety briefing video</b>
+              <div className="mt-3 h-1.5 rounded-full bg-white/20">
+                <div className="h-full w-1/3 rounded-full bg-blue-400" />
               </div>
             </div>
           </div>
-
-          {/* Safety Guidelines Priority Sorted */}
-          <div className="glass-panel rounded-2xl p-6 md:p-8 space-y-6">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-              <ShieldAlert className="w-5 h-5 text-purple-400" />
-              <h3 className="text-base font-bold text-white m-0">Isolated Safety Guidelines</h3>
-            </div>
-
-            <div className="space-y-4">
-              {vehicle.safetyGuidelines && vehicle.safetyGuidelines.length > 0 ? (
-                vehicle.safetyGuidelines
-                  .sort((a: any, b: any) => {
-                    const weight: any = { critical: 4, high: 3, medium: 2, low: 1 };
-                    return (weight[b.priority.toLowerCase()] || 0) - (weight[a.priority.toLowerCase()] || 0);
-                  })
-                  .map((g: any, index: number) => (
-                    <div
-                      key={index}
-                      className="p-5 rounded-xl bg-white/5 border border-white/5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <h4 className="text-base font-bold text-white m-0">{g.title}</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed m-0">{g.description}</p>
-                      </div>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md shrink-0 self-start md:self-auto ${getPriorityStyle(g.priority)}`}>
-                        {g.priority}
-                      </span>
-                    </div>
-                  ))
-              ) : (
-                <div className="text-sm text-gray-400 text-center py-4">No specific safety guidelines documented.</div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Right Col: Features Groups */}
-        <div className="space-y-8">
-          <div className="glass-panel rounded-2xl p-6 space-y-5">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-              <Layers className="w-5 h-5 text-purple-400" />
-              <h3 className="text-base font-bold text-white m-0">Features & Structural Tech</h3>
-            </div>
+        {/* Reset Scan */}
+        <div className="absolute inset-x-5 bottom-5">
+          <Link
+            to="/scan"
+            className="w-full rounded-2xl bg-blue-600 py-4 font-bold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98] text-center block"
+          >
+            Start New Scan
+          </Link>
+        </div>
+      </div>
+    </PhoneShell>
+  );
+}
 
-            <div className="space-y-6">
-              {vehicle.features && vehicle.features.length > 0 ? (
-                vehicle.features.map((f: any, index: number) => (
-                  <div key={index} className="space-y-2">
-                    <span className="text-xs text-purple-400 font-bold tracking-wider uppercase">{f.category}</span>
-                    <ul className="m-0 pl-0 list-none space-y-2">
-                      {f.items.map((item: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
-                          <CheckCircle className="w-4 h-4 text-purple-500/60 shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))
-              ) : (
-                <div className="text-xs text-gray-400 text-center py-2">No specific features logged.</div>
-              )}
-            </div>
+// ─── Emergency Panel ──────────────────────────────────────────────────────────
+
+function EmergencyPanel() {
+  return (
+    <div className="rounded-[2rem] border border-red-200 bg-red-600 p-6 text-white shadow-2xl shadow-red-900/30">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Siren className="size-9" />
+          <div>
+            <p className="font-mono text-xs font-bold tracking-[0.2em]">PHASE 6</p>
+            <h2 className="text-2xl font-extrabold">Potential crash detected</h2>
           </div>
+        </div>
+        <X className="cursor-pointer" />
+      </div>
+      <div className="my-8 text-center">
+        <div className="animate-pulse text-7xl font-black tabular-nums">00:30</div>
+        <p className="mt-2 font-semibold">Alert sends automatically unless canceled.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {/* TODO: Reconnect emergency alert dispatch controls via apiClient.triggerAlert() */}
+        <button className="rounded-2xl bg-white px-4 py-4 font-bold text-red-700 active:scale-95 cursor-pointer">
+          I&apos;m OK — Cancel
+        </button>
+        <button className="rounded-2xl bg-slate-950 px-4 py-4 font-bold text-white active:scale-95 cursor-pointer">
+          SOS — Send Now
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Web Companion ────────────────────────────────────────────────────────────
+
+function WebCompanion() {
+  return (
+    <div className="grid gap-5 lg:grid-cols-[1fr_.9fr]">
+      <div className="rounded-[2rem] border bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <Upload className="text-blue-600" />
+          <h2 className="text-2xl font-extrabold">Web upload fallback</h2>
+        </div>
+        <div className="mt-5 grid min-h-56 place-items-center rounded-3xl border-2 border-dashed border-blue-300 bg-blue-50 text-center">
+          <div>
+            <ScanLine className="mx-auto size-12 text-blue-600" />
+            <p className="mt-3 font-bold">Drop vehicle photo here</p>
+            <p className="text-slate-600">or click to browse when camera permission is unavailable</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[2rem] border bg-slate-950 p-6 text-white">
+        <div className="flex items-center gap-3">
+          <MapPin className="text-green-400" />
+          <h2 className="text-2xl font-extrabold">Dispatch status</h2>
+        </div>
+        <div className="mt-5 rounded-3xl bg-slate-800 p-5">
+          <div className="grid h-44 place-items-center rounded-2xl bg-slate-700/60 font-mono text-sm text-slate-300">
+            MAP PLACEHOLDER · 37.7749, -122.4194
+          </div>
+          {["Alert Sent", "Police Notified", "Ambulance Dispatched", "Contact Alerted"].map((s, i) => (
+            <div key={s} className="mt-4 flex items-center gap-3">
+              <span className={`grid size-7 place-items-center rounded-full ${i < 3 ? "bg-green-500" : "bg-slate-600"}`}>
+                {i < 3 ? <Check size={15} /> : <Circle size={10} />}
+              </span>
+              <b>{s}</b>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-// Router root entry App
+// ─── Root ─────────────────────────────────────────────────────────────────────
+
 export default function App() {
+  const [emergency, setEmergency] = useState(false);
+
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/vehicles" element={<VehiclesCatalog />} />
-          <Route path="/vehicles/:id" element={<VehicleDetail />} />
-        </Routes>
-      </Layout>
+      <main className="min-h-screen bg-background p-4 text-foreground md:p-8">
+        <div className="mx-auto max-w-7xl">
+          {/* Page header */}
+          <header className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="font-mono text-xs font-bold uppercase tracking-[0.26em] text-blue-700">
+                VQR design system / prototype
+              </p>
+              <h1 className="mt-2 max-w-3xl text-5xl font-black leading-[0.98] tracking-[-0.02em] md:text-7xl">
+                Emergency vehicle intelligence, securely remembered.
+              </h1>
+            </div>
+            <div className="flex gap-2">
+              <Badge tone="blue">Light</Badge>
+              <Badge tone="red">Crash alert</Badge>
+              <Badge tone="green">OTP · Password · Passkey</Badge>
+            </div>
+          </header>
+
+          {/* Phone Screen Mock Area */}
+          <section className="flex justify-center py-6">
+            <Routes>
+              <Route path="/" element={<HomeScreen emergency={emergency} setEmergency={setEmergency} />} />
+              <Route path="/login" element={<LoginScreen />} />
+              <Route path="/manual-entry" element={<ManualScreen />} />
+              <Route path="/scan" element={<ScanScreen />} />
+              <Route path="/results" element={<ResultsScreen />} />
+              <Route path="/vehicles/:id" element={<ResultsScreen />} />
+            </Routes>
+          </section>
+
+          {/* Saved profile */}
+          <section className="mt-8">
+            <SavedProfilePanel />
+          </section>
+
+          {/* Emergency + dispatch */}
+          <section className="mt-8 grid gap-6 lg:grid-cols-[.85fr_1.15fr]">
+            <EmergencyPanel />
+            <WebCompanion />
+          </section>
+
+          {/* Component atoms */}
+          <section className="mt-8 rounded-[2rem] border bg-card p-6">
+            <h2 className="text-2xl font-extrabold">Component library atoms</h2>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white active:scale-95 cursor-pointer">Primary</button>
+              <button className="rounded-xl bg-slate-200 px-5 py-3 font-bold text-slate-900 active:scale-95 cursor-pointer">Secondary</button>
+              <button className="rounded-xl border px-5 py-3 font-bold active:scale-95 cursor-pointer">Ghost</button>
+              <Badge tone="red">Critical</Badge>
+              <Badge tone="amber">High</Badge>
+              <Badge tone="blue">Medium</Badge>
+              <Badge tone="green">Low</Badge>
+              <span className="rounded-xl border bg-white px-4 py-3 font-mono text-sm font-bold">98% CONFIDENCE</span>
+              <span className="flex items-center gap-2 rounded-xl border bg-white px-4 py-3">
+                <Radio size={18} /> Offline resilient
+              </span>
+              <span className="flex items-center gap-2 rounded-xl border bg-white px-4 py-3">
+                <Fingerprint size={18} className="text-blue-600" /> Passkey ready
+              </span>
+            </div>
+          </section>
+        </div>
+      </main>
     </BrowserRouter>
   );
 }
