@@ -11,7 +11,7 @@ class SafetyGuideline(BaseModel):
     description: str
     priority: str
 
-class VehicleFeature(BaseModel):
+class FeatureGroup(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True,
@@ -30,6 +30,6 @@ class Vehicle(BaseModel):
     model: str
     year: int
     safety_guidelines: List[SafetyGuideline]
-    features: List[VehicleFeature]
+    features: List[FeatureGroup]
     video_url: str
     thumbnail_url: str

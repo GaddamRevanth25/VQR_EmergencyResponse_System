@@ -6,7 +6,7 @@ export const SafetyGuidelineSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'critical']),
 });
 
-export const VehicleFeatureSchema = z.object({
+export const FeatureGroupSchema = z.object({
   category: z.string(),
   items: z.array(z.string()),
 });
@@ -17,7 +17,7 @@ export const VehicleSchema = z.object({
   model: z.string(),
   year: z.number(),
   safetyGuidelines: z.array(SafetyGuidelineSchema),
-  features: z.array(VehicleFeatureSchema),
+  features: z.array(FeatureGroupSchema),
   videoUrl: z.string(),
   thumbnailUrl: z.string(),
 });
@@ -35,4 +35,18 @@ export const AlertRequestSchema = z.object({
   message: z.string(),
   latitude: z.number(),
   longitude: z.number(),
+});
+
+export const MLPredictionSchema = z.object({
+  predictedClass: z.string(),
+  confidence: z.number(),
+  boundingBox: z.array(z.number()).optional(),
+});
+
+export const ScanResultSchema = z.object({
+  success: z.boolean(),
+  vehicle: VehicleSchema.optional(),
+  message: z.string(),
+  prediction: MLPredictionSchema.optional(),
+  timestamp: z.string(),
 });
