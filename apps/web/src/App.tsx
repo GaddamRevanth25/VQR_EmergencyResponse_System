@@ -106,7 +106,7 @@ function Badge({
 type AuthMethod = "phone" | "email";
 type AuthFlow = "otp" | "password" | "passkey";
 
-function LoginScreen() {
+function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const [method, setMethod] = useState<AuthMethod>("phone");
   const [flow, setFlow] = useState<AuthFlow>("otp");
   const [otpSent, setOtpSent] = useState(false);
@@ -115,7 +115,10 @@ function LoginScreen() {
 
   function handlePasskey() {
     setPasskeyState("scanning");
-    setTimeout(() => setPasskeyState("done"), 2200);
+    setTimeout(() => {
+      setPasskeyState("done");
+      setTimeout(() => onLoginSuccess(), 1000);
+    }, 2200);
   }
 
   return (
@@ -203,8 +206,14 @@ function LoginScreen() {
               </div>
             )}
             <button
-              onClick={() => setOtpSent(true)}
-              className="mt-4 w-full rounded-2xl bg-blue-600 py-4 font-extrabold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98]"
+              onClick={() => {
+                if (otpSent) {
+                  onLoginSuccess();
+                } else {
+                  setOtpSent(true);
+                }
+              }}
+              className="mt-4 w-full rounded-2xl bg-blue-600 py-4 font-extrabold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98] cursor-pointer"
             >
               {otpSent ? "Verify & continue" : `Send SMS one-time passcode`}
             </button>
@@ -235,7 +244,10 @@ function LoginScreen() {
                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </label>
-            <button className="mt-4 w-full rounded-2xl bg-blue-600 py-4 font-extrabold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98]">
+            <button
+              onClick={() => onLoginSuccess()}
+              className="mt-4 w-full rounded-2xl bg-blue-600 py-4 font-extrabold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98] cursor-pointer"
+            >
               Sign in with password
             </button>
             <p className="mt-3 text-center text-xs text-slate-400">
@@ -729,6 +741,15 @@ function WebCompanion() {
 
 export default function App() {
   const [emergency, setEmergency] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  if (!isLoggedIn) {
+    return (
+      <main className="min-h-screen bg-background p-4 text-foreground md:p-8 flex items-center justify-center">
+        <LoginScreen onLoginSuccess={() => setIsLoggedIn(true)} />
+      </main>
+    );
+  }
 
   return (
     <BrowserRouter>
@@ -755,7 +776,7 @@ export default function App() {
           <section className="flex justify-center py-6">
             <Routes>
               <Route path="/" element={<HomeScreen emergency={emergency} setEmergency={setEmergency} />} />
-              <Route path="/login" element={<LoginScreen />} />
+              <Route path="/login" element={<LoginScreen onLoginSuccess={() => setIsLoggedIn(true)} />} />
               <Route path="/manual-entry" element={<ManualScreen />} />
               <Route path="/scan" element={<ScanScreen />} />
               <Route path="/results" element={<ResultsScreen />} />
