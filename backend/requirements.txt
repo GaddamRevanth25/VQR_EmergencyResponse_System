@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart          # image upload
+pydantic
+pydantic-settings
+torch
+torchvision
+opencv-python-headless
+Pillow
+numpy
+onnxruntime               # optional production inference
+scikit-learn              # crash model + utilities

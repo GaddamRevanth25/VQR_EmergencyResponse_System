@@ -1,0 +1,32 @@
+[
+  {
+    "id": "v1",
+    "licensePlate": "EMERGENCY-1",
+    "type": "AMBULANCE",
+    "status": "AVAILABLE",
+    "qrCode": "VQR-AMB-EM1",
+    "ownerDepartment": "City General Hospital",
+    "contactNumber": "+15550101",
+    "updatedAt": "2026-07-01T09:00:00Z"
+  },
+  {
+    "id": "v2",
+    "licensePlate": "EMERGENCY-2",
+    "type": "FIRE_TRUCK",
+    "status": "AVAILABLE",
+    "qrCode": "VQR-FIR-EM2",
+    "ownerDepartment": "Central Fire Station",
+    "contactNumber": "+15550102",
+    "updatedAt": "2026-07-01T09:00:00Z"
+  },
+  {
+    "id": "v3",
+    "licensePlate": "EMERGENCY-3",
+    "type": "POLICE",
+    "status": "AVAILABLE",
+    "qrCode": "VQR-POL-EM3",
+    "ownerDepartment": "Metro Police Department",
+    "contactNumber": "+15550103",
+    "updatedAt": "2026-07-01T09:00:00Z"
+  }
+]

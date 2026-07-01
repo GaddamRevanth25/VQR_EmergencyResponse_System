@@ -1,0 +1,20 @@
+{
+  "name": "vqr-emergency-response",
+  "private": true,
+  "version": "1.0.0",
+  "description": "VQR Emergency Response Monorepo",
+  "packageManager": "npm@11.12.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
