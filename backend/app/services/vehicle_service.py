@@ -1,7 +1,7 @@
 import json
 import os
 from typing import List, Optional
-from ..schemas.vehicle import Vehicle
+from app.schemas.vehicle import Vehicle
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "vehicles.json")
 

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from ..schemas.alert import AlertRequest, AlertResponse
+from app.schemas.alert import AlertRequest, AlertResponse
 
 class AlertService:
     @staticmethod
