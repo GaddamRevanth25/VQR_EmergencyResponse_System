@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
-from app.schemas.scan import ScanRequest, ScanResponse
-from app.services.vehicle_service import VehicleService
+from ...schemas.scan import ScanRequest, ScanResponse
+from ...services.vehicle_service import VehicleService
 
 router = APIRouter(prefix="/scan", tags=["scan"])
 

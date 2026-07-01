@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from app.schemas.vehicle import Vehicle
-from app.services.vehicle_service import VehicleService
+from ...schemas.vehicle import Vehicle
+from ...services.vehicle_service import VehicleService
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
