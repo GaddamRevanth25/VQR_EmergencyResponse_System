@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { VehicleSchema, ScanRequestSchema, AlertRequestSchema } from './schemas';
+import { SafetyGuidelineSchema, VehicleFeatureSchema, VehicleSchema, ScanRequestSchema, AlertRequestSchema } from './schemas';
 
-export type VehicleType = 'AMBULANCE' | 'FIRE_TRUCK' | 'POLICE' | 'RESCUE' | 'OTHER';
+export type SafetyGuideline = z.infer<typeof SafetyGuidelineSchema>;
+export type VehicleFeature = z.infer<typeof VehicleFeatureSchema>;
 export type Vehicle = z.infer<typeof VehicleSchema>;
 export type ScanRequest = z.infer<typeof ScanRequestSchema>;
 export type AlertRequest = z.infer<typeof AlertRequestSchema>;

@@ -37,6 +37,6 @@ class VehicleService:
     def get_by_qr_code(cls, qr_code: str) -> Optional[Vehicle]:
         vehicles = cls.load_vehicles()
         for v in vehicles:
-            if v["qrCode"] == qr_code:
+            if v["id"] == qr_code:
                 return Vehicle(**v)
         return None

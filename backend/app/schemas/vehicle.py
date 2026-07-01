@@ -1,18 +1,23 @@
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
-from enum import Enum
+from typing import List
 
-class VehicleType(str, Enum):
-    AMBULANCE = "AMBULANCE"
-    FIRE_TRUCK = "FIRE_TRUCK"
-    POLICE = "POLICE"
-    RESCUE = "RESCUE"
-    OTHER = "OTHER"
+class SafetyGuideline(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+    title: str
+    description: str
+    priority: str
 
-class VehicleStatus(str, Enum):
-    AVAILABLE = "AVAILABLE"
-    ACTIVE = "ACTIVE"
-    MAINTENANCE = "MAINTENANCE"
+class VehicleFeature(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+    category: str
+    items: List[str]
 
 class Vehicle(BaseModel):
     model_config = ConfigDict(
@@ -21,10 +26,10 @@ class Vehicle(BaseModel):
     )
 
     id: str
-    license_plate: str
-    type: VehicleType
-    status: VehicleStatus
-    qr_code: str
-    owner_department: str
-    contact_number: str
-    updated_at: str
+    make: str
+    model: str
+    year: int
+    safety_guidelines: List[SafetyGuideline]
+    features: List[VehicleFeature]
+    video_url: str
+    thumbnail_url: str

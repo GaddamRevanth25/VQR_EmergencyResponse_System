@@ -19,6 +19,6 @@ def scan_vehicle(request: ScanRequest):
     return ScanResponse(
         success=True,
         vehicle=vehicle,
-        message=f"Successfully identified {vehicle.type} ({vehicle.license_plate})",
+        message=f"Successfully identified {vehicle.year} {vehicle.make} {vehicle.model}",
         timestamp=datetime.utcnow().isoformat() + "Z"
     )

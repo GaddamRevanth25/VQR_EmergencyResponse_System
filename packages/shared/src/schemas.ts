@@ -1,16 +1,25 @@
 import { z } from 'zod';
 
-export const VehicleTypeSchema = z.enum(['AMBULANCE', 'FIRE_TRUCK', 'POLICE', 'RESCUE', 'OTHER']);
+export const SafetyGuidelineSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+});
+
+export const VehicleFeatureSchema = z.object({
+  category: z.string(),
+  items: z.array(z.string()),
+});
 
 export const VehicleSchema = z.object({
   id: z.string(),
-  licensePlate: z.string(),
-  type: VehicleTypeSchema,
-  status: z.enum(['AVAILABLE', 'ACTIVE', 'MAINTENANCE']),
-  qrCode: z.string(),
-  ownerDepartment: z.string(),
-  contactNumber: z.string(),
-  updatedAt: z.string(),
+  make: z.string(),
+  model: z.string(),
+  year: z.number(),
+  safetyGuidelines: z.array(SafetyGuidelineSchema),
+  features: z.array(VehicleFeatureSchema),
+  videoUrl: z.string(),
+  thumbnailUrl: z.string(),
 });
 
 export const ScanRequestSchema = z.object({
