@@ -23,9 +23,24 @@ function AppContent() {
   const isLandingPage = location.pathname === "/";
 
   const [emergency, setEmergency] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+
+  // Persistent login state initialized from localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem("vqr_is_logged_in") === "true";
+  });
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem("vqr_is_logged_in", "true");
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsProfileOpen(false);
+    localStorage.removeItem("vqr_is_logged_in");
+  };
 
   // Determine initial theme based on local time (Light in morning, Dark at night)
   useEffect(() => {
@@ -265,10 +280,7 @@ function AppContent() {
         isLoggedIn={isLoggedIn}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
-        onLogout={() => {
-          setIsLoggedIn(false);
-          setIsProfileOpen(false);
-        }}
+        onLogout={handleLogout}
       />
 
       {/* Dynamic Route Viewport */}
@@ -285,7 +297,7 @@ function AppContent() {
                 <Navigate to="/app" replace />
               ) : (
                 <main className="flex-1 flex items-center justify-center p-4">
-                  <LoginScreen onLoginSuccess={() => setIsLoggedIn(true)} />
+                  <LoginScreen onLoginSuccess={handleLoginSuccess} />
                 </main>
               )
             }
@@ -298,7 +310,7 @@ function AppContent() {
                 <Navigate to="/app" replace />
               ) : (
                 <main className="flex-1 flex items-center justify-center p-4">
-                  <RegisterScreen onRegisterSuccess={() => setIsLoggedIn(true)} />
+                  <RegisterScreen onRegisterSuccess={handleLoginSuccess} />
                 </main>
               )
             }
