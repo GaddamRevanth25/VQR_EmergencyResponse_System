@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { UserRound, Siren, Sun, Moon } from "lucide-react";
 
@@ -19,6 +20,23 @@ export function Navbar({
   onLogout,
 }: NavbarProps) {
   const isDark = theme === "dark";
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside detector hook
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileOpen, setIsProfileOpen]);
 
   return (
     <nav className={`fixed top-4 left-0 right-0 z-50 mx-4 md:mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-full border backdrop-blur-md transition-all duration-500 shrink-0 ${
@@ -58,7 +76,7 @@ export function Navbar({
           </button>
 
           {isLoggedIn ? (
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm transition cursor-pointer active:scale-95 ${

@@ -69,11 +69,11 @@ function AppContent() {
   const isDark = theme === "dark";
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 flex flex-col relative overflow-hidden select-none ${
-      isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
-    }`}>
+    <div className={`min-h-screen transition-colors duration-500 flex flex-col relative overflow-hidden select-none ${isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
+      }`}>
       {/* CSS Style Injector for High-Fidelity Background Animations */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes float-blob-1 {
           0% { transform: translate(0px, 0px) scale(1); }
           33% { transform: translate(40px, -60px) scale(1.08); }
@@ -173,15 +173,12 @@ function AppContent() {
       {/* Global Dynamic Background Canvas */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Neon Aurora Gradient Blobs */}
-        <div className={`absolute top-[15%] left-[5%] size-[480px] rounded-full blur-[130px] animate-blob-1 transition-colors duration-500 ${
-          isDark ? "bg-blue-600/10" : "bg-blue-300/10"
-        }`} />
-        <div className={`absolute bottom-[15%] right-[5%] size-[520px] rounded-full blur-[140px] animate-blob-2 transition-colors duration-500 ${
-          isDark ? "bg-indigo-500/10" : "bg-indigo-200/10"
-        }`} />
-        <div className={`absolute top-[35%] right-[25%] size-[380px] rounded-full blur-[125px] animate-blob-3 transition-colors duration-500 ${
-          isDark ? "bg-cyan-500/8" : "bg-cyan-200/8"
-        }`} />
+        <div className={`absolute top-[15%] left-[5%] size-[480px] rounded-full blur-[130px] animate-blob-1 transition-colors duration-500 ${isDark ? "bg-blue-600/10" : "bg-blue-300/10"
+          }`} />
+        <div className={`absolute bottom-[15%] right-[5%] size-[520px] rounded-full blur-[140px] animate-blob-2 transition-colors duration-500 ${isDark ? "bg-indigo-500/10" : "bg-indigo-200/10"
+          }`} />
+        <div className={`absolute top-[35%] right-[25%] size-[380px] rounded-full blur-[125px] animate-blob-3 transition-colors duration-500 ${isDark ? "bg-cyan-500/8" : "bg-cyan-200/8"
+          }`} />
         {/* Scrollable grid overlay */}
         <div className="absolute inset-0 bg-grid-scroll" />
       </div>
@@ -196,9 +193,8 @@ function AppContent() {
               <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-slate-200/10 dark:bg-white/10" />
               <div className="absolute top-1/2 left-0 right-0 h-[1px] text-blue-500/20 dark:text-blue-400/15 scrolling-road-dashes mt-3" />
               <div className="relative flex flex-col items-center">
-                <Plane size={36} className={`animate-plane-pitch transition-colors duration-500 ${
-                  isDark ? "text-blue-400/30" : "text-blue-600/25"
-                }`} />
+                <Plane size={36} className={`animate-plane-pitch transition-colors duration-500 ${isDark ? "text-blue-400/30" : "text-blue-600/25"
+                  }`} />
                 <span className="text-[7px] font-mono tracking-widest text-slate-500/40 dark:text-white/20 mt-4 uppercase">Aviation Track</span>
               </div>
             </div>
@@ -208,9 +204,8 @@ function AppContent() {
               <div className="absolute top-1/2 left-0 right-0 h-1 border-t border-b border-slate-200/10 dark:border-white/10" />
               <div className="absolute top-1/2 left-0 right-0 h-[2px] text-blue-500/25 dark:text-blue-400/20 scrolling-rail-ties mt-[2px]" />
               <div className="relative flex flex-col items-center">
-                <Train size={34} className={`animate-train-vibe transition-colors duration-500 ${
-                  isDark ? "text-blue-400/30" : "text-blue-600/25"
-                }`} />
+                <Train size={34} className={`animate-train-vibe transition-colors duration-500 ${isDark ? "text-blue-400/30" : "text-blue-600/25"
+                  }`} />
                 <span className="text-[7px] font-mono tracking-widest text-slate-500/40 dark:text-white/20 mt-4 uppercase">Transit Rail</span>
               </div>
             </div>
@@ -220,9 +215,8 @@ function AppContent() {
               <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-blue-500/20 dark:bg-blue-400/15" />
               <div className="absolute top-1/2 left-0 right-0 h-[2px] text-blue-500/30 dark:text-blue-400/20 scrolling-water-waves mt-1" />
               <div className="relative flex flex-col items-center">
-                <Ship size={36} className={`animate-ship-rock transition-colors duration-500 ${
-                  isDark ? "text-blue-400/30" : "text-blue-600/25"
-                }`} />
+                <Ship size={36} className={`animate-ship-rock transition-colors duration-500 ${isDark ? "text-blue-400/30" : "text-blue-600/25"
+                  }`} />
                 <span className="text-[7px] font-mono tracking-widest text-slate-500/40 dark:text-white/20 mt-4 uppercase">Marine Cargo</span>
               </div>
             </div>
@@ -235,9 +229,8 @@ function AppContent() {
               <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-slate-200/10 dark:bg-white/10" />
               <div className="absolute top-1/2 left-0 right-0 h-[1px] text-yellow-500/20 dark:text-yellow-500/15 scrolling-road-dashes mt-1" />
               <div className="relative flex flex-col items-center">
-                <Car size={32} className={`animate-car-bob transition-colors duration-500 ${
-                  isDark ? "text-blue-400/30" : "text-blue-600/25"
-                }`} />
+                <Car size={32} className={`animate-car-bob transition-colors duration-500 ${isDark ? "text-blue-400/30" : "text-blue-600/25"
+                  }`} />
                 <span className="text-[7px] font-mono tracking-widest text-slate-500/40 dark:text-white/20 mt-4 uppercase">Commuter Lane</span>
               </div>
             </div>
@@ -250,9 +243,8 @@ function AppContent() {
                 {/* Emergency Vehicle: Strobe light on top */}
                 <div className="relative flex flex-col items-center">
                   <Siren size={11} className="absolute -top-2.5 animate-flash-siren" />
-                  <Car size={32} className={`animate-car-bob transition-colors duration-500 ${
-                    isDark ? "text-blue-400/35" : "text-blue-600/30"
-                  }`} />
+                  <Car size={32} className={`animate-car-bob transition-colors duration-500 ${isDark ? "text-blue-400/35" : "text-blue-600/30"
+                    }`} />
                 </div>
                 <span className="text-[7px] font-mono tracking-[0.25em] text-red-500/40 dark:text-red-400/30 mt-4 uppercase font-black animate-pulse">Rescue Squad</span>
               </div>
@@ -263,9 +255,8 @@ function AppContent() {
               <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-slate-200/10 dark:bg-white/10" />
               <div className="absolute top-1/2 left-0 right-0 h-[1px] text-slate-500/20 scrolling-road-dashes-slow mt-1" />
               <div className="relative flex flex-col items-center">
-                <Truck size={36} className={`animate-truck-rumble transition-colors duration-500 ${
-                  isDark ? "text-blue-400/30" : "text-blue-600/25"
-                }`} />
+                <Truck size={36} className={`animate-truck-rumble transition-colors duration-500 ${isDark ? "text-blue-400/30" : "text-blue-600/25"
+                  }`} />
                 <span className="text-[7px] font-mono tracking-widest text-slate-500/40 dark:text-white/20 mt-4 uppercase">Heavy Hauler</span>
               </div>
             </div>

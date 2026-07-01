@@ -17,7 +17,7 @@ export function PhoneShell({ children, title }: { children: React.ReactNode; tit
           <span>100% [🔋]</span>
         </div>
       </div>
-      
+
       {/* Screen Viewport */}
       <div className="bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
         {children}
