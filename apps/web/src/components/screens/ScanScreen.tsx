@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, FileImage, Upload, RotateCw, AlertCircle, Zap, Camera, Settings, ScanLine } from "lucide-react";
+import { ArrowLeft, RotateCw, AlertCircle, Zap, Camera, Settings, ScanLine, Image } from "lucide-react";
 import { PhoneShell } from "../PhoneShell";
 
 export function ScanScreen() {
@@ -10,7 +10,11 @@ export function ScanScreen() {
   const [isScanning, setIsScanning] = useState(true);
   const [confidence, setConfidence] = useState(0);
   const [recognized, setRecognized] = useState(false);
+  const [isFlashOn, setIsFlashOn] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -59,6 +63,104 @@ export function ScanScreen() {
       }
     };
   }, [facingMode]);
+
+  // Automatically reload the page when camera permission status is updated by the user
+  useEffect(() => {
+    let permissionStatus: PermissionStatus | null = null;
+
+    const handlePermissionChange = () => {
+      window.location.reload();
+    };
+
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions
+        .query({ name: "camera" as PermissionName })
+        .then((status) => {
+          permissionStatus = status;
+          status.addEventListener("change", handlePermissionChange);
+        })
+        .catch((err) => {
+          console.warn("Permissions API not supported for camera:", err);
+        });
+    }
+
+    return () => {
+      if (permissionStatus) {
+        permissionStatus.removeEventListener("change", handlePermissionChange);
+      }
+    };
+  }, []);
+
+  // Toggle camera flash (torch) if supported by the browser stream
+  useEffect(() => {
+    if (!stream) return;
+    const videoTrack = stream.getVideoTracks()[0];
+    if (videoTrack) {
+      const capabilities = videoTrack.getCapabilities?.();
+      // @ts-ignore - torch is not in standard ts MediaTrackCapabilities
+      if (capabilities && capabilities.torch) {
+        videoTrack.applyConstraints({
+          advanced: [{
+            // @ts-ignore
+            torch: isFlashOn
+          }]
+        }).catch((err) => {
+          console.warn("Failed to toggle camera hardware flash:", err);
+        });
+      }
+    }
+  }, [isFlashOn, stream]);
+
+  // Handle local media (image) uploads
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setIsScanning(true);
+      setConfidence(0);
+      setRecognized(false);
+
+      // Simulate recognition progress quickly for uploaded file
+      let currentConfidence = 0;
+      const interval = setInterval(() => {
+        currentConfidence += Math.random() * 18 + 12;
+        if (currentConfidence >= 98) {
+          currentConfidence = 98;
+          setConfidence(98);
+          setRecognized(true);
+          setIsScanning(false);
+          clearInterval(interval);
+        } else {
+          setConfidence(currentConfidence);
+        }
+      }, 150);
+    }
+  };
+
+  // Re-request camera permissions
+  const requestCameraPermission = async () => {
+    setShowSettingsModal(false);
+    setErrorMsg(null);
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
+        audio: false
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch((err) => {
+          console.warn("Auto-play blocked:", err);
+        });
+      }
+    } catch (err: any) {
+      console.warn("Manual camera access request denied:", err);
+      setErrorMsg(err?.message || "Permission Denied");
+    }
+  };
 
   // Simulate confidence scanning animation
   useEffect(() => {
@@ -149,7 +251,7 @@ export function ScanScreen() {
             className="grid size-10 place-items-center rounded-xl bg-white/10 backdrop-blur-md border border-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
             title="Switch Front/Rear Camera"
           >
-            <Settings size={18} className="text-slate-400" />
+            <RotateCw size={18} className="text-slate-400" />
           </button>
         </div>
 
@@ -246,38 +348,68 @@ export function ScanScreen() {
         <div className="relative mt-auto p-5 z-20 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
           {/* Toolbar icons row */}
           <div className="flex items-center justify-center gap-5 mb-4 text-slate-500">
-            <button className="hover:text-cyan-400 transition cursor-pointer"><Camera size={16} /></button>
-            <button className="hover:text-cyan-400 transition cursor-pointer"><Zap size={16} /></button>
-            <button className="hover:text-cyan-400 transition cursor-pointer"><RotateCw size={16} onClick={toggleCamera} /></button>
-            <button className="hover:text-cyan-400 transition cursor-pointer"><ScanLine size={16} /></button>
-            <button className="hover:text-cyan-400 transition cursor-pointer"><Settings size={16} /></button>
-          </div>
-
-          {/* Action buttons row */}
-          <div className="flex items-center justify-center gap-3 mb-4">
             <button
-              onClick={() => setIsScanning(!isScanning)}
-              className="rounded-xl bg-slate-800 border border-white/10 px-5 py-2.5 text-xs font-bold tracking-wider text-slate-300 hover:bg-slate-700 active:scale-95 transition cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              className="hover:text-cyan-400 transition cursor-pointer"
+              title="Upload Media from Device"
             >
-              {isScanning ? "STOP SCAN" : "START SCAN"}
+              <Image size={16} />
             </button>
-            <Link
-              to="/results"
-              className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-xs font-bold tracking-wider text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-95 transition"
+            <button
+              onClick={() => setIsFlashOn(!isFlashOn)}
+              className={`transition cursor-pointer ${isFlashOn ? 'text-yellow-400 hover:text-yellow-300' : 'hover:text-cyan-400'}`}
+              title={isFlashOn ? "Turn Flash Off" : "Turn Flash On"}
             >
-              DETAILS
-            </Link>
+              <Zap size={16} fill={isFlashOn ? "white" : "none"} className={isFlashOn ? "text-yellow-400" : ""} />
+            </button>
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="hover:text-cyan-400 transition cursor-pointer"
+              title="Camera Permissions Settings"
+            >
+              <Settings size={16} />
+            </button>
           </div>
 
-          {/* Model & VIN info bar (shown when recognized) */}
-          {recognized && (
-            <div className="flex items-center justify-center gap-3 fade-in-up">
-              <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 backdrop-blur px-3 py-1.5 text-[10px] font-mono text-cyan-300 tracking-wide">
-                MODEL: Audi A4 (2023)
+          {recognized ? (
+            <div className="bg-slate-900/85 border border-cyan-500/30 backdrop-blur-xl rounded-2xl p-4 mb-4 fade-in-up shadow-xl shadow-cyan-500/5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">Vehicle Recognized</span>
+                  <h3 className="text-lg font-bold text-white tracking-wide">Audi A4 (2023)</h3>
+                </div>
+                <div className="bg-cyan-500/10 text-cyan-400 rounded-xl p-2.5 border border-cyan-500/20">
+                  <ScanLine size={20} className="animate-pulse" />
+                </div>
               </div>
-              <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 backdrop-blur px-3 py-1.5 text-[10px] font-mono text-cyan-300 tracking-wide">
-                VIN: WA1V23...
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setConfidence(0);
+                    setRecognized(false);
+                    setIsScanning(true);
+                  }}
+                  className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-4 py-2.5 text-xs font-bold tracking-wider text-slate-300 hover:bg-slate-700 active:scale-95 transition cursor-pointer"
+                >
+                  SCAN AGAIN
+                </button>
+                <Link
+                  to="/results"
+                  className="flex-1 text-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2.5 text-xs font-bold tracking-wider text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-95 transition flex items-center justify-center gap-1.5"
+                >
+                  VIEW DETAILS
+                </Link>
               </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <button
+                onClick={() => setIsScanning(!isScanning)}
+                className="rounded-xl bg-slate-800 border border-white/10 px-5 py-2.5 text-xs font-bold tracking-wider text-slate-300 hover:bg-slate-700 active:scale-95 transition cursor-pointer"
+              >
+                {isScanning ? "STOP SCAN" : "START SCAN"}
+              </button>
             </div>
           )}
 
@@ -289,6 +421,67 @@ export function ScanScreen() {
             </p>
           </div>
         </div>
+
+        {/* Hidden input for local media upload */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          accept="image/*"
+          className="hidden"
+        />
+
+        {/* Settings Modal (Camera Permissions Dialog) */}
+        {showSettingsModal && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-6">
+            <div className="w-full max-w-sm rounded-2xl border border-cyan-500/30 bg-slate-900/90 p-5 shadow-2xl shadow-cyan-500/10 text-white fade-in-up">
+              <div className="flex items-center gap-2.5 mb-3 border-b border-white/10 pb-3">
+                <Settings className="text-cyan-400" size={20} />
+                <h3 className="font-bold text-sm tracking-wide uppercase text-slate-100">Camera Permissions</h3>
+              </div>
+
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed text-center">
+                If camera access is blocked or not working, you can update permissions in your browser:
+              </p>
+
+              <div className="space-y-3 mb-5 text-left">
+                <div className="flex gap-2.5 items-start">
+                  <span className="grid size-5 shrink-0 place-items-center rounded bg-cyan-500/10 text-[10px] font-bold text-cyan-400 border border-cyan-500/20">1</span>
+                  <p className="text-[11px] text-slate-300">
+                    Tap the <b className="text-white">settings/lock icon</b> next to the URL in your browser's search bar.
+                  </p>
+                </div>
+                <div className="flex gap-2.5 items-start">
+                  <span className="grid size-5 shrink-0 place-items-center rounded bg-cyan-500/10 text-[10px] font-bold text-cyan-400 border border-cyan-500/20">2</span>
+                  <p className="text-[11px] text-slate-300">
+                    Find the <b className="text-white">Camera</b> setting and toggle it to <b className="text-cyan-400">Allow</b>.
+                  </p>
+                </div>
+                <div className="flex gap-2.5 items-start">
+                  <span className="grid size-5 shrink-0 place-items-center rounded bg-cyan-500/10 text-[10px] font-bold text-cyan-400 border border-cyan-500/20">3</span>
+                  <p className="text-[11px] text-slate-300">
+                    The scanner page will reload automatically to start the feed.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={requestCameraPermission}
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-xs font-bold tracking-wider text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-95 transition cursor-pointer"
+                >
+                  REQUEST PERMISSION NOW
+                </button>
+                <button
+                  onClick={() => setShowSettingsModal(false)}
+                  className="w-full rounded-xl bg-slate-800 border border-white/10 py-2.5 text-xs font-bold tracking-wider text-slate-300 hover:bg-slate-700 active:scale-95 transition cursor-pointer"
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PhoneShell>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { KeyRound, Lock, Eye, EyeOff, Check, Fingerprint, ShieldAlert, Phone, Mail } from "lucide-react";
 import { PhoneShell } from "../PhoneShell";
 import { Badge } from "../Badge";
@@ -216,6 +217,14 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
               </p>
             </>
           )}
+
+          {/* Don't have an account */}
+          <p className="mt-6 text-center text-sm text-slate-300 dark:text-slate-400">
+            Don&apos;t have a responder account?{" "}
+            <Link to="/register" className="font-bold text-blue-400 dark:text-cyan-400 hover:underline">
+              Register here
+            </Link>
+          </p>
 
           {/* Why sign in */}
           <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4">

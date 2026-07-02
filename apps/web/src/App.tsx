@@ -24,7 +24,16 @@ function AppContent() {
 
   const [emergency, setEmergency] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  
+  // Persistent theme state initialized from localStorage or local time fallback
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const savedTheme = localStorage.getItem("vqr_theme") as "light" | "dark" | null;
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+    const hour = new Date().getHours();
+    return hour >= 6 && hour < 18 ? "light" : "dark";
+  });
 
   // Persistent login state initialized from localStorage
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
@@ -42,15 +51,9 @@ function AppContent() {
     localStorage.removeItem("vqr_is_logged_in");
   };
 
-  // Determine initial theme based on local time (Light in morning, Dark at night)
+  // Sync theme changes to the document root element and localStorage
   useEffect(() => {
-    const hour = new Date().getHours();
-    const localDefault = hour >= 6 && hour < 18 ? "light" : "dark";
-    setTheme(localDefault);
-  }, []);
-
-  // Sync theme changes to the document root element for Tailwind v4 dark variants
-  useEffect(() => {
+    localStorage.setItem("vqr_theme", theme);
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {

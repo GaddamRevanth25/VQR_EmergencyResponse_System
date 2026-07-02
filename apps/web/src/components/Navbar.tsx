@@ -39,11 +39,10 @@ export function Navbar({
   }, [isProfileOpen, setIsProfileOpen]);
 
   return (
-    <nav className={`fixed top-4 left-0 right-0 z-50 mx-4 md:mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-full border backdrop-blur-md transition-all duration-500 shrink-0 ${
-      isDark 
-        ? "border-white/10 bg-slate-950/80 text-white shadow-2xl shadow-black/45" 
+    <nav className={`fixed top-4 left-0 right-0 z-50 mx-4 md:mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-full border backdrop-blur-md transition-all duration-500 shrink-0 ${isDark
+        ? "border-white/10 bg-slate-950/80 text-white shadow-2xl shadow-black/45"
         : "border-slate-200 bg-white/80 text-slate-900 shadow-xl shadow-slate-200/60"
-    }`}>
+      }`}>
       <div className="flex items-center justify-between px-6 py-3.5">
         <Link to="/" className="flex items-center gap-3 active:scale-95 transition">
           <div className="grid size-9 place-items-center rounded-full bg-blue-600 shadow-md text-white animate-pulse">
@@ -67,9 +66,8 @@ export function Navbar({
           {/* Theme Toggle Button (Light/Dark Switcher) */}
           <button
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className={`grid size-9 place-items-center rounded-full border transition cursor-pointer active:scale-90 ${
-              isDark ? "border-white/15 bg-white/5 text-yellow-400 hover:bg-white/10" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
+            className={`grid size-9 place-items-center rounded-full border transition cursor-pointer active:scale-90 ${isDark ? "border-white/15 bg-white/5 text-yellow-400 hover:bg-white/10" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
             title={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
@@ -79,20 +77,18 @@ export function Navbar({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm transition cursor-pointer active:scale-95 ${
-                  isDark ? "border-white/15 bg-white/5 text-white hover:bg-white/10" : "border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100"
-                }`}
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm transition cursor-pointer active:scale-95 ${isDark ? "border-white/15 bg-white/5 text-white hover:bg-white/10" : "border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100"
+                  }`}
               >
                 <div className="grid size-6 place-items-center rounded-full bg-blue-600 text-white">
                   <UserRound size={12} />
                 </div>
-                <span className="hidden sm:inline">Responder #4</span>
+                <span className="hidden sm:inline">Responder</span>
               </button>
 
               {isProfileOpen && (
-                <div className={`absolute right-0 mt-2 w-56 rounded-2xl border p-4 shadow-xl z-50 animate-fadeIn ${
-                  isDark ? "border-white/10 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"
-                }`}>
+                <div className={`absolute right-0 mt-2 w-56 rounded-2xl border p-4 shadow-xl z-50 animate-fadeIn ${isDark ? "border-white/10 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"
+                  }`}>
                   <div className={`flex items-center gap-3 border-b pb-3 mb-3 ${isDark ? "border-white/10" : "border-slate-100"}`}>
                     <div className="grid size-10 place-items-center rounded-full bg-blue-600 text-white font-black">
                       R4
@@ -123,9 +119,8 @@ export function Navbar({
             <>
               <Link
                 to="/login"
-                className={`rounded-full border px-5 py-2 text-xs font-bold transition ${
-                  isDark ? "border-white/15 bg-white/5 text-white hover:bg-white/10" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
+                className={`rounded-full border px-5 py-2 text-xs font-bold transition ${isDark ? "border-white/15 bg-white/5 text-white hover:bg-white/10" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
               >
                 Sign In
               </Link>
