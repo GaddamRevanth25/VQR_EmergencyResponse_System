@@ -35,7 +35,7 @@ class MLService:
         self._model_loaded = True
         logger.info("MLService: Model weights loaded successfully.")
 
-    def predict_vehicle(self, image_bytes: Optional[bytes] = None) -> dict:
+    def predict_vehicle(self, image_bytes: Optional[bytes] = None, qr_data: Optional[str] = None) -> dict:
         """
         Isolated vehicle prediction engine.
         Ensures lazy loading of model weights is triggered upon invocation.
@@ -44,8 +44,9 @@ class MLService:
 
         # Swappable live/mock prediction interface:
         # Returns simulated predictions for scanning/classification flow
+        predicted_class = qr_data if qr_data else "toyota-camry-2024"
         return {
-            "predicted_class": "toyota-camry-2024",
+            "predicted_class": predicted_class,
             "confidence": 0.945,
             "bounding_box": [45.0, 60.0, 420.0, 380.0]
         }

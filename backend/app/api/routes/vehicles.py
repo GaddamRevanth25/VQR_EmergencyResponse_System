@@ -5,7 +5,7 @@ from ...services.vehicle_service import VehicleService
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
-@router.get("/", response_model=List[Vehicle])
+@router.get("", response_model=List[Vehicle])
 def list_vehicles():
     return VehicleService.get_all()
 

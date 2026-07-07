@@ -10,3 +10,5 @@ Pillow
 numpy
 onnxruntime               # optional production inference
 scikit-learn              # crash model + utilities
+keras
+cv
