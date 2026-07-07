@@ -115,22 +115,20 @@ const RECENT_INCIDENTS = [
 
 export default function RescueScreen() {
   const theme = useTheme();
-  
+
   // Navigation states: 'dashboard' | 'manual' | 'scanner' | 'details'
   const [activeView, setActiveView] = useState<'dashboard' | 'manual' | 'scanner' | 'details'>('dashboard');
-  
+
   // Custom states
   const [emergency, setEmergency] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [backendUrl, setBackendUrl] = useState(DEFAULT_API_URL);
   const [isFlashOn, setIsFlashOn] = useState(false);
   const [facingMode, setFacingMode] = useState<'back' | 'front'>('back');
-  
+
   // Scanner state
   const [permission, requestPermission] = useCameraPermissions();
   const [confidence, setConfidence] = useState(0);
   const [recognized, setRecognized] = useState(false);
-  
+
   // Data states
   const [vehicle, setVehicle] = useState<any>(null);
   const [prediction, setPrediction] = useState<any>(null);
@@ -143,8 +141,8 @@ export default function RescueScreen() {
   const [manualModel, setManualModel] = useState('Camry');
   const [manualYear, setManualYear] = useState('2024');
 
-  const apiClient = createApiClient(backendUrl);
-  
+  const apiClient = createApiClient(DEFAULT_API_URL);
+
   // Animated value defined via useState for stable reference in rendering
   const [scanAnim] = useState(() => new Animated.Value(0));
   const progressInterval = useRef<any>(null);
@@ -166,7 +164,7 @@ export default function RescueScreen() {
       setConfidence(0);
       setRecognized(false);
     }, 0);
-    
+
     // Start scan line translate animation
     scanAnim.setValue(0);
     Animated.loop(
@@ -247,7 +245,7 @@ export default function RescueScreen() {
       const match = LOCAL_MOCK_VEHICLES.find(
         (v) => v.id.includes(manualModel.toLowerCase()) || v.id.includes(code)
       ) || LOCAL_MOCK_VEHICLES[0];
-      
+
       setVehicle(match);
       setPrediction({ confidence: 0.98 });
       setScanMessage("Loaded from offline database (Offline Mode)");
@@ -309,8 +307,8 @@ export default function RescueScreen() {
         <View style={[styles.neonBlob2, { backgroundColor: theme.accent + '0a' }]} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+
         {/* GLOBAL HEADER */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -322,13 +320,13 @@ export default function RescueScreen() {
               <Text style={[styles.headerTitle, { color: theme.text }]}>Vehicle Quick Response</Text>
             </View>
           </View>
-          
+
           {/* Emergency mode switch toggle */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.switchTrack, 
+              styles.switchTrack,
               { backgroundColor: emergency ? theme.destructive : theme.backgroundSelected }
-            ]} 
+            ]}
             activeOpacity={0.8}
             onPress={() => setEmergency(!emergency)}
           >
@@ -344,30 +342,7 @@ export default function RescueScreen() {
           </View>
         )}
 
-        {/* Collapsible Host IP Settings */}
-        <View style={[styles.settingsCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-          <TouchableOpacity 
-            style={styles.settingsHeader} 
-            onPress={() => setShowSettings(!showSettings)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.settingsTitle, { color: theme.text }]}>⚙️ API Server Connection</Text>
-            <Text style={{ color: theme.textSecondary }}>{showSettings ? '▲' : '▼'}</Text>
-          </TouchableOpacity>
-          
-          {showSettings && (
-            <View style={styles.settingsBody}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Backend API Base IP:</Text>
-              <TextInput
-                value={backendUrl}
-                onChangeText={setBackendUrl}
-                placeholder="http://192.168.1.x:8000"
-                placeholderTextColor={theme.textSecondary}
-                style={[styles.input, { color: theme.text, backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}
-              />
-            </View>
-          )}
-        </View>
+
 
         {/* VIEW ROUTING LAYOUTS */}
 
@@ -386,7 +361,7 @@ export default function RescueScreen() {
 
             {/* Main Action Cards */}
             <View style={styles.actionGrid}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.actionCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
                 onPress={() => setActiveView('manual')}
                 activeOpacity={0.8}
@@ -400,7 +375,7 @@ export default function RescueScreen() {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.actionCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
                 onPress={() => {
                   if (!permission?.granted) {
@@ -451,37 +426,37 @@ export default function RescueScreen() {
             <View style={[styles.manualForm, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
               <View style={styles.formRow}>
                 <Text style={[styles.formLabel, { color: theme.textSecondary }]}>Make</Text>
-                <TextInput 
-                  value={manualMake} 
+                <TextInput
+                  value={manualMake}
                   onChangeText={setManualMake}
-                  placeholder="e.g. Toyota" 
+                  placeholder="e.g. Toyota"
                   placeholderTextColor={theme.textSecondary}
                   style={[styles.formInput, { color: theme.text, borderColor: theme.backgroundSelected }]}
                 />
               </View>
               <View style={styles.formRow}>
                 <Text style={[styles.formLabel, { color: theme.textSecondary }]}>Model</Text>
-                <TextInput 
-                  value={manualModel} 
+                <TextInput
+                  value={manualModel}
                   onChangeText={setManualModel}
-                  placeholder="e.g. Camry" 
+                  placeholder="e.g. Camry"
                   placeholderTextColor={theme.textSecondary}
                   style={[styles.formInput, { color: theme.text, borderColor: theme.backgroundSelected }]}
                 />
               </View>
               <View style={styles.formRow}>
                 <Text style={[styles.formLabel, { color: theme.textSecondary }]}>Year</Text>
-                <TextInput 
-                  value={manualYear} 
+                <TextInput
+                  value={manualYear}
                   onChangeText={setManualYear}
-                  placeholder="e.g. 2024" 
+                  placeholder="e.g. 2024"
                   placeholderTextColor={theme.textSecondary}
                   keyboardType="numeric"
                   style={[styles.formInput, { color: theme.text, borderColor: theme.backgroundSelected }]}
                 />
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.searchBtn, { backgroundColor: theme.primary }]}
                 onPress={processQuery}
                 activeOpacity={0.8}
@@ -539,7 +514,7 @@ export default function RescueScreen() {
               <View style={[styles.permissionBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
                 <Text style={{ fontSize: 32, marginBottom: 12 }}>📷</Text>
                 <Text style={[styles.permissionText, { color: theme.text }]}>Camera permissions are required for classification.</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.grantBtn, { backgroundColor: theme.primary }]}
                   onPress={requestPermission}
                 >
@@ -549,11 +524,11 @@ export default function RescueScreen() {
             ) : (
               <View style={styles.cameraFrameWrapper}>
                 {/* Simulated Lens or Real Stream */}
-                <CameraView 
-                  style={StyleSheet.absoluteFill} 
+                <CameraView
+                  style={StyleSheet.absoluteFill}
                   facing={facingMode}
                 />
-                
+
                 {/* Glowing neon borders */}
                 <View style={styles.scannerCornerTL} />
                 <View style={styles.scannerCornerTR} />
@@ -565,11 +540,11 @@ export default function RescueScreen() {
 
                 {/* Animated scan line */}
                 {isScanningActive() && (
-                  <Animated.View 
+                  <Animated.View
                     style={[
-                      styles.scanLine, 
+                      styles.scanLine,
                       { transform: [{ translateY }] }
-                    ]} 
+                    ]}
                   />
                 )}
 
@@ -593,16 +568,16 @@ export default function RescueScreen() {
                     </View>
                   )}
                 </View>
-                
+
                 <View style={[styles.progressBarBg, { backgroundColor: theme.background }]}>
-                  <View 
+                  <View
                     style={[
-                      styles.progressBarFill, 
+                      styles.progressBarFill,
                       { width: `${Math.min(confidence, 98)}%`, backgroundColor: theme.primary }
-                    ]} 
+                    ]}
                   />
                 </View>
-                
+
                 {recognized && (
                   <Text style={[styles.recognizedLabel, { color: theme.success }]}>
                     VEHICLE DETECTED: Audi A4 / Camry Class
@@ -613,8 +588,8 @@ export default function RescueScreen() {
 
             {/* Controls */}
             <View style={styles.scannerControls}>
-              <TouchableOpacity 
-                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]} 
+              <TouchableOpacity
+                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
                 onPress={() => {
                   setFacingMode(facingMode === 'back' ? 'front' : 'back');
                 }}
@@ -622,15 +597,15 @@ export default function RescueScreen() {
                 <Text style={{ fontSize: 16 }}>🔄 Flip</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]} 
+              <TouchableOpacity
+                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
                 onPress={() => setIsFlashOn(!isFlashOn)}
               >
                 <Text style={{ fontSize: 16 }}>⚡ Flash</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]} 
+              <TouchableOpacity
+                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
                 onPress={() => {
                   stopScanningSimulation();
                   startScanningSimulation();
@@ -645,7 +620,7 @@ export default function RescueScreen() {
         {/* 4. DETAILS / RESULTS VIEW */}
         {activeView === 'details' && vehicle && (
           <View style={styles.detailsViewContainer}>
-            
+
             {/* Header specs metadata */}
             <View style={styles.detailsHeader}>
               <View>
@@ -671,18 +646,18 @@ export default function RescueScreen() {
             {/* Safety guidelines accordion */}
             <View style={styles.detailsSection}>
               <Text style={[styles.sectionTitleText, { color: theme.text }]}>Safety Cutout Guidelines</Text>
-              
+
               {vehicle.safetyGuidelines.map((g: any, index: number) => {
                 const priorityStyles = getPriorityColors(g.priority);
                 const isExpanded = expandedGuideline === index;
-                
+
                 return (
                   <TouchableOpacity
                     key={index}
                     style={[
-                      styles.guidelineCard, 
-                      { 
-                        backgroundColor: theme.backgroundElement, 
+                      styles.guidelineCard,
+                      {
+                        backgroundColor: theme.backgroundElement,
                         borderColor: theme.backgroundSelected,
                         borderLeftColor: priorityStyles.border
                       }
@@ -698,7 +673,7 @@ export default function RescueScreen() {
                         </Text>
                       </View>
                     </View>
-                    
+
                     {isExpanded && (
                       <Text style={[styles.guidelineDesc, { color: theme.textSecondary }]}>
                         {g.description || g.body}
@@ -732,7 +707,7 @@ export default function RescueScreen() {
                   </View>
                   <Text style={styles.videoMockLabel}>Standard extrication guidelines ready</Text>
                 </View>
-                
+
                 <View style={styles.videoTimelineContainer}>
                   <View style={styles.videoTimelineBg}>
                     <View style={[styles.videoTimelineFill, { backgroundColor: theme.primary }]} />
@@ -744,15 +719,15 @@ export default function RescueScreen() {
 
             {/* Alert / Incident dispatch controls */}
             <View style={styles.dispatchSection}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.dispatchBtn, { backgroundColor: theme.destructive }]}
                 disabled={alerting}
                 onPress={() => triggerMobileAlert('CRITICAL')}
               >
                 <Text style={styles.dispatchBtnText}>Trigger Critical Dispatch</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[styles.dispatchBtn, { backgroundColor: theme.warning }]}
                 disabled={alerting}
                 onPress={() => triggerMobileAlert('WARNING')}
@@ -762,7 +737,7 @@ export default function RescueScreen() {
             </View>
 
             {/* Reset / scan next button */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.resetScanBtn, { backgroundColor: theme.primary }]}
               onPress={() => {
                 setVehicle(null);
@@ -1374,7 +1349,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   videoPlayerMock: {
-    aspectRatio: 16/9,
+    aspectRatio: 16 / 9,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#090d16',

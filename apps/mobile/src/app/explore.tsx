@@ -114,7 +114,7 @@ export default function ExploreScreen() {
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
   const [alerting, setAlerting] = useState(false);
   const [expandedGuideline, setExpandedGuideline] = useState<number | null>(null);
-  
+
   const backendUrl = DEFAULT_API_URL;
   const apiClient = createApiClient(backendUrl);
 
@@ -316,7 +316,7 @@ export default function ExploreScreen() {
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: theme.text }]}>Rescue Catalog</Text>
-            
+
             <View style={styles.searchRow}>
               <TextInput
                 value={search}

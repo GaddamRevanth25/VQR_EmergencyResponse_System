@@ -1,0 +1,291 @@
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { useTheme } from '@/hooks/use-theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+interface VQRRegisterScreenProps {
+  onRegisterSuccess: (message: string) => void;
+  onGoToLogin: () => void;
+}
+
+export default function VQRRegisterScreen({
+  onRegisterSuccess,
+  onGoToLogin,
+}: VQRRegisterScreenProps) {
+  const theme = useTheme();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = () => {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
+      Alert.alert('Validation Error', 'Please fill out all required fields.');
+      return;
+    }
+
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert('Validation Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    const cleanedPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanedPhone.length < 10) {
+      Alert.alert('Validation Error', 'Please enter a valid 10-digit phone number.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Validation Error', 'Passwords do not match.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Validation Error', 'Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
+
+    // Simulate API registration call
+    setTimeout(() => {
+      setLoading(false);
+      onRegisterSuccess('Registration successful! Please login with your details.');
+    }, 1200);
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top', 'bottom']}>
+      {/* Neon Blobs */}
+      <View style={styles.neonBlobContainer} pointerEvents="none">
+        <View style={[styles.neonBlob1, { backgroundColor: theme.primary + '11' }]} />
+        <View style={[styles.neonBlob2, { backgroundColor: theme.accent + '0a' }]} />
+      </View>
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+
+      <View style={styles.header}>
+        <View style={[styles.logoBg, { backgroundColor: theme.primary }]}>
+          <Text style={styles.logoIcon}>🚨</Text>
+        </View>
+        <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Register as a Standby VQR Responder
+        </Text>
+      </View>
+
+      {/* Registration Form */}
+      <View style={[styles.form, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+        {/* Full Name */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: theme.textSecondary }]}>Full Name</Text>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="Officer John Doe"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+          />
+        </View>
+
+        {/* Email */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: theme.textSecondary }]}>Email Address</Text>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Ex:user@gmail.com"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+          />
+        </View>
+
+        {/* Phone Number */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: theme.textSecondary }]}>Phone Number</Text>
+          <TextInput
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="+91 88xxx xx921"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="phone-pad"
+            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+          />
+        </View>
+
+        {/* Password */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor={theme.textSecondary}
+            secureTextEntry
+            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+          />
+        </View>
+
+        {/* Confirm Password */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: theme.textSecondary }]}>Confirm Password</Text>
+          <TextInput
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder="••••••••"
+            placeholderTextColor={theme.textSecondary}
+            secureTextEntry
+            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+          />
+        </View>
+
+        {/* Register Action Button */}
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: theme.primary }]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          <Text style={styles.actionButtonText}>
+            {loading ? 'Registering...' : 'Register Account'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+    </ScrollView>
+
+    {/* Login redirect */}
+    <View style={styles.footer}>
+      <Text style={[styles.footerText, { color: theme.textSecondary }]}>Already have a responder profile? </Text>
+      <TouchableOpacity onPress={onGoToLogin}>
+        <Text style={[styles.loginLink, { color: theme.primary }]}>Sign In Instead</Text>
+      </TouchableOpacity>
+    </View>
+  </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 60,
+    minHeight: '100%',
+    justifyContent: 'center',
+  },
+  neonBlobContainer: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+    zIndex: 0,
+  },
+  neonBlob1: {
+    position: 'absolute',
+    top: 50,
+    left: -120,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+  },
+  neonBlob2: {
+    position: 'absolute',
+    bottom: 50,
+    right: -120,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 28,
+    zIndex: 1,
+  },
+  logoBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logoIcon: {
+    fontSize: 28,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  subtitle: {
+    fontSize: 14,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  form: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    gap: 14,
+    zIndex: 1,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.02,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  inputGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actionButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 16,
+    paddingTop: 8,
+    zIndex: 1,
+  },
+  footerText: {
+    fontSize: 13,
+  },
+  loginLink: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+});
