@@ -1,7 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { ThemeAndAuthPropsProvider, useThemeAndAuth } from '../context/ThemeAndAuthContext';
 
 import VQRSplashScreen from '@/components/auth/splash-screen';
 import VQRLoginScreen from '@/components/auth/login-screen';
@@ -11,17 +11,19 @@ import AppTabs from '@/components/app-tabs';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+function RootLayoutContent() {
+  const { authState, setAuthState, isInitialized, loginSession, resolvedTheme } = useThemeAndAuth();
 
-  // Auth state machine: 'splash' | 'login' | 'register' | 'two-factor' | 'authenticated'
-  const [authState, setAuthState] = useState<'splash' | 'login' | 'register' | 'two-factor' | 'authenticated'>('splash');
-  const [regSuccessMsg, setRegSuccessMsg] = useState('');
-
-  // Hide the native splash screen as soon as our React Native app starts rendering our custom splash
+  // Hide the native splash screen as soon as state hydration completes
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => { });
-  }, []);
+    if (isInitialized) {
+      SplashScreen.hideAsync().catch(() => { });
+    }
+  }, [isInitialized]);
+
+  if (!isInitialized) {
+    return null;
+  }
 
   const handleSplashFinish = () => {
     setAuthState('login');
@@ -32,16 +34,21 @@ export default function TabLayout() {
   };
 
   const handleRegisterSuccess = (msg: string) => {
-    setRegSuccessMsg(msg);
     setAuthState('login');
   };
 
   const handleVerifySuccess = () => {
-    setAuthState('authenticated');
+    // Save persistent user session on successful token/passkey verification
+    loginSession({
+      name: 'Officer Davis',
+      email: 'davis@vqr-response.gov',
+      phone: '+91 88xxx xx921',
+      role: 'Primary First Responder',
+    });
   };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={resolvedTheme === 'dark' ? DarkTheme : DefaultTheme}>
       {authState === 'splash' && (
         <VQRSplashScreen onFinish={handleSplashFinish} />
       )}
@@ -50,8 +57,8 @@ export default function TabLayout() {
         <VQRLoginScreen
           onLoginSuccess={handleLoginSuccess}
           onGoToRegister={() => setAuthState('register')}
-          registrationSuccessMsg={regSuccessMsg}
-          clearSuccessMsg={() => setRegSuccessMsg('')}
+          registrationSuccessMsg=""
+          clearSuccessMsg={() => {}}
         />
       )}
 
@@ -73,5 +80,13 @@ export default function TabLayout() {
         <AppTabs />
       )}
     </ThemeProvider>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <ThemeAndAuthPropsProvider>
+      <RootLayoutContent />
+    </ThemeAndAuthPropsProvider>
   );
 }

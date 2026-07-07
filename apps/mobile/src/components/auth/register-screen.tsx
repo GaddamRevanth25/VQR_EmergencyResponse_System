@@ -76,105 +76,105 @@ export default function VQRRegisterScreen({
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
-      <View style={styles.header}>
-        <View style={[styles.logoBg, { backgroundColor: theme.primary }]}>
-          <Text style={styles.logoIcon}>🚨</Text>
-        </View>
-        <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Register as a Standby VQR Responder
-        </Text>
-      </View>
-
-      {/* Registration Form */}
-      <View style={[styles.form, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-        {/* Full Name */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>Full Name</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Officer John Doe"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
-          />
-        </View>
-
-        {/* Email */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>Email Address</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Ex:user@gmail.com"
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
-          />
-        </View>
-
-        {/* Phone Number */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>Phone Number</Text>
-          <TextInput
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="+91 88xxx xx921"
-            placeholderTextColor={theme.textSecondary}
-            keyboardType="phone-pad"
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
-          />
-        </View>
-
-        {/* Password */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
-          />
-        </View>
-
-        {/* Confirm Password */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>Confirm Password</Text>
-          <TextInput
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="••••••••"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
-          />
-        </View>
-
-        {/* Register Action Button */}
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: theme.primary }]}
-          onPress={handleRegister}
-          disabled={loading}
-        >
-          <Text style={styles.actionButtonText}>
-            {loading ? 'Registering...' : 'Register Account'}
+        <View style={styles.header}>
+          <View style={[styles.logoBg, { backgroundColor: theme.primary }]}>
+            <Text style={styles.logoIcon}>🚨</Text>
+          </View>
+          <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            Register as a Standby VQR Responder
           </Text>
+        </View>
+
+        {/* Registration Form */}
+        <View style={[styles.form, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+          {/* Full Name */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Full Name</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Officer John Doe"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Email */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Email Address</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Ex:user@gmail.com"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Phone Number */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Phone Number</Text>
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+91 88xxx xx921"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="phone-pad"
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Password */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              placeholderTextColor={theme.textSecondary}
+              secureTextEntry
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Confirm Password */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Confirm Password</Text>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="••••••••"
+              placeholderTextColor={theme.textSecondary}
+              secureTextEntry
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Register Action Button */}
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.primary }]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            <Text style={styles.actionButtonText}>
+              {loading ? 'Registering...' : 'Register Account'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+
+      {/* Login redirect */}
+      <View style={styles.footer}>
+        <Text style={[styles.footerText, { color: theme.textSecondary }]}>Already have a  profile? </Text>
+        <TouchableOpacity onPress={onGoToLogin}>
+          <Text style={[styles.loginLink, { color: theme.primary }]}>Sign In </Text>
         </TouchableOpacity>
       </View>
-
-    </ScrollView>
-
-    {/* Login redirect */}
-    <View style={styles.footer}>
-      <Text style={[styles.footerText, { color: theme.textSecondary }]}>Already have a responder profile? </Text>
-      <TouchableOpacity onPress={onGoToLogin}>
-        <Text style={[styles.loginLink, { color: theme.primary }]}>Sign In Instead</Text>
-      </TouchableOpacity>
-    </View>
-  </SafeAreaView>
+    </SafeAreaView>
   );
 }
 

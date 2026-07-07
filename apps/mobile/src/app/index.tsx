@@ -307,47 +307,48 @@ export default function RescueScreen() {
         <View style={[styles.neonBlob2, { backgroundColor: theme.accent + '0a' }]} />
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-
-        {/* GLOBAL HEADER */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={[styles.sirenContainer, { backgroundColor: theme.primary }]}>
-              <Text style={styles.sirenEmoji}>🚨</Text>
+      {/* Render Fixed Global Header for non-scanner views */}
+      {activeView !== 'scanner' && (
+        <View style={styles.fixedHeader}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View style={[styles.sirenContainer, { backgroundColor: theme.primary }]}>
+                <Text style={styles.sirenEmoji}>🚨</Text>
+              </View>
+              <View>
+                <Text style={[styles.headerSub, { color: theme.primary }]}>VQR SYSTEM</Text>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>Vehicle Quick Response</Text>
+              </View>
             </View>
-            <View>
-              <Text style={[styles.headerSub, { color: theme.primary }]}>VQR SYSTEM</Text>
-              <Text style={[styles.headerTitle, { color: theme.text }]}>Vehicle Quick Response</Text>
-            </View>
+            
+            {/* Emergency mode switch toggle */}
+            <TouchableOpacity
+              style={[
+                styles.switchTrack,
+                { backgroundColor: emergency ? theme.destructive : theme.backgroundSelected }
+              ]}
+              activeOpacity={0.8}
+              onPress={() => setEmergency(!emergency)}
+            >
+              <View style={[styles.switchThumb, { transform: [{ translateX: emergency ? 20 : 2 }] }]} />
+            </TouchableOpacity>
           </View>
 
-          {/* Emergency mode switch toggle */}
-          <TouchableOpacity
-            style={[
-              styles.switchTrack,
-              { backgroundColor: emergency ? theme.destructive : theme.backgroundSelected }
-            ]}
-            activeOpacity={0.8}
-            onPress={() => setEmergency(!emergency)}
-          >
-            <View style={[styles.switchThumb, { transform: [{ translateX: emergency ? 20 : 2 }] }]} />
-          </TouchableOpacity>
+          {/* INCIDENT ALERTS */}
+          {emergency && (
+            <View style={[styles.alertBanner, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: theme.destructive }]}>
+              <View style={styles.pulseDot} />
+              <Text style={[styles.alertText, { color: theme.destructive }]}>Emergency mode armed. Incident reports active.</Text>
+            </View>
+          )}
         </View>
+      )}
 
-        {/* INCIDENT ALERTS AND HOST CONFIGURATION */}
-        {emergency && (
-          <View style={[styles.alertBanner, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: theme.destructive }]}>
-            <View style={styles.pulseDot} />
-            <Text style={[styles.alertText, { color: theme.destructive }]}>Emergency mode armed. Incident reports active.</Text>
-          </View>
-        )}
+      {/* VIEW ROUTING LAYOUTS */}
 
-
-
-        {/* VIEW ROUTING LAYOUTS */}
-
-        {/* 1. DASHBOARD VIEW */}
-        {activeView === 'dashboard' && (
+      {/* 1. DASHBOARD VIEW */}
+      {activeView === 'dashboard' && (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled" alwaysBounceVertical={true} showsVerticalScrollIndicator={true}>
           <View style={styles.dashboardContainer}>
             <View style={styles.heroSection}>
               <View style={[styles.readyBadge, { backgroundColor: 'rgba(22, 163, 74, 0.12)', borderColor: theme.success }]}>
@@ -370,8 +371,8 @@ export default function RescueScreen() {
                   <Text style={styles.actionIcon}>🔍</Text>
                 </View>
                 <View style={styles.actionContent}>
-                  <Text style={[styles.actionTitle, { color: theme.text }]}>Enter Vehicle Details</Text>
-                  <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>Search by make, model, year</Text>
+                  <Text style={[styles.actionTitle, { color: theme.text }]}>Manual Search</Text>
+                  <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>Query safety guidelines by make, model, and year.</Text>
                 </View>
               </TouchableOpacity>
 
@@ -382,15 +383,16 @@ export default function RescueScreen() {
                     requestPermission();
                   }
                   setActiveView('scanner');
+                  startScanningSimulation();
                 }}
                 activeOpacity={0.8}
               >
-                <View style={[styles.actionIconBg, { backgroundColor: '#020617' }]}>
+                <View style={[styles.actionIconBg, { backgroundColor: theme.accent }]}>
                   <Text style={styles.actionIcon}>📷</Text>
                 </View>
                 <View style={styles.actionContent}>
-                  <Text style={[styles.actionTitle, { color: theme.text }]}>Camera Scan</Text>
-                  <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>Classify vehicle frontend</Text>
+                  <Text style={[styles.actionTitle, { color: theme.text }]}>Camera Scanner</Text>
+                  <Text style={[styles.actionDesc, { color: theme.textSecondary }]}>Classify vehicle structures automatically in real-time.</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -411,10 +413,12 @@ export default function RescueScreen() {
               ))}
             </View>
           </View>
-        )}
+        </ScrollView>
+      )}
 
-        {/* 2. MANUAL ENTRY VIEW */}
-        {activeView === 'manual' && (
+      {/* 2. MANUAL SEARCH VIEW */}
+      {activeView === 'manual' && (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled" alwaysBounceVertical={true} showsVerticalScrollIndicator={true}>
           <View style={styles.manualViewContainer}>
             <View style={styles.backRow}>
               <TouchableOpacity onPress={() => setActiveView('dashboard')} style={styles.backBtn}>
@@ -464,163 +468,135 @@ export default function RescueScreen() {
                 <Text style={styles.searchBtnText}>Identify Vehicle</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Offline cached list quick picks */}
-            <Text style={[styles.catalogLabel, { color: theme.text }]}>Local Vehicle Matches</Text>
-            <View style={styles.catalogList}>
-              {LOCAL_MOCK_VEHICLES.map((v) => (
-                <TouchableOpacity
-                  key={v.id}
-                  style={[styles.catalogCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
-                  onPress={() => {
-                    setVehicle(v);
-                    setPrediction({ confidence: 0.98 });
-                    setScanMessage("Loaded from offline database (Offline Mode)");
-                    setExpandedGuideline(null);
-                    setActiveView('details');
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.catalogCardLeft}>
-                    <View style={[styles.carBadge, { backgroundColor: theme.primary + '15' }]}>
-                      <Text style={{ fontSize: 18 }}>🚗</Text>
-                    </View>
-                    <View>
-                      <Text style={[styles.catalogCardTitle, { color: theme.text }]}>{v.make} {v.model}</Text>
-                      <Text style={[styles.catalogCardSub, { color: theme.textSecondary }]}>{v.vin} · {v.year}</Text>
-                    </View>
-                  </View>
-                  <View style={[styles.matchBadge, { backgroundColor: 'rgba(22, 163, 74, 0.12)', borderColor: theme.success }]}>
-                    <Text style={[styles.matchBadgeText, { color: theme.success }]}>98%</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
           </View>
-        )}
+        </ScrollView>
+      )}
 
-        {/* 3. CAMERA SCANNER VIEW */}
-        {activeView === 'scanner' && (
-          <View style={styles.scannerContainer}>
-            <View style={styles.backRow}>
-              <TouchableOpacity onPress={() => setActiveView('dashboard')} style={styles.backBtn}>
-                <Text style={[styles.backArrow, { color: theme.text }]}>← Exit</Text>
-              </TouchableOpacity>
-              <Text style={[styles.viewTitle, { color: theme.text }]}>Camera Scanner</Text>
+      {/* 3. CLASSIFICATION / CAMERA STREAM */}
+      {activeView === 'scanner' && (
+        <View style={styles.scannerContainer}>
+          <View style={styles.backRow}>
+            <TouchableOpacity onPress={() => stopScanningSimulation()} style={styles.backBtn}>
+              <Text style={[styles.backArrow, { color: theme.text }]}>← Back</Text>
+            </TouchableOpacity>
+            <Text style={[styles.viewTitle, { color: theme.text }]}>Real-time Scan</Text>
+          </View>
+
+          {!permission ? (
+            <View style={[styles.permissionBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+              <Text style={[styles.permissionText, { color: theme.text }]}>Requesting camera permission...</Text>
             </View>
+          ) : !permission.granted ? (
+            <View style={[styles.permissionBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+              <Text style={{ fontSize: 32, marginBottom: 12 }}>📷</Text>
+              <Text style={[styles.permissionText, { color: theme.text }]}>Camera permissions are required for classification.</Text>
+              <TouchableOpacity
+                style={[styles.grantBtn, { backgroundColor: theme.primary }]}
+                onPress={requestPermission}
+              >
+                <Text style={styles.grantBtnText}>Grant Permission</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.cameraFrameWrapper}>
+              {/* Simulated Lens or Real Stream */}
+              <CameraView
+                style={StyleSheet.absoluteFill}
+                facing={facingMode}
+              />
 
-            {/* Scanner permissions */}
-            {!permission?.granted ? (
-              <View style={[styles.permissionBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-                <Text style={{ fontSize: 32, marginBottom: 12 }}>📷</Text>
-                <Text style={[styles.permissionText, { color: theme.text }]}>Camera permissions are required for classification.</Text>
-                <TouchableOpacity
-                  style={[styles.grantBtn, { backgroundColor: theme.primary }]}
-                  onPress={requestPermission}
-                >
-                  <Text style={styles.grantBtnText}>Grant Camera Permission</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.cameraFrameWrapper}>
-                {/* Simulated Lens or Real Stream */}
-                <CameraView
-                  style={StyleSheet.absoluteFill}
-                  facing={facingMode}
+              {/* Glowing neon borders */}
+              <View style={styles.scannerCornerTL} />
+              <View style={styles.scannerCornerTR} />
+              <View style={styles.scannerCornerBL} />
+              <View style={styles.scannerCornerBR} />
+
+              {/* Dotted border frame */}
+              <View style={styles.dottedOutline} />
+
+              {/* Animated scan line */}
+              {isScanningActive() && (
+                <Animated.View
+                  style={[
+                    styles.scanLine,
+                    { transform: [{ translateY }] }
+                  ]}
                 />
+              )}
 
-                {/* Glowing neon borders */}
-                <View style={styles.scannerCornerTL} />
-                <View style={styles.scannerCornerTR} />
-                <View style={styles.scannerCornerBL} />
-                <View style={styles.scannerCornerBR} />
-
-                {/* Dotted border frame */}
-                <View style={styles.dottedOutline} />
-
-                {/* Animated scan line */}
-                {isScanningActive() && (
-                  <Animated.View
-                    style={[
-                      styles.scanLine,
-                      { transform: [{ translateY }] }
-                    ]}
-                  />
-                )}
-
-                {/* Overlay Text */}
-                <View style={styles.cameraOverlayTextContainer}>
-                  <Text style={styles.cameraOverlayText}>Center vehicle grille inside brackets</Text>
-                </View>
+              {/* Overlay Text */}
+              <View style={styles.cameraOverlayTextContainer}>
+                <Text style={styles.cameraOverlayText}>Center vehicle grille inside brackets</Text>
               </View>
-            )}
-
-            {/* Progress indicators */}
-            {confidence > 0 && (
-              <View style={[styles.scanStatusCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-                <View style={styles.progressHeader}>
-                  <Text style={[styles.progressTitle, { color: theme.text }]}>
-                    {Math.min(Math.round(confidence), 98)}% / {recognized ? "CLASSIFIED" : "ANALYZING..."}
-                  </Text>
-                  {recognized && (
-                    <View style={[styles.checkCircle, { backgroundColor: theme.success }]}>
-                      <Text style={styles.checkIcon}>✓</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={[styles.progressBarBg, { backgroundColor: theme.background }]}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      { width: `${Math.min(confidence, 98)}%`, backgroundColor: theme.primary }
-                    ]}
-                  />
-                </View>
-
-                {recognized && (
-                  <Text style={[styles.recognizedLabel, { color: theme.success }]}>
-                    VEHICLE DETECTED: Audi A4 / Camry Class
-                  </Text>
-                )}
-              </View>
-            )}
-
-            {/* Controls */}
-            <View style={styles.scannerControls}>
-              <TouchableOpacity
-                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
-                onPress={() => {
-                  setFacingMode(facingMode === 'back' ? 'front' : 'back');
-                }}
-              >
-                <Text style={{ fontSize: 16 }}>🔄 Flip</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
-                onPress={() => setIsFlashOn(!isFlashOn)}
-              >
-                <Text style={{ fontSize: 16 }}>⚡ Flash</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
-                onPress={() => {
-                  stopScanningSimulation();
-                  startScanningSimulation();
-                }}
-              >
-                <Text style={{ fontSize: 16 }}>♻️ Reset</Text>
-              </TouchableOpacity>
             </View>
+          )}
+
+          {/* Progress indicators */}
+          {confidence > 0 && (
+            <View style={[styles.scanStatusCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+              <View style={styles.progressHeader}>
+                <Text style={[styles.progressTitle, { color: theme.text }]}>
+                  {Math.min(Math.round(confidence), 98)}% / {recognized ? "CLASSIFIED" : "ANALYZING..."}
+                </Text>
+                {recognized && (
+                  <View style={[styles.checkCircle, { backgroundColor: theme.success }]}>
+                    <Text style={styles.checkIcon}>✓</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={[styles.progressBarBg, { backgroundColor: theme.background }]}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${Math.min(confidence, 98)}%`, backgroundColor: theme.primary }
+                  ]}
+                />
+              </View>
+
+              {recognized && (
+                <Text style={[styles.recognizedLabel, { color: theme.success }]}>
+                  VEHICLE DETECTED: Audi A4 / Camry Class
+                </Text>
+              )}
+            </View>
+          )}
+
+          {/* Controls */}
+          <View style={styles.scannerControls}>
+            <TouchableOpacity
+              style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
+              onPress={() => {
+                setFacingMode(facingMode === 'back' ? 'front' : 'back');
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>🔄 Flip</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
+              onPress={() => setIsFlashOn(!isFlashOn)}
+            >
+              <Text style={{ fontSize: 16 }}>⚡ Flash</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.controlBtn, { backgroundColor: theme.backgroundElement }]}
+              onPress={() => {
+                stopScanningSimulation();
+                startScanningSimulation();
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>♻️ Reset</Text>
+            </TouchableOpacity>
           </View>
-        )}
+        </View>
+      )}
 
-        {/* 4. DETAILS / RESULTS VIEW */}
-        {activeView === 'details' && vehicle && (
+      {/* 4. DETAILS / RESULTS VIEW */}
+      {activeView === 'details' && vehicle && (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer} alwaysBounceVertical={true} showsVerticalScrollIndicator={true}>
           <View style={styles.detailsViewContainer}>
-
             {/* Header specs metadata */}
             <View style={styles.detailsHeader}>
               <View>
@@ -684,7 +660,7 @@ export default function RescueScreen() {
               })}
             </View>
 
-            {/* Vehicle spec chips */}
+            {/* Specs chips */}
             <View style={styles.detailsSection}>
               <Text style={[styles.sectionTitleText, { color: theme.text }]}>Vehicle Specifications</Text>
               <View style={styles.specChipsContainer}>
@@ -696,11 +672,10 @@ export default function RescueScreen() {
               </View>
             </View>
 
-            {/* Simulated video guide briefing */}
+            {/* Video preview mock */}
             <View style={styles.detailsSection}>
               <Text style={[styles.sectionTitleText, { color: theme.text }]}>Extraction Video Guide</Text>
               <View style={[styles.videoWrapper, { backgroundColor: '#020617', borderColor: theme.backgroundSelected }]}>
-                {/* Real video if online, otherwise mock graphics */}
                 <View style={styles.videoPlayerMock}>
                   <View style={styles.playButtonBg}>
                     <Text style={styles.playButtonSymbol}>▶</Text>
@@ -750,9 +725,8 @@ export default function RescueScreen() {
             </TouchableOpacity>
 
           </View>
-        )}
-
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -760,6 +734,13 @@ export default function RescueScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  fixedHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148, 163, 184, 0.08)',
   },
   neonBlobContainer: {
     ...StyleSheet.absoluteFill,
@@ -791,9 +772,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148, 163, 184, 0.08)',
+    paddingBottom: 12,
   },
   headerLeft: {
     flexDirection: 'row',
