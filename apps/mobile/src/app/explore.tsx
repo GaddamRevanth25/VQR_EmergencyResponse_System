@@ -13,9 +13,38 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createApiClient } from '@vqr/shared';
 import { useTheme } from '@/hooks/use-theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from 'expo-router';
 
 // Host configurations
 const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+
+const MOCK_DEFAULT_HISTORY = [
+  {
+    id: "toyota-camry-2024",
+    title: "Toyota Camry (2024)",
+    type: "browse",
+    timestamp: "02:14 PM",
+    date: "Jul 10, 2026",
+    params: { make: "Toyota", model: "Camry", year: 2024 }
+  },
+  {
+    id: "bmw-740li-2012",
+    title: "BMW 740Li (2012)",
+    type: "manual",
+    timestamp: "10:30 AM",
+    date: "Jul 08, 2026",
+    params: { reg: "MH02CL0555" }
+  },
+  {
+    id: "honda-cbr-2023",
+    title: "Honda CBR (2023)",
+    type: "scan",
+    timestamp: "06:45 PM",
+    date: "Jul 09, 2026",
+    params: { reg: "HONDA-CBR" }
+  }
+];
 
 const LOCAL_MOCK_VEHICLES = [
   {
@@ -104,41 +133,87 @@ const LOCAL_MOCK_VEHICLES = [
     vin: "VQR-EV-512"
   }
 ];
-
 export default function ExploreScreen() {
   const theme = useTheme();
-
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const navigation = useNavigation();
+  const [recentSearches, setRecentSearches] = useState<any[]>([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
   const [alerting, setAlerting] = useState(false);
-  const [expandedGuideline, setExpandedGuideline] = useState<number | null>(null);
+  const [activeResultTab, setActiveResultTab] = useState<'safety' | 'emergency' | 'features' | 'video'>('safety');
+  const [videoPlayTime, setVideoPlayTime] = useState('0:00');
 
   const backendUrl = DEFAULT_API_URL;
   const apiClient = createApiClient(backendUrl);
 
-  useEffect(() => {
-    fetchVehicles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backendUrl]);
+  const loadHistory = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('vqr_recent_searches');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.length > 0) {
+          setRecentSearches(parsed);
+          return;
+        }
+      }
+      // Seed with mock defaults
+      await AsyncStorage.setItem('vqr_recent_searches', JSON.stringify(MOCK_DEFAULT_HISTORY));
+      setRecentSearches(MOCK_DEFAULT_HISTORY);
+    } catch (e) {
+      setRecentSearches(MOCK_DEFAULT_HISTORY);
+    }
+  };
 
-  async function fetchVehicles() {
+  useEffect(() => {
+    loadHistory();
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadHistory();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const clearHistory = async () => {
+    try {
+      await AsyncStorage.setItem('vqr_recent_searches', JSON.stringify([]));
+      setRecentSearches([]);
+    } catch (e) {}
+  };
+
+  const handleItemPress = async (id: string) => {
     setLoading(true);
     try {
-      const data = await apiClient.listVehicles();
-      if (data && data.length > 0) {
-        setVehicles(data);
-      } else {
-        setVehicles(LOCAL_MOCK_VEHICLES);
-      }
-    } catch (err: any) {
-      console.warn("Failed to fetch vehicles list from API, using offline DB:", err.message);
-      setVehicles(LOCAL_MOCK_VEHICLES);
+      const data = await apiClient.getVehicle(id);
+      setSelectedVehicle(data);
+    } catch (err) {
+      Alert.alert(
+        "Offline Mode",
+        "Could not load live vehicle safety data. Displaying pre-cached checklist.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Fallback to mock item
+              const found = MOCK_DEFAULT_HISTORY.find(x => x.id === id);
+              setSelectedVehicle({
+                id,
+                make: found ? found.title.split(' ')[0] : 'Toyota',
+                model: found ? found.title.split(' ')[1] : 'Camry',
+                year: 2024,
+                fuelType: "HYBRID",
+                safetyGuidelines: [
+                  { title: "Emergency Cut Points", description: "Cut point isolation marked on outer pillars.", location: "A/B Pillars", priority: "high" }
+                ],
+                features: []
+              });
+            }
+          }
+        ]
+      );
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const triggerMobileAlert = async (severity: 'INFO' | 'WARNING' | 'CRITICAL') => {
     if (!selectedVehicle) return;
@@ -177,12 +252,13 @@ export default function ExploreScreen() {
     }
   };
 
-  const filteredVehicles = vehicles.filter((v) => {
-    const term = search.toLowerCase();
+  const filteredHistory = recentSearches.filter((item) => {
+    const query = search.toLowerCase().trim();
+    if (!query) return true;
     return (
-      v.make.toLowerCase().includes(term) ||
-      v.model.toLowerCase().includes(term) ||
-      v.id.toLowerCase().includes(term)
+      item.title?.toLowerCase().includes(query) ||
+      item.date?.toLowerCase().includes(query) ||
+      item.type?.toLowerCase().includes(query)
     );
   });
 
@@ -195,7 +271,7 @@ export default function ExploreScreen() {
       </View>
 
       {selectedVehicle ? (
-        /* DETAIL VIEW OVERLAY */
+        /* DETAIL VIEW OVERLAY - FOLLOWING SAFETY LAYOUT PATTERN */
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.detailsHeader}>
             <View>
@@ -212,159 +288,194 @@ export default function ExploreScreen() {
             </View>
           </View>
 
-          {/* Safety guidelines accordion */}
-          <View style={styles.detailsSection}>
-            <Text style={[styles.sectionTitleText, { color: theme.text }]}>Safety Cutout Guidelines</Text>
-            {selectedVehicle.safetyGuidelines.map((g: any, index: number) => {
-              const priorityStyles = getPriorityColors(g.priority);
-              const isExpanded = expandedGuideline === index;
-
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.guidelineCard,
-                    {
-                      backgroundColor: theme.backgroundElement,
-                      borderColor: theme.backgroundSelected,
-                      borderLeftColor: priorityStyles.border,
-                    },
-                  ]}
-                  onPress={() => setExpandedGuideline(isExpanded ? null : index)}
-                  activeOpacity={0.9}
-                >
-                  <View style={styles.guidelineHeader}>
-                    <Text style={[styles.guidelineTitle, { color: theme.text }]}>{g.title}</Text>
-                    <View style={[styles.priorityBadge, { backgroundColor: priorityStyles.bg, borderColor: priorityStyles.border }]}>
-                      <Text style={[styles.priorityBadgeText, { color: priorityStyles.text }]}>
-                        {g.priority}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {isExpanded && (
-                    <Text style={[styles.guidelineDesc, { color: theme.textSecondary }]}>
-                      {g.description || g.body}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+          {/* Tabs bar */}
+          <View style={styles.tabsBar}>
+            {(['safety', 'emergency', 'features', 'video'] as const).map((t) => (
+              <TouchableOpacity
+                key={t}
+                onPress={() => setActiveResultTab(t)}
+                style={[
+                  styles.tabButton,
+                  { borderBottomColor: activeResultTab === t ? theme.primary : 'transparent' }
+                ]}
+              >
+                <Text style={[styles.tabButtonText, { color: activeResultTab === t ? theme.primary : theme.textSecondary }]}>
+                  {t.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          {/* Specifications Pills */}
-          <View style={styles.detailsSection}>
-            <Text style={[styles.sectionTitleText, { color: theme.text }]}>Vehicle Specifications</Text>
-            <View style={styles.specChipsContainer}>
-              {selectedVehicle.features.flatMap((f: any) => f.items).map((item: string, i: number) => (
-                <View key={i} style={[styles.specChip, { backgroundColor: theme.backgroundSelected }]}>
-                  <Text style={[styles.specChipText, { color: theme.textSecondary }]}>{item}</Text>
+          {/* Tab Content 1: Safety Features */}
+          {activeResultTab === 'safety' && (
+            <View style={styles.tabContent}>
+              {(selectedVehicle.safetyGuidelines || selectedVehicle.safetyFeatures || []).map((feat: any, idx: number) => {
+                const icon = feat.icon === 'hammer' ? '🔨' : feat.icon === 'exit' ? '🚪' : '⚠️';
+                return (
+                  <View key={idx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement }]}>
+                    <Text style={[styles.infoCardTitle, { color: theme.text }]}>{icon} {feat.title}</Text>
+                    <Text style={[styles.infoCardText, { color: theme.textSecondary }]}>{feat.description || feat.body}</Text>
+                    <Text style={[styles.infoCardLoc, { color: theme.primary }]}>📍 Location: {feat.location || "Under hood"}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Tab Content 2: Emergency Scenario Guide */}
+          {activeResultTab === 'emergency' && (
+            <View style={styles.tabContent}>
+              {(selectedVehicle.emergencyProcedures || [
+                {
+                  scenario: "Engine Compartment Fire",
+                  dos: ["Safely pull over immediately", "Switch ignition off to cut fuel pump", "Evacuate all occupants to safe distance", "Call emergency services"],
+                  donts: ["Open the hood completely (oxygen feeds fire)", "Attempt to use water on electrical/hybrid fires"]
+                },
+                {
+                  scenario: "Submersion or Flood",
+                  dos: ["Release seat belts immediately", "Open or break side windows before electrical system fails", "Escape passenger compartment immediately"],
+                  donts: ["Wait for vehicle to fill with water", "Attempt to open doors against water pressure"]
+                }
+              ]).map((proc: any, idx: number) => (
+                <View key={idx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement }]}>
+                  <Text style={[styles.infoCardTitle, { color: theme.destructive }]}>⚠️ Scenario: {proc.scenario}</Text>
+                  <View style={{ gap: 8, marginTop: 8 }}>
+                    <View>
+                      <Text style={{ fontWeight: 'bold', color: theme.success, fontSize: 13, marginBottom: 4 }}>✓ WHAT TO DO</Text>
+                      {(proc.steps || proc.dos || []).map((st: string, sIdx: number) => (
+                        <Text key={sIdx} style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8, marginBottom: 2 }}>• {st}</Text>
+                      ))}
+                    </View>
+                    {proc.donts && proc.donts.length > 0 && (
+                      <View style={{ marginTop: 4 }}>
+                        <Text style={{ fontWeight: 'bold', color: theme.destructive, fontSize: 13, marginBottom: 4 }}>✕ WHAT NOT TO DO</Text>
+                        {proc.donts.map((st: string, sIdx: number) => (
+                          <Text key={sIdx} style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8, marginBottom: 2 }}>• {st}</Text>
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 </View>
               ))}
             </View>
-          </View>
+          )}
 
-          {/* Video guide briefing */}
-          <View style={styles.detailsSection}>
-            <Text style={[styles.sectionTitleText, { color: theme.text }]}>Extraction Video Guide</Text>
-            <View style={[styles.videoWrapper, { backgroundColor: '#020617', borderColor: theme.backgroundSelected }]}>
-              <View style={styles.videoPlayerMock}>
-                <View style={styles.playButtonBg}>
-                  <Text style={styles.playButtonSymbol}>▶</Text>
+          {/* Tab Content 3: Vehicle Features */}
+          {activeResultTab === 'features' && (
+            <View style={styles.tabContent}>
+              {(selectedVehicle.features || selectedVehicle.vehicleFeatures || []).map((grp: any, idx: number) => (
+                <View key={idx} style={{ marginBottom: 12 }}>
+                  <Text style={[styles.groupCategoryTitle, { color: theme.textSecondary }]}>{grp.category.toUpperCase()}</Text>
+                  <View style={{ gap: 8, marginTop: 6 }}>
+                    {(grp.items || []).map((item: any, iIdx: number) => {
+                      const name = typeof item === 'string' ? item : item.name;
+                      const loc = typeof item === 'string' ? '' : item.location;
+                      return (
+                        <View key={iIdx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement, paddingVertical: 12 }]}>
+                          <Text style={{ fontWeight: 'bold', color: theme.text, fontSize: 13 }}>📍 {name}</Text>
+                          {loc ? <Text style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2, marginLeft: 18 }}>{loc}</Text> : null}
+                        </View>
+                      );
+                    })}
+                  </View>
                 </View>
-                <Text style={styles.videoMockLabel}>Standard extrication guidelines ready</Text>
-              </View>
-
-              <View style={styles.videoTimelineContainer}>
-                <View style={styles.videoTimelineBg}>
-                  <View style={[styles.videoTimelineFill, { backgroundColor: theme.primary }]} />
-                </View>
-                <Text style={styles.videoDuration}>03:22</Text>
-              </View>
+              ))}
             </View>
-          </View>
+          )}
 
-          {/* Dispatch controls */}
-          <View style={styles.dispatchSection}>
-            <TouchableOpacity
-              style={[styles.dispatchBtn, { backgroundColor: theme.destructive }]}
-              disabled={alerting}
-              onPress={() => triggerMobileAlert('CRITICAL')}
-            >
-              <Text style={styles.dispatchBtnText}>Trigger Critical Dispatch</Text>
-            </TouchableOpacity>
+          {/* Tab Content 4: Video Guide */}
+          {activeResultTab === 'video' && (
+            <View style={styles.tabContent}>
+              <View style={styles.videoPlayerBox}>
+                <Text style={{ color: '#fff', fontSize: 18 }}>📺 Video Guide Mock</Text>
+                <Text style={{ color: theme.accent, fontSize: 14, marginTop: 8 }}>Playing Time: {videoPlayTime}</Text>
+              </View>
 
-            <TouchableOpacity
-              style={[styles.dispatchBtn, { backgroundColor: theme.warning }]}
-              disabled={alerting}
-              onPress={() => triggerMobileAlert('WARNING')}
-            >
-              <Text style={[styles.dispatchBtnText, { color: '#020617' }]}>Trigger warning alert</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Close Guide button */}
-          <TouchableOpacity
-            style={[styles.resetScanBtn, { backgroundColor: theme.primary }]}
-            onPress={() => setSelectedVehicle(null)}
-          >
-            <Text style={styles.resetScanBtnText}>Close Catalog Guide</Text>
-          </TouchableOpacity>
+              {/* Seek Chapters */}
+              <Text style={[styles.sectionHeading, { color: theme.text, marginTop: 16 }] as any}>Chapters</Text>
+              <TouchableOpacity
+                onPress={() => setVideoPlayTime("0:15")}
+                style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
+              >
+                <Text style={[styles.chapterTitle, { color: theme.text }] as any}>0:15 - Glass Hammer Location</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setVideoPlayTime("1:40")}
+                style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
+              >
+                <Text style={[styles.chapterTitle, { color: theme.text }] as any}>1:40 - Battery Cabling Cut Point</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setVideoPlayTime("2:55")}
+                style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
+              >
+                <Text style={[styles.chapterTitle, { color: theme.text }] as any}>2:55 - Trunk Escape Release</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       ) : (
-        /* CATALOG LIST VIEW */
+        /* HISTORY/EXPLORE LIST VIEW */
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Rescue Catalog</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={[styles.headerTitle, { color: theme.text }]}>Search History</Text>
+            </View>
 
             <View style={styles.searchRow}>
               <TextInput
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Search catalog directory..."
+                placeholder="Search history cache..."
                 placeholderTextColor={theme.textSecondary}
                 style={[styles.searchInput, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
               />
-              <TouchableOpacity
-                style={[styles.refreshButton, { backgroundColor: theme.backgroundSelected }]}
-                onPress={fetchVehicles}
-              >
-                <Text style={[styles.refreshButtonText, { color: theme.text }]}>Reload</Text>
-              </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={[styles.infoBanner, { backgroundColor: theme.primary + '18', borderColor: theme.primary + '33' }]}>
+            <Text style={[styles.infoBannerText, { color: theme.primary }]}>
+              💾 Search your previously identified vehicles by name, method, or scan date.
+            </Text>
           </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.primary} />
-              <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading vehicle entries...</Text>
             </View>
-          ) : filteredVehicles.length === 0 ? (
-            <Text style={[styles.noResults, { color: theme.textSecondary }]}>No matching vehicles found.</Text>
+          ) : recentSearches.length === 0 ? (
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <Text style={{ color: theme.textSecondary, textAlign: 'center', fontSize: 14 }}>No cached searches yet.</Text>
+            </View>
+          ) : filteredHistory.length === 0 ? (
+            <Text style={[styles.noResults, { color: theme.textSecondary }]}>No matching history found.</Text>
           ) : (
             <View style={styles.catalogGrid}>
-              {filteredVehicles.map((v) => (
+              {filteredHistory.map((s, idx) => (
                 <TouchableOpacity
-                  key={v.id}
-                  style={[styles.card, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
-                  onPress={() => {
-                    setExpandedGuideline(null);
-                    setSelectedVehicle(v);
-                  }}
+                  key={idx}
+                  style={[styles.historyRow, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}
+                  onPress={() => handleItemPress(s.id)}
                   activeOpacity={0.8}
                 >
-                  <View style={styles.cardInfo}>
-                    <Text style={[styles.cardTitle, { color: theme.text }]}>
-                      {v.make} {v.model}
-                    </Text>
-                    <Text style={[styles.cardYear, { color: theme.textSecondary }]}>Model Year: {v.year}</Text>
-                    <Text style={[styles.cardStats, { color: theme.primary }]}>
-                      {v.safetyGuidelines.length} safety items logged
-                    </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                    <View style={[styles.iconContainer, { backgroundColor: theme.backgroundSelected }]}>
+                      <Text style={{ fontSize: 18 }}>⏱️</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.cardTitle, { color: theme.text }]}>
+                        {s.title}
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 11 }}>{s.type.toUpperCase()}</Text>
+                        <Text style={{ color: theme.textSecondary, fontSize: 10 }}>•</Text>
+                        <Text style={{ color: theme.textSecondary, fontSize: 11 }}>
+                          {s.date || 'Today'}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={[styles.openBtn, { backgroundColor: theme.backgroundSelected }]}>
-                    <Text style={[styles.openBtnText, { color: theme.text }]}>Open</Text>
-                  </View>
+                  <Text style={{ color: theme.textSecondary, fontSize: 16 }}>→</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -665,4 +776,96 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 14,
   },
-});
+  infoBanner: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 16,
+  },
+  infoBannerText: {
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabsBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148, 163, 184, 0.08)',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+  },
+  tabButtonText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  tabContent: {
+    marginTop: 12,
+    gap: 12,
+  },
+  infoCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.08)',
+  },
+  infoCardTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  infoCardText: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  infoCardLoc: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  videoPlayerBox: {
+    aspectRatio: 16 / 9,
+    backgroundColor: '#020617',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  chapterRow: {
+    padding: 12,
+    borderRadius: 12,
+  },
+  chapterTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  groupCategoryTitle: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    marginTop: 8,
+  },
+}) as any;

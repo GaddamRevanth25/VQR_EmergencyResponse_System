@@ -10,6 +10,10 @@ export interface UserInfo {
   email: string;
   phone: string;
   role: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+  bloodGroup?: string;
 }
 
 interface ThemeAndAuthContextType {

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/use-theme';
@@ -42,6 +43,16 @@ export default function ProfileScreen() {
           <Text style={[styles.headerSub, { color: theme.textSecondary }]}>Manage account settings and preferences</Text>
         </View>
 
+        {/* Personal Credentials Header with Edit */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Personal Credentials</Text>
+          <TouchableOpacity 
+            onPress={() => Alert.alert("Edit Profile", "To update your profile credentials, please log out and register a new account.")}
+          >
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.primary }}>✎ Edit</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* User Card */}
         <View style={[styles.profileCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
           <View style={[styles.avatarContainer, { backgroundColor: theme.primary + '22' }]}>
@@ -51,6 +62,31 @@ export default function ProfileScreen() {
             <Text style={[styles.userName, { color: theme.text }]}>{user.name}</Text>
             <Text style={[styles.userMeta, { color: theme.textSecondary }]}>✉ {user.email}</Text>
             <Text style={[styles.userMeta, { color: theme.textSecondary }]}>📞 {user.phone}</Text>
+            <Text style={[styles.userMeta, { color: theme.destructive, fontWeight: 'bold', marginTop: 4 }]}>🩸 Blood Group: {user.bloodGroup || 'Not Specified'}</Text>
+          </View>
+        </View>
+
+        {/* Emergency Info Card */}
+        <View style={styles.section}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>Emergency Contact Details</Text>
+            <TouchableOpacity 
+              onPress={() => Alert.alert("Edit Emergency Contacts", "To update emergency details, please log out and register a new account.")}
+            >
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.primary }}>✎ Edit</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Name</Text>
+              <Text style={[styles.infoValue, { color: theme.text }]}>
+                {user.emergencyContactName || 'None'}{user.emergencyContactRelation ? ` (${user.emergencyContactRelation})` : ''}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Contact</Text>
+              <Text style={[styles.infoValue, { color: theme.text }]}>{user.emergencyContactPhone || 'N/A'}</Text>
+            </View>
           </View>
         </View>
 

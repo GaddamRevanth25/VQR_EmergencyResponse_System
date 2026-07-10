@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { ThemeAndAuthPropsProvider, useThemeAndAuth } from '../context/ThemeAndAuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import VQRSplashScreen from '@/components/auth/splash-screen';
 import VQRLoginScreen from '@/components/auth/login-screen';
@@ -13,6 +14,7 @@ SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
   const { authState, setAuthState, isInitialized, loginSession, resolvedTheme } = useThemeAndAuth();
+  const [regSuccessMsg, setRegSuccessMsg] = React.useState('');
 
   // Hide the native splash screen as soon as state hydration completes
   useEffect(() => {
@@ -34,16 +36,30 @@ function RootLayoutContent() {
   };
 
   const handleRegisterSuccess = (msg: string) => {
+    setRegSuccessMsg(msg);
     setAuthState('login');
   };
 
-  const handleVerifySuccess = () => {
+  const handleVerifySuccess = async () => {
+    try {
+      const savedUser = await AsyncStorage.getItem('@vqr_registered_user');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        loginSession(parsedUser);
+        return;
+      }
+    } catch (e) {}
+
     // Save persistent user session on successful token/passkey verification
     loginSession({
       name: 'Officer Davis',
       email: 'davis@vqr-response.gov',
       phone: '+91 88xxx xx921',
       role: 'Primary First Responder',
+      emergencyContactName: 'Jane Doe',
+      emergencyContactPhone: '+91 99xxx xx111',
+      emergencyContactRelation: 'Spouse',
+      bloodGroup: 'O+'
     });
   };
 
@@ -57,8 +73,8 @@ function RootLayoutContent() {
         <VQRLoginScreen
           onLoginSuccess={handleLoginSuccess}
           onGoToRegister={() => setAuthState('register')}
-          registrationSuccessMsg=""
-          clearSuccessMsg={() => {}}
+          registrationSuccessMsg={regSuccessMsg}
+          clearSuccessMsg={() => setRegSuccessMsg('')}
         />
       )}
 

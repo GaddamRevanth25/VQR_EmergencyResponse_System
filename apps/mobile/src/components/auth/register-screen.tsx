@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface VQRRegisterScreenProps {
   onRegisterSuccess: (message: string) => void;
@@ -27,6 +28,10 @@ export default function VQRRegisterScreen({
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [emergencyContactName, setEmergencyContactName] = useState('');
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
+  const [emergencyContactRelation, setEmergencyContactRelation] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = () => {
@@ -59,8 +64,22 @@ export default function VQRRegisterScreen({
 
     setLoading(true);
 
-    // Simulate API registration call
-    setTimeout(() => {
+    // Save registration details to AsyncStorage so it can be loaded on login
+    const registrationDetails = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      role: 'Primary First Responder',
+      emergencyContactName: emergencyContactName.trim(),
+      emergencyContactPhone: emergencyContactPhone.trim(),
+      emergencyContactRelation: emergencyContactRelation.trim(),
+      bloodGroup: bloodGroup.trim()
+    };
+
+    setTimeout(async () => {
+      try {
+        await AsyncStorage.setItem('@vqr_registered_user', JSON.stringify(registrationDetails));
+      } catch (e) {}
       setLoading(false);
       onRegisterSuccess('Registration successful! Please login with your details.');
     }, 1200);
@@ -149,6 +168,55 @@ export default function VQRRegisterScreen({
               placeholder="••••••••"
               placeholderTextColor={theme.textSecondary}
               secureTextEntry
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Blood Group */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Blood Group</Text>
+            <TextInput
+              value={bloodGroup}
+              onChangeText={setBloodGroup}
+              placeholder="Ex: O+, A-, B+"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Emergency Contact Name */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Emergency Contact Name</Text>
+            <TextInput
+              value={emergencyContactName}
+              onChangeText={setEmergencyContactName}
+              placeholder="Jane Doe"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Emergency Contact Phone */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Emergency Contact Phone</Text>
+            <TextInput
+              value={emergencyContactPhone}
+              onChangeText={setEmergencyContactPhone}
+              placeholder="Ex: +91 99xxx xx111"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="phone-pad"
+              style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
+            />
+          </View>
+
+          {/* Emergency Contact Relation */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Emergency Contact Relation</Text>
+            <TextInput
+              value={emergencyContactRelation}
+              onChangeText={setEmergencyContactRelation}
+              placeholder="Ex: Spouse, Parent, Sibling"
+              placeholderTextColor={theme.textSecondary}
               style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected, backgroundColor: theme.background }]}
             />
           </View>
