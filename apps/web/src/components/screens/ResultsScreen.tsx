@@ -1,83 +1,368 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Play } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Link, useParams } from "react-router-dom";
+import { 
+  ArrowLeft, Play, ShieldAlert, Hammer, Flame,
+  DoorClosed, Info, CheckCircle, AlertTriangle, 
+  MapPin, Compass, Video 
+} from "lucide-react";
 import { PhoneShell } from "../PhoneShell";
 import { Badge } from "../Badge";
-import { safety } from "../../lib/data";
+import { apiClient } from "../../lib/api";
+import type { Vehicle } from "@vqr/shared";
+
+// Safe fallback vehicle data if API lookup fails
+const FALLBACK_VEHICLE: Vehicle = {
+  id: "toyota-camry-2024",
+  vehicleType: "CAR",
+  make: "Toyota",
+  model: "Camry",
+  year: 2024,
+  fuelType: "HYBRID",
+  safetyFeatures: [
+    { title: "Emergency Glass Hammer", description: "Located in driver's door pocket. Strike corners of side windows, not center.", location: "Driver door pocket", icon: "hammer", priority: "high" },
+    { title: "Emergency Trunk Release", description: "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.", location: "Trunk interior, left side", icon: "exit", priority: "critical" }
+  ],
+  emergencyProcedures: [
+    {
+      scenario: "Vehicle Submersion",
+      dos: [
+        "Unbuckle immediately",
+        "Open window before water rises",
+        "Escape through window",
+        "Leave belongings"
+      ],
+      donts: [
+        "Wait for water to fill",
+        "Try to open door against water pressure",
+        "Call 112 before escaping"
+      ],
+      videoTimestamp: "45"
+    },
+    {
+      scenario: "Engine Fire",
+      dos: [
+        "Pull over safely",
+        "Turn off engine",
+        "Evacuate all passengers",
+        "Use extinguisher from 6 feet away"
+      ],
+      donts: [
+        "Open hood fully",
+        "Use water on electrical fire",
+        "Stand directly in front"
+      ],
+      videoTimestamp: "10"
+    }
+  ],
+  vehicleFeatures: [
+    {
+      category: "Fuel & Charging",
+      items: [
+        { name: "Fuel Cap", location: "Left rear fender", icon: "fuel" },
+        { name: "12V Battery", location: "Engine bay, right side", icon: "battery" }
+      ]
+    },
+    {
+      category: "Tires & Tools",
+      items: [
+        { name: "Spare Tire", location: "Under trunk floor", icon: "tire" },
+        { name: "Jack", location: "Trunk left compartment", icon: "jack" }
+      ]
+    }
+  ],
+  videoUrl: "/videos/toyota-camry-2024-traveler-safety.mp4",
+  thumbnailUrl: "/videos/thumbnails/toyota-camry-2024.jpg"
+};
 
 export function ResultsScreen() {
-  const [open, setOpen] = useState(0);
+  const { id } = useParams<{ id: string }>();
+  const [vehicle, setVehicle] = useState<Vehicle>(FALLBACK_VEHICLE);
+  const [activeTab, setActiveTab] = useState<"safety" | "guides" | "features" | "video">("safety");
+  const [loading, setLoading] = useState(true);
+  const [playingVideo, setPlayingVideo] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    async function loadVehicle() {
+      setLoading(true);
+      try {
+        const vehicleId = id || "toyota-camry-2024";
+        const data = await apiClient.getVehicle(vehicleId);
+        setVehicle(data);
+      } catch (err) {
+        console.warn("Failed to load vehicle, defaulting to Camry simulation:", err);
+        setVehicle(FALLBACK_VEHICLE);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadVehicle();
+  }, [id]);
+
+  const playChapter = (timestampSeconds: string) => {
+    setPlayingVideo(true);
+    setTimeout(() => {
+      if (videoRef.current) {
+        const seconds = parseInt(timestampSeconds, 10) || 0;
+        videoRef.current.currentTime = seconds;
+        videoRef.current.play().catch((err) => {
+          console.warn("Failed to auto-play chapter seek:", err);
+        });
+      }
+    }, 200);
+  };
+
+  // Helper to resolve icon from string
+  const renderIcon = (iconName: string) => {
+    switch (iconName.toLowerCase()) {
+      case "hammer":
+        return <Hammer className="size-6 text-orange-500" />;
+      case "flame":
+        return <Flame className="size-6 text-red-500" />;
+      case "exit":
+      case "doorclosed":
+        return <DoorClosed className="size-6 text-green-500" />;
+      case "shieldalert":
+        return <ShieldAlert className="size-6 text-blue-500" />;
+      default:
+        return <Info className="size-6 text-slate-500" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <PhoneShell title="LOADING VEHICLE GUIDE">
+        <div className="min-h-[720px] bg-slate-900 text-white flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <span className="size-10 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin" />
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Loading safety guide...</p>
+          </div>
+        </div>
+      </PhoneShell>
+    );
+  }
 
   return (
-    <PhoneShell title="RESULTS">
-      <div className="relative min-h-[720px] bg-white dark:bg-slate-950 text-slate-900 dark:text-white pb-24 transition-colors duration-500">
+    <PhoneShell title="VEHICLE SAFETY GUIDE">
+      <div className="relative min-h-[720px] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white pb-28 transition-colors duration-500 flex flex-col">
         {/* Results Header */}
-        <div className="bg-slate-950 p-5 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <Link to="/app"><ArrowLeft className="text-white" size={18} /></Link>
-            <p className="font-mono text-xs text-blue-300">VQR-7C2-941</p>
+        <div className="bg-slate-950 p-5 text-white border-b border-white/5">
+          <div className="flex items-center gap-3 mb-3">
+            <Link to="/app" className="grid size-9 place-items-center rounded-xl bg-white/10 hover:bg-white/20 transition">
+              <ArrowLeft className="text-white" size={16} />
+            </Link>
+            <p className="font-mono text-xs text-cyan-400 uppercase tracking-widest">VEHICLE PROFILE</p>
           </div>
+          
           <div className="flex items-start justify-between">
-            <h2 className="text-3xl font-extrabold leading-none">Toyota Camry 2024</h2>
-            <Badge tone="green">98% match</Badge>
-          </div>
-          <div className="mt-5 flex gap-2 overflow-hidden">
-            <Badge tone="slate">Accord 86%</Badge>
-            <Badge tone="slate">Civic 82%</Badge>
-            <Badge tone="slate">Corolla 75%</Badge>
+            <div>
+              <h2 className="text-2xl font-black leading-tight">{vehicle.make} {vehicle.model}</h2>
+              <p className="text-xs text-slate-400 font-semibold">{vehicle.year} Model Year</p>
+            </div>
+            <Badge tone="green">{vehicle.fuelType}</Badge>
           </div>
         </div>
 
-        <div className="p-5">
-          <h3 className="mb-3 text-lg font-extrabold">Safety Guidelines</h3>
-          <div className="space-y-3">
-            {safety.map((s, i) => (
-              <button
-                onClick={() => setOpen(open === i ? -1 : i)}
-                key={s.title}
-                className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 p-4 text-left transition hover:bg-white dark:hover:bg-slate-800 cursor-pointer text-slate-900 dark:text-white"
-              >
-                <div className="flex items-center justify-between">
-                  <b>{s.title}</b>
-                  <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-widest ${s.color}`}>
-                    {s.priority}
-                  </span>
-                </div>
-                {open === i && <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">{s.body}</p>}
-              </button>
-            ))}
-          </div>
+        {/* Tab Selector Row */}
+        <div className="flex border-b border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-900 sticky top-0 z-20">
+          {[
+            { id: "safety", label: "Safety Tools" },
+            { id: "guides", label: "Emergency do's" },
+            { id: "features", label: "Car Features" },
+            { id: "video", label: "Video Guide" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex-1 py-3 text-center text-xs font-extrabold uppercase tracking-wider transition-all border-b-2 ${
+                activeTab === tab.id
+                  ? "border-blue-600 text-blue-600 dark:border-cyan-400 dark:text-cyan-400"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          <h3 className="mb-3 mt-6 text-lg font-extrabold">Vehicle Features</h3>
-          <div className="flex flex-wrap gap-2">
-            {["Hybrid system", "Side curtain airbags", "Reinforced B-pillar", "Smart key", "Li-ion pack"].map((f) => (
-              <span key={f} className="rounded-full bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400">
-                {f}
-              </span>
-            ))}
-          </div>
-
-          {/* Video briefing */}
-          <div className="mt-6 overflow-hidden rounded-2xl bg-slate-950 text-white">
-            <div className="grid aspect-video place-items-center bg-gradient-to-br from-slate-800 to-blue-950">
-              <Play className="size-14 rounded-full bg-white/15 p-3 cursor-pointer" />
-            </div>
-            <div className="p-4">
-              <b>Safety briefing video</b>
-              <div className="mt-3 h-1.5 rounded-full bg-white/20">
-                <div className="h-full w-1/3 rounded-full bg-blue-400" />
+        {/* Tab Contents Viewport */}
+        <div className="p-5 flex-1 overflow-y-auto">
+          {/* TAB 1: SAFETY FEATURES */}
+          {activeTab === "safety" && (
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">Your Safety Equipment</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Location guide for passenger safety items in this vehicle.</p>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                {vehicle.safetyFeatures.map((f, i) => (
+                  <div 
+                    key={i}
+                    className="flex gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm"
+                  >
+                    <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                      {renderIcon(f.icon)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{f.title}</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{f.description}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-mono uppercase tracking-wider">📍 Location: {f.location}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
+
+          {/* TAB 2: EMERGENCY GUIDES */}
+          {activeTab === "guides" && (
+            <div className="space-y-5 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">“What do I do if...”</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Critical step-by-step passenger emergency guides.</p>
+
+              {vehicle.emergencyProcedures.map((guide, idx) => (
+                <div 
+                  key={idx}
+                  className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm"
+                >
+                  <div className="bg-slate-100 dark:bg-slate-800 px-4 py-3 border-b border-slate-200 dark:border-white/5 flex items-center gap-2">
+                    <Compass className="text-cyan-500 size-4" />
+                    <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">{guide.scenario}</h4>
+                  </div>
+                  <div className="p-4 grid gap-4 sm:grid-cols-2">
+                    {/* Do's List */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-black uppercase text-green-600 dark:text-green-400 tracking-wider">
+                        <CheckCircle size={14} />
+                        <span>What to Do</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {guide.dos.map((item, i) => (
+                          <li key={i} className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed flex items-start gap-2">
+                            <span className="text-green-500 select-none">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Don'ts List */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-black uppercase text-red-600 dark:text-red-400 tracking-wider">
+                        <AlertTriangle size={14} />
+                        <span>What NOT to Do</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {guide.donts.map((item, i) => (
+                          <li key={i} className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed flex items-start gap-2">
+                            <span className="text-red-500 select-none">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 3: VEHICLE FEATURES */}
+          {activeTab === "features" && (
+            <div className="space-y-6 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">Everyday Vehicle Features</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Location map and guides for ports, fuel caps, and changing tires.</p>
+
+              {vehicle.vehicleFeatures.map((group, idx) => (
+                <div key={idx} className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-white/5 pb-1">
+                    {group.category}
+                  </h4>
+                  <div className="space-y-2.5">
+                    {group.items.map((item, i) => (
+                      <div 
+                        key={i}
+                        className="flex items-start gap-3.5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm"
+                      >
+                        <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-cyan-400">
+                          <MapPin size={18} />
+                        </div>
+                        <div>
+                          <h5 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">{item.name}</h5>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">📍 {item.location}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 4: VIDEO BRIEFING GUIDE */}
+          {activeTab === "video" && (
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">Safety Video Briefing</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Visual walkthrough of safety exits, tools and emergency procedures.</p>
+
+              <div className="overflow-hidden rounded-2xl bg-slate-950 text-white shadow-xl">
+                {playingVideo ? (
+                  <video 
+                    ref={videoRef}
+                    src={vehicle.videoUrl} 
+                    controls 
+                    autoPlay 
+                    className="w-full aspect-video object-cover"
+                  />
+                ) : (
+                  <div className="relative aspect-video bg-gradient-to-br from-slate-900 to-blue-950 flex flex-col items-center justify-center p-6 border-b border-white/5">
+                    <button 
+                      onClick={() => setPlayingVideo(true)}
+                      className="grid size-16 place-items-center rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 active:scale-95 transition cursor-pointer mb-3"
+                    >
+                      <Play className="size-8 text-cyan-400" fill="currentColor" />
+                    </button>
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-300">Play Demonstration</span>
+                  </div>
+                )}
+                
+                <div className="p-4 bg-slate-900">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-400 uppercase block mb-3">
+                    Video chapters (Click to seek)
+                  </span>
+                  <div className="space-y-1.5">
+                    {vehicle.emergencyProcedures
+                      .filter((proc) => proc.videoTimestamp)
+                      .map((proc, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => playChapter(proc.videoTimestamp!)}
+                          className="w-full flex items-center justify-between p-2 rounded-xl text-left bg-slate-950/60 border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                        >
+                          <span className="flex items-center gap-2 font-semibold">
+                            <Video size={12} className="text-cyan-400" />
+                            {proc.scenario} Guide
+                          </span>
+                          <span className="font-mono text-[10px] text-slate-500">
+                            {parseInt(proc.videoTimestamp!) >= 60
+                              ? `${Math.floor(parseInt(proc.videoTimestamp!) / 60)}:${(parseInt(proc.videoTimestamp!) % 60).toString().padStart(2, '0')}`
+                              : `0:${proc.videoTimestamp!.padStart(2, '0')}`}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Reset Scan */}
+        {/* Reset Search */}
         <div className="absolute inset-x-5 bottom-5">
           <Link
-            to="/scan"
-            className="w-full rounded-2xl bg-blue-600 py-4 font-bold text-white shadow-xl shadow-blue-600/25 active:scale-[0.98] text-center block"
+            to="/app"
+            className="w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white py-4 font-bold text-center block shadow-lg"
           >
-            Start New Scan
+            Start New Search
           </Link>
         </div>
       </div>

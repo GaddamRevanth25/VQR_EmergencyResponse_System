@@ -1,9 +1,19 @@
 import json
 import os
-from typing import List, Optional
-from ..schemas.vehicle import Vehicle
+from typing import List, Optional, Dict
+from ..schemas.vehicle import Vehicle, LookupResponse
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "vehicles.json")
+
+# Mock registrations and VINs mapping to vehicle IDs
+MOCK_MAPPINGS = {
+  ("MH02CL0555", "IN"): "bmw-740li-2012",
+  ("MH02CL0555", "GLOBAL"): "bmw-740li-2012",
+  ("TE57VRN", "UK"): "toyota-camry-2024",
+  ("7XER187", "US"): "toyota-camry-2024",
+  ("WBAFR7C57CC811956", "VIN"): "toyota-camry-2024",
+  ("WBAFR7C57CC811956", "GLOBAL"): "toyota-camry-2024"
+}
 
 class VehicleService:
     @staticmethod
@@ -15,11 +25,6 @@ class VehicleService:
                 return json.load(f)
             except json.JSONDecodeError:
                 return []
-
-    @staticmethod
-    def save_vehicles(vehicles: List[dict]):
-        with open(DATA_PATH, "w") as f:
-            json.dump(vehicles, f, indent=2)
 
     @classmethod
     def get_all(cls) -> List[Vehicle]:
@@ -34,9 +39,83 @@ class VehicleService:
         return None
 
     @classmethod
-    def get_by_qr_code(cls, qr_code: str) -> Optional[Vehicle]:
+    def lookup(cls, vin: str, country: Optional[str] = None) -> Optional[LookupResponse]:
+        normalized_input = vin.strip().replace("-", "").replace(" ", "").upper()
+        normalized_country = country.strip().upper() if country else "GLOBAL"
+
+        # Check in our mock mappings first
+        vehicle_id = None
+        if (normalized_input, normalized_country) in MOCK_MAPPINGS:
+            vehicle_id = MOCK_MAPPINGS[(normalized_input, normalized_country)]
+        elif (normalized_input, "GLOBAL") in MOCK_MAPPINGS:
+            vehicle_id = MOCK_MAPPINGS[(normalized_input, "GLOBAL")]
+        elif len(normalized_input) == 17:
+            vehicle_id = "toyota-camry-2024"
+
+        if not vehicle_id:
+            # Fallback scan lookup by model matching in database
+            for v in cls.load_vehicles():
+                if v["id"].upper() in normalized_input or normalized_input in v["id"].upper():
+                    vehicle_id = v["id"]
+                    break
+
+        if not vehicle_id:
+            return None
+
+        vehicle = cls.get_by_id(vehicle_id)
+        if not vehicle:
+            return None
+
+        is_vin = len(normalized_input) == 17
+        return LookupResponse(
+            inputType="vin" if is_vin else "registration",
+            registrationNumber=vin,
+            vehicleType=vehicle.vehicle_type,
+            make=vehicle.make,
+            model=vehicle.model,
+            year=vehicle.year,
+            fuelType=vehicle.fuel_type,
+            vehicleId=vehicle.id,
+            safetyFeatures=vehicle.safety_features,
+            emergencyProcedures=vehicle.emergency_procedures,
+            vehicleFeatures=vehicle.vehicle_features,
+            videoUrl=vehicle.video_url
+        )
+
+    @classmethod
+    def get_makes(cls, vehicle_type: Optional[str] = None) -> List[str]:
+        makes = set()
+        for v in cls.load_vehicles():
+            if not vehicle_type or v.get("vehicleType", "").upper() == vehicle_type.upper():
+                makes.add(v["make"])
+        return sorted(list(makes))
+
+    @classmethod
+    def get_models(cls, make: str, vehicle_type: Optional[str] = None) -> List[str]:
+        models = set()
+        for v in cls.load_vehicles():
+            if v["make"].lower() == make.lower():
+                if not vehicle_type or v.get("vehicleType", "").upper() == vehicle_type.upper():
+                    models.add(v["model"])
+        return sorted(list(models))
+
+    @classmethod
+    def get_years(cls, make: str, model: str, vehicle_type: Optional[str] = None) -> List[int]:
+        years = set()
+        for v in cls.load_vehicles():
+            if v["make"].lower() == make.lower() and v["model"].lower() == model.lower():
+                if not vehicle_type or v.get("vehicleType", "").upper() == vehicle_type.upper():
+                    years.add(int(v["year"]))
+        return sorted(list(years))
+
+    @classmethod
+    def get_by_make_model_year(cls, make: str, model: str, year: int) -> Optional[Vehicle]:
         vehicles = cls.load_vehicles()
         for v in vehicles:
-            if v["id"] == qr_code:
+            if (
+                v["make"].strip().upper() == make.strip().upper()
+                and v["model"].strip().upper() == model.strip().upper()
+                and int(v["year"]) == int(year)
+            ):
                 return Vehicle(**v)
         return None

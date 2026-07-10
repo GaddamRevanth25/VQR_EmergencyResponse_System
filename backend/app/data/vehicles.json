@@ -1,187 +1,262 @@
 [
   {
     "id": "toyota-camry-2024",
+    "vehicleType": "CAR",
     "make": "Toyota",
     "model": "Camry",
     "year": 2024,
-    "safetyGuidelines": [
+    "fuelType": "HYBRID",
+    "safetyFeatures": [
       {
-        "title": "High-Voltage Battery",
-        "description": "Hybrid high-voltage battery located under rear seats. Avoid cutting into rear seat floor area.",
-        "priority": "critical"
-      },
-      {
-        "title": "Emergency Shutoff",
-        "description": "Turn ignition switch to OFF position to disable high-voltage system and SRS airbags.",
+        "title": "Emergency Glass Hammer",
+        "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+        "location": "Driver door pocket",
+        "icon": "hammer",
         "priority": "high"
-      }
-    ],
-    "features": [
-      {
-        "category": "Safety",
-        "items": ["Lane Departure Alert", "Pre-Collision System", "Dynamic Radar Cruise Control"]
       },
       {
-        "category": "Powertrain",
-        "items": ["Hybrid 2.5L 4-Cylinder", "EV Mode", "Electronically controlled Continuously Variable Transmission (ECVT)"]
+        "title": "Emergency Trunk Release",
+        "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
+        "location": "Trunk interior, left side",
+        "icon": "exit",
+        "priority": "critical"
       }
     ],
-    "videoUrl": "/videos/toyota-camry-2024.mp4",
+    "emergencyProcedures": [
+      {
+        "scenario": "Vehicle Submersion",
+        "dos": [
+          "Unbuckle immediately",
+          "Open window before water rises",
+          "Escape through window",
+          "Leave belongings"
+        ],
+        "donts": [
+          "Wait for water to fill",
+          "Try to open door against water pressure",
+          "Call 112 before escaping"
+        ],
+        "videoTimestamp": "45"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
     "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
   },
   {
-    "id": "tesla-model-y-2023",
-    "make": "Tesla",
-    "model": "Model Y",
-    "year": 2023,
-    "safetyGuidelines": [
+    "id": "bmw-740li-2012",
+    "vehicleType": "CAR",
+    "make": "BMW",
+    "model": "740Li",
+    "year": 2012,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
       {
-        "title": "High-Voltage Battery",
-        "description": "Full battery pack under cabin floor. Do not puncture or cut through floorboards. Heat build-up can cause thermal runaway.",
-        "priority": "critical"
-      },
-      {
-        "title": "Emergency Fire Loop Cut",
-        "description": "Cut the low-voltage first-responder loop in the front trunk (frunk) to disable high-voltage safety contactors.",
-        "priority": "critical"
-      },
-      {
-        "title": "SRS Airbags & Pretensioners",
-        "description": "Avoid cutting into the A, B, and C pillars to prevent accidental deployment of side curtain airbags.",
+        "title": "Emergency Glass Hammer",
+        "description": "Located in front passenger door pocket. Strike corners of side windows.",
+        "location": "Front passenger door pocket",
+        "icon": "hammer",
         "priority": "high"
       }
     ],
-    "features": [
+    "emergencyProcedures": [
       {
-        "category": "Safety",
-        "items": ["Autopilot Cameras", "Automatic Emergency Braking", "Side Collision Warning"]
-      },
-      {
-        "category": "Powertrain",
-        "items": ["Dual Motor AWD", "Lithium-ion Battery Pack", "Regenerative Braking"]
+        "scenario": "Vehicle Submersion",
+        "dos": [
+          "Unbuckle immediately",
+          "Open window before water rises",
+          "Escape through window"
+        ],
+        "donts": [
+          "Wait for water to fill"
+        ],
+        "videoTimestamp": "30"
       }
     ],
-    "videoUrl": "/videos/tesla-model-y-2023.mp4",
-    "thumbnailUrl": "/videos/thumbnails/tesla-model-y-2023.jpg"
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/bmw-740li-2012.jpg"
   },
   {
-    "id": "ford-f150-lightning-2023",
-    "make": "Ford",
-    "model": "F-150 Lightning",
+    "id": "honda-cbr-2023",
+    "vehicleType": "BIKE",
+    "make": "Honda",
+    "model": "CBR",
     "year": 2023,
-    "safetyGuidelines": [
+    "fuelType": "PETROL",
+    "safetyFeatures": [
       {
-        "title": "High-Voltage Isolation",
-        "description": "Accessory service disconnect located under the hood. Remove pin connector to isolate high voltage.",
-        "priority": "critical"
-      },
-      {
-        "title": "Frame Cutting Zones",
-        "description": "Ultra-high-strength steel reinforcement in frame rails. Use heavy-duty hydraulic cutters only at designated cut zones.",
-        "priority": "high"
-      }
-    ],
-    "features": [
-      {
-        "category": "Safety",
-        "items": ["Ford Co-Pilot360", "Intersection Assist", "Post-Collision Braking"]
-      },
-      {
-        "category": "Powertrain",
-        "items": ["Standard Range Battery", "Dual eMotor 4WD", "Pro Power Onboard (9.6kW output)"]
-      }
-    ],
-    "videoUrl": "/videos/ford-f150-lightning-2023.mp4",
-    "thumbnailUrl": "/videos/thumbnails/ford-f150-lightning-2023.jpg"
-  },
-  {
-    "id": "hyundai-ioniq-5-2024",
-    "make": "Hyundai",
-    "model": "Ioniq 5",
-    "year": 2024,
-    "safetyGuidelines": [
-      {
-        "title": "High-Voltage Service Plug",
-        "description": "Yellow service plug located under the rear cargo area tray. Pull plug to disable 800V architecture.",
-        "priority": "critical"
-      },
-      {
-        "title": "SRS Airbag Inflators",
-        "description": "Stored gas inflators located in the roof line above B and C pillars. Do not cut in these areas.",
-        "priority": "high"
-      }
-    ],
-    "features": [
-      {
-        "category": "Safety",
-        "items": ["Blind-Spot View Monitor", "Highway Driving Assist II", "Safe Exit Assist"]
-      },
-      {
-        "category": "Powertrain",
-        "items": ["77.4 kWh Battery Pack", "800V Ultra-Fast Charging", "Vehicle-to-Load (V2L) output"]
-      }
-    ],
-    "videoUrl": "/videos/hyundai-ioniq-5-2024.mp4",
-    "thumbnailUrl": "/videos/thumbnails/hyundai-ioniq-5-2024.jpg"
-  },
-  {
-    "id": "chevrolet-bolt-ev-2023",
-    "make": "Chevrolet",
-    "model": "Bolt EV",
-    "year": 2023,
-    "safetyGuidelines": [
-      {
-        "title": "Manual Service Disconnect",
-        "description": "Manual service disconnect lever under front console trim. Pull to isolate 350V battery pack.",
-        "priority": "critical"
-      },
-      {
-        "title": "Side Door Reinforcements",
-        "description": "High-strength steel intrusion beams in side doors. Avoid cutting door centerlines during extrication.",
+        "title": "Helmet Lock",
+        "description": "Under seat panel. Keeps helmet secure during travel check.",
+        "location": "Under seat, left side",
+        "icon": "shieldalert",
         "priority": "medium"
       }
     ],
-    "features": [
+    "emergencyProcedures": [
       {
-        "category": "Safety",
-        "items": ["Chevy Safety Assist", "Rear Cross Traffic Alert", "HD Surround Vision"]
-      },
-      {
-        "category": "Powertrain",
-        "items": ["65 kWh Lithium-ion Battery", "Single-Motor FWD", "One-Pedal Driving mode"]
+        "scenario": "Low Side Slide",
+        "dos": [
+          "Let go of handlebars",
+          "Slide away from bike",
+          "Wait for slide to stop completely before standing"
+        ],
+        "donts": [
+          "Try to save the motorcycle during slide",
+          "Stand up while sliding"
+        ],
+        "videoTimestamp": "15"
       }
     ],
-    "videoUrl": "/videos/chevrolet-bolt-ev-2023.mp4",
-    "thumbnailUrl": "/videos/thumbnails/chevrolet-bolt-ev-2023.jpg"
+    "vehicleFeatures": [
+      {
+        "category": "Controls & Caps",
+        "items": [
+          { "name": "Fuel Cap", "location": "Center top of tank", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/honda-cbr-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
   },
   {
-    "id": "honda-crv-hybrid-2024",
-    "make": "Honda",
-    "model": "CR-V Hybrid",
-    "year": 2024,
-    "safetyGuidelines": [
+    "id": "amtrak-acela-2022",
+    "vehicleType": "TRAIN",
+    "make": "Amtrak",
+    "model": "Acela",
+    "year": 2022,
+    "fuelType": "ELECTRIC",
+    "safetyFeatures": [
       {
-        "title": "Orange Cables Warning",
-        "description": "Do not touch, cut, or squeeze orange high-voltage cables running beneath the vehicle passenger compartment.",
+        "title": "Emergency Brake Pull",
+        "description": "Pull red handle situated at the end of each passenger coach.",
+        "location": "End wall panel near vestibule",
+        "icon": "exit",
         "priority": "critical"
-      },
-      {
-        "title": "Low-Voltage Battery Disconnect",
-        "description": "Disconnect the standard 12V lead-acid battery in the engine compartment to turn off safety control systems.",
-        "priority": "high"
       }
     ],
-    "features": [
+    "emergencyProcedures": [
       {
-        "category": "Safety",
-        "items": ["Honda Sensing", "Traffic Jam Assist", "Driver Attention Monitor"]
-      },
-      {
-        "category": "Powertrain",
-        "items": ["Two-Motor Hybrid System", "Real Time AWD", "4-Mode Drive System"]
+        "scenario": "Derailment or Collision",
+        "dos": [
+          "Hold onto seat frames or handrails",
+          "Brace yourself against seatback",
+          "Evacuate through doors or push-out emergency windows once stopped"
+        ],
+        "donts": [
+          "Stand up while train is violently vibrating",
+          "Exude panic or rush doors before train stops"
+        ],
+        "videoTimestamp": "20"
       }
     ],
-    "videoUrl": "/videos/honda-crv-hybrid-2024.mp4",
-    "thumbnailUrl": "/videos/thumbnails/honda-crv-hybrid-2024.jpg"
+    "vehicleFeatures": [
+      {
+        "category": "Charging & Comfort",
+        "items": [
+          { "name": "Charging Outlet", "location": "Under armrest console", "icon": "battery" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/amtrak-acela-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/amtrak-acela.jpg"
+  },
+  {
+    "id": "boeing-737-2021",
+    "vehicleType": "AIRPLANE",
+    "make": "Boeing",
+    "model": "737",
+    "year": 2021,
+    "fuelType": "KEROSENE",
+    "safetyFeatures": [
+      {
+        "title": "Overwing Emergency Exit",
+        "description": "Pull down red handle to release emergency door hatch. Jump onto wing.",
+        "location": "Row 16 and 17 passenger window frames",
+        "icon": "exit",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Cabin Depressurization",
+        "dos": [
+          "Pull mask down fully to start oxygen flow",
+          "Fit mask over nose and mouth first",
+          "Secure your own mask before helping others"
+        ],
+        "donts": [
+          "Wait for cabin crew instructions before placing mask",
+          "Take off seatbelt while signs are lit"
+        ],
+        "videoTimestamp": "5"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Cabin Controls",
+        "items": [
+          { "name": "Oxygen Mask Hatch", "location": "Directly above passenger seat", "icon": "shieldalert" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/boeing-737-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/boeing-737.jpg"
+  },
+  {
+    "id": "yamaha-sx190-2020",
+    "vehicleType": "BOAT",
+    "make": "Yamaha",
+    "model": "SX190",
+    "year": 2020,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Life Jacket Locker",
+        "description": "Locker holds approved life vests for all passengers onboard.",
+        "location": "Under deck console locker",
+        "icon": "shieldalert",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Man Overboard",
+        "dos": [
+          "Throw life buoy immediately near passenger",
+          "Keep eyes locked on victim's position",
+          "Shift motor to neutral before approaching"
+        ],
+        "donts": [
+          "Jump in water without securing safety line",
+          "Keep throttle open near passenger in water"
+        ],
+        "videoTimestamp": "12"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Equipment",
+        "items": [
+          { "name": "Bilge Pump", "location": "Stern engine compartment floor", "icon": "exit" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/yamaha-boat-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/yamaha-boat.jpg"
   }
 ]

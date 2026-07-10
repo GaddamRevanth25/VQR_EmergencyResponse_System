@@ -7,6 +7,8 @@ import { HomeScreen } from "./components/screens/HomeScreen";
 import { ManualScreen } from "./components/screens/ManualScreen";
 import { ScanScreen } from "./components/screens/ScanScreen";
 import { ResultsScreen } from "./components/screens/ResultsScreen";
+import { DropdownSearchScreen } from "./components/screens/DropdownSearchScreen";
+import { HistoryScreen } from "./components/screens/HistoryScreen";
 import { LandingPage } from "./components/screens/LandingPage";
 import { Navbar } from "./components/Navbar";
 
@@ -24,7 +26,7 @@ function AppContent() {
 
   const [emergency, setEmergency] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  
+
   // Persistent theme state initialized from localStorage or local time fallback
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const savedTheme = localStorage.getItem("vqr_theme") as "light" | "dark" | null;
@@ -345,7 +347,40 @@ function AppContent() {
           />
 
           <Route
+            path="/dropdown-search"
+            element={
+              <ProtectedRoute>
+                <main className="flex-1 flex items-center justify-center p-4">
+                  <DropdownSearchScreen />
+                </main>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <main className="flex-1 flex items-center justify-center p-4">
+                  <HistoryScreen />
+                </main>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/results"
+            element={
+              <ProtectedRoute>
+                <main className="flex-1 flex items-center justify-center p-4">
+                  <ResultsScreen />
+                </main>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/results/:id"
             element={
               <ProtectedRoute>
                 <main className="flex-1 flex items-center justify-center p-4">
