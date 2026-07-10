@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCw, Zap, Camera, ScanLine, Image } from "lucide-react";
+import { ArrowLeft, RotateCw, Zap, Camera, ScanLine, Image, ShieldCheck } from "lucide-react";
 import { PhoneShell } from "../PhoneShell";
 import { apiClient } from "../../lib/api";
 
@@ -82,10 +82,11 @@ export function ScanScreen() {
     setIsScanning(true);
     setConfidence(0);
     setRecognized(false);
+    setScannedRegText("");
 
     let currentConfidence = 0;
     const interval = setInterval(() => {
-      currentConfidence += Math.random() * 15 + 10;
+      currentConfidence += Math.random() * 12 + 8;
       if (currentConfidence >= 100) {
         setConfidence(100);
         setRecognized(true);
@@ -103,7 +104,7 @@ export function ScanScreen() {
       } else {
         setConfidence(currentConfidence);
       }
-    }, 150);
+    }, 200);
   };
 
   // Automatically start scan on component mount or reset
@@ -143,25 +144,34 @@ export function ScanScreen() {
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   }
 
+  // Get active plate characters for bounding box highlight simulation
+  const getSimulatedPlateText = () => {
+    if (countryType === "IN") return "MH02CL0555";
+    if (countryType === "UK") return "TE57VRN";
+    return "7XER187";
+  };
+
+  const activePlateText = getSimulatedPlateText();
+  const highlightedCharCount = Math.floor((confidence / 100) * activePlateText.length);
+
   return (
-    <PhoneShell title="LICENSE PLATE SCANNER">
-      <div className="relative min-h-[720px] overflow-hidden bg-slate-950 text-white flex flex-col">
-        {/* Inline keyframe styles for scan animations */}
+    <PhoneShell title="COMPUTER VISION SCANNER">
+      <div className="relative min-h-[720px] overflow-hidden bg-slate-950 text-white flex flex-col justify-between">
         <style dangerouslySetInnerHTML={{
           __html: `
           @keyframes scanLineMove {
-            0%, 100% { top: 20%; }
-            50% { top: 75%; }
+            0%, 100% { top: 0%; }
+            50% { top: 100%; }
           }
-          @keyframes scanPulse {
-            0%, 100% { opacity: 0.4; box-shadow: 0 0 8px #06b6d4, 0 0 20px rgba(6,182,212,0.15); }
-            50% { opacity: 1; box-shadow: 0 0 20px #06b6d4, 0 0 50px rgba(6,182,212,0.3); }
+          @keyframes borderGlow {
+            0%, 100% { border-color: rgba(6, 182, 212, 0.4); }
+            50% { border-color: rgba(6, 182, 212, 1); }
           }
           .scan-line-anim {
-            animation: scanLineMove 3.0s ease-in-out infinite;
+            animation: scanLineMove 2.5s ease-in-out infinite;
           }
-          .scan-pulse {
-            animation: scanPulse 1.8s ease-in-out infinite;
+          .glow-border {
+            animation: borderGlow 1.5s ease-in-out infinite;
           }
           .fade-in-up {
             animation: fadeInUp 0.4s ease-out forwards;
@@ -172,17 +182,14 @@ export function ScanScreen() {
           }
         `}} />
 
-        {/* Shading overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-transparent to-slate-950/80 z-10 pointer-events-none" />
-
         {/* Top Header Bar */}
-        <div className="relative flex items-center justify-between px-5 pt-5 pb-3 z-20">
+        <div className="relative flex items-center justify-between px-5 pt-5 pb-3 z-30 bg-gradient-to-b from-slate-950 to-transparent">
           <Link to="/app" className="grid size-10 place-items-center rounded-xl bg-white/10 backdrop-blur-md border border-white/10 hover:bg-white/20 transition">
             <ArrowLeft className="text-cyan-400" size={18} />
           </Link>
           <div className="flex items-center gap-2 text-slate-300">
             <ScanLine size={18} className="text-cyan-400" />
-            <span className="text-xs font-bold tracking-widest uppercase">Plate Scanner</span>
+            <span className="text-xs font-bold tracking-widest uppercase font-mono">CV OCR Active</span>
           </div>
           <button
             onClick={toggleCamera}
@@ -193,15 +200,15 @@ export function ScanScreen() {
         </div>
 
         {/* OCR Simulation Config - Country switch */}
-        <div className="relative z-20 flex justify-center gap-2 px-5 mb-2">
-          <span className="text-xs text-slate-400 self-center mr-2">Target Plate:</span>
+        <div className="relative z-30 flex justify-center gap-2 px-5 mb-2">
+          <span className="text-xs text-slate-400 self-center mr-2">Target Format:</span>
           {(["IN", "UK", "US"] as const).map((cc) => (
             <button
               key={cc}
               onClick={() => setCountryType(cc)}
               className={`px-3 py-1 text-xs font-bold rounded-lg border transition ${
                 countryType === cc
-                  ? "bg-cyan-500/25 border-cyan-400 text-cyan-300"
+                  ? "bg-cyan-500/25 border-cyan-400 text-cyan-300 shadow-[0_0_8px_rgba(34,211,238,0.25)]"
                   : "bg-slate-900/60 border-slate-800 text-slate-400"
               }`}
             >
@@ -210,37 +217,15 @@ export function ScanScreen() {
           ))}
         </div>
 
-        {/* Confidence Progress */}
-        {confidence > 5 && (
-          <div className="relative z-20 mx-auto mb-2 fade-in-up">
-            <div className="rounded-xl border border-cyan-500/30 bg-slate-900/80 backdrop-blur-xl px-4 py-2 shadow-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-mono text-xs font-bold text-cyan-300 tracking-wider">
-                  OCR: {Math.round(confidence)}% / {recognized ? "PLATE DETECTED" : "READING CHARACTERS..."}
-                </span>
-              </div>
-              <div className="h-1 w-40 rounded-full bg-slate-800 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-cyan-400 transition-all duration-200"
-                  style={{ width: `${confidence}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Camera Live Feed Viewport */}
         <div className="absolute inset-0 w-full h-full z-0 flex items-center justify-center bg-slate-950">
           {errorMsg ? (
-            <div className="px-6 text-center max-w-xs z-20">
+            <div className="px-6 text-center max-w-xs z-10">
               <div className="mx-auto grid size-12 place-items-center rounded-full bg-cyan-500/10 text-cyan-400 mb-3 animate-bounce">
                 <Camera size={24} />
               </div>
               <p className="text-sm font-bold text-slate-200">Device camera feed active</p>
               <p className="text-xs text-slate-400 mt-1">({errorMsg})</p>
-              <p className="text-xs text-slate-400 mt-4 bg-white/5 border border-white/10 rounded-xl p-3">
-                Simulating camera stream. Align template below.
-              </p>
             </div>
           ) : (
             <video
@@ -248,82 +233,89 @@ export function ScanScreen() {
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover opacity-60"
             />
           )}
         </div>
 
-        {/* === LICENSE PLATE FRAME GUIDE === */}
-        <div className="relative mx-12 my-auto aspect-[3/1] z-20 pointer-events-none flex flex-col justify-center items-center">
+        {/* === NEON LICENSE PLATE SCANNED FRAME ONLY === */}
+        <div className="relative mx-10 my-auto aspect-[3.2/1] z-20 flex flex-col justify-center items-center rounded-xl border-2 border-cyan-500/40 glow-border bg-slate-950/20 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+          
+          {/* Surround Shading Panels (Darkening the remaining frames) */}
+          <div className="absolute top-0 bottom-0 left-0 -ml-[100vw] w-[100vw] bg-slate-950/80 backdrop-blur-[2px]" />
+          <div className="absolute top-0 bottom-0 right-0 -mr-[100vw] w-[100vw] bg-slate-950/80 backdrop-blur-[2px]" />
+          <div className="absolute left-0 right-0 top-0 -mt-[100vh] h-[100vh] bg-slate-950/80 backdrop-blur-[2px]" />
+          <div className="absolute left-0 right-0 bottom-0 -mb-[100vh] h-[100vh] bg-slate-950/80 backdrop-blur-[2px]" />
+
           {/* Neon Corner Brackets */}
-          <span className="absolute -left-1 -top-1 w-6 h-6 border-l-[3px] border-t-[3px] border-cyan-400 rounded-tl-md" />
-          <span className="absolute -right-1 -top-1 w-6 h-6 border-r-[3px] border-t-[3px] border-cyan-400 rounded-tr-md" />
-          <span className="absolute -bottom-1 -left-1 w-6 h-6 border-b-[3px] border-l-[3px] border-cyan-400 rounded-bl-md" />
-          <span className="absolute -bottom-1 -right-1 w-6 h-6 border-b-[3px] border-r-[3px] border-cyan-400 rounded-br-md" />
+          <span className="absolute -left-1.5 -top-1.5 w-6 h-6 border-l-[4px] border-t-[4px] border-cyan-400 rounded-tl-lg" />
+          <span className="absolute -right-1.5 -top-1.5 w-6 h-6 border-r-[4px] border-t-[4px] border-cyan-400 rounded-tr-lg" />
+          <span className="absolute -bottom-1.5 -left-1.5 w-6 h-6 border-b-[4px] border-l-[4px] border-cyan-400 rounded-bl-lg" />
+          <span className="absolute -bottom-1.5 -right-1.5 w-6 h-6 border-b-[4px] border-r-[4px] border-cyan-400 rounded-br-lg" />
 
-          {/* Dotted helper line inside */}
-          <div className="absolute inset-1.5 border border-dashed border-cyan-500/35 rounded-md" />
+          {/* Computer Vision Character Bounding Boxes Overlay */}
+          <div className="flex gap-1.5 px-3 py-2 bg-slate-900/90 rounded-lg border border-slate-700 select-none shadow-md">
+            {activePlateText.split("").map((char, index) => {
+              const isActive = index < highlightedCharCount;
+              return (
+                <span
+                  key={index}
+                  className={`w-6 h-8 flex items-center justify-center font-mono text-sm font-black rounded border transition-all duration-300 ${
+                    recognized
+                      ? "bg-cyan-500 border-cyan-400 text-slate-950 scale-105"
+                      : isActive
+                      ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 scale-102"
+                      : "bg-slate-950/60 border-slate-800 text-slate-600"
+                  }`}
+                >
+                  {isActive || recognized ? char : "?"}
+                </span>
+              );
+            })}
+          </div>
 
-          {/* Simulated scanning horizontal laser line */}
+          {/* Simulated scanning vertical laser line */}
           {isScanning && (
-            <div className="absolute left-0 right-0 h-[2px] scan-line-anim">
-              <div className="h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent scan-pulse" />
-            </div>
-          )}
-
-          {/* Show OCR output bounding box */}
-          {recognized && (
-            <div className="bg-yellow-400/90 text-slate-950 px-4 py-1.5 font-mono font-black text-sm tracking-[0.2em] rounded border border-yellow-300 shadow-lg animate-pulse">
-              {scannedRegText}
+            <div className="absolute left-0 right-0 h-[2px] scan-line-anim pointer-events-none">
+              <div className="h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
             </div>
           )}
         </div>
 
         {/* Bottom Controls Panel */}
         <div className="relative mt-auto p-5 z-20 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
-          {/* Gallery upload / manual trigger icons */}
-          <div className="flex items-center justify-center gap-6 mb-4 text-slate-400">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="hover:text-cyan-400 transition cursor-pointer flex flex-col items-center gap-1"
-            >
-              <Image size={20} />
-              <span className="text-[9px]">GALLERY</span>
-            </button>
-            <button
-              onClick={() => setIsFlashOn(!isFlashOn)}
-              className={`transition cursor-pointer flex flex-col items-center gap-1 ${isFlashOn ? 'text-yellow-400' : 'hover:text-cyan-400'}`}
-            >
-              <Zap size={20} fill={isFlashOn ? "white" : "none"} />
-              <span className="text-[9px]">FLASH</span>
-            </button>
-            <button
-              onClick={() => triggerScanCycle()}
-              className="hover:text-cyan-400 transition cursor-pointer flex flex-col items-center gap-1"
-            >
-              <RotateCw size={20} />
-              <span className="text-[9px]">RE-SCAN</span>
-            </button>
-          </div>
+          {/* Confidence Progress Bar */}
+          {confidence > 0 && (
+            <div className="max-w-[240px] mx-auto mb-4 bg-slate-900/90 border border-white/5 rounded-full px-3 py-1 flex items-center justify-between text-[10px] font-mono text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-cyan-400 animate-pulse" />
+                OCR Matcher
+              </span>
+              <span className="font-bold text-cyan-400">{Math.round(confidence)}%</span>
+            </div>
+          )}
 
           {recognized ? (
-            <div className="bg-slate-900/90 border border-cyan-500/35 backdrop-blur-xl rounded-2xl p-4 mb-4 fade-in-up shadow-xl text-center">
-              <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block">Plate Recognized ({countryType})</span>
+            <div className="bg-slate-900/95 border border-cyan-500/35 backdrop-blur-xl rounded-2xl p-4 mb-4 fade-in-up shadow-2xl text-center">
+              <div className="mx-auto grid size-9 place-items-center rounded-full bg-cyan-500/10 text-cyan-400 mb-2">
+                <ShieldCheck size={20} />
+              </div>
+              <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block">Plate Recognized</span>
               <h3 className="text-xl font-mono font-black text-white mt-1 tracking-widest">{scannedRegText}</h3>
               <p className="text-xs text-slate-400 mt-1">Successfully matched in passenger database</p>
 
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => triggerScanCycle()}
-                  className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-700 transition"
+                  className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer"
                 >
-                  SCAN AGAIN
+                  RE-SCAN
                 </button>
                 <button
                   onClick={handleViewDetails}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition"
+                  className="flex-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-cyan-600/20 transition cursor-pointer"
                 >
-                  VIEW SAFETY GUIDE
+                  VIEW GUIDE
                 </button>
               </div>
             </div>
@@ -338,19 +330,29 @@ export function ScanScreen() {
                   else if (countryType === "UK") setScannedRegText("TE57VRN");
                   else setScannedRegText("7XER187");
                 }}
-                className="rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-6 py-3 tracking-widest active:scale-95 transition"
+                className="rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-6 py-3.5 tracking-widest active:scale-95 transition cursor-pointer"
               >
                 MANUAL CAPTURE
               </button>
             </div>
           )}
 
-          {/* Status bar */}
-          <div className="mt-3 mx-auto max-w-xs rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-center backdrop-blur">
-            <p className="font-mono text-[10px] text-slate-400 flex items-center justify-center gap-2">
-              <span className={`size-1.5 rounded-full ${isScanning ? "bg-green-500 animate-pulse" : "bg-slate-600"}`} />
-              ALIGN LICENSE PLATE WITHIN NEON CORNERS
-            </p>
+          {/* Gallery upload / flash icons */}
+          <div className="flex items-center justify-center gap-6 mt-2 text-slate-400 border-t border-white/5 pt-4">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="hover:text-cyan-400 transition cursor-pointer flex flex-col items-center gap-1"
+            >
+              <Image size={18} />
+              <span className="text-[9px]">GALLERY</span>
+            </button>
+            <button
+              onClick={() => setIsFlashOn(!isFlashOn)}
+              className={`transition cursor-pointer flex flex-col items-center gap-1 ${isFlashOn ? 'text-yellow-400' : 'hover:text-cyan-400'}`}
+            >
+              <Zap size={18} fill={isFlashOn ? "white" : "none"} />
+              <span className="text-[9px]">FLASH</span>
+            </button>
           </div>
         </div>
 
