@@ -18,6 +18,7 @@ import { createApiClient } from '@vqr/shared';
 import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 // Host configurations
 const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
@@ -75,7 +76,7 @@ export default function RescueScreen() {
 
   // Camera Scanner States
   const [permission, requestPermission] = useCameraPermissions();
-  const facingMode = 'back';
+  const [facingMode, setFacingMode] = useState<'back' | 'front'>('back');
   const [confidence, setConfidence] = useState(0);
   const [recognized, setRecognized] = useState(false);
   const [scannedRegText, setScannedRegText] = useState('');
@@ -97,7 +98,7 @@ export default function RescueScreen() {
           return;
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   useEffect(() => {
@@ -291,7 +292,7 @@ export default function RescueScreen() {
     setRecentSearches(updated);
     try {
       await AsyncStorage.setItem('vqr_recent_searches', JSON.stringify(updated));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Bounding box characters helper
@@ -334,7 +335,7 @@ export default function RescueScreen() {
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {crashDetectionBg && (
-                <Animated.View 
+                <Animated.View
                   style={{
                     width: 6,
                     height: 6,
@@ -351,28 +352,28 @@ export default function RescueScreen() {
                   setCrashDetectionBg(nextState);
                   Alert.alert(
                     "Crash Detection",
-                    nextState 
-                      ? "Crash Detection System is now running in the background." 
+                    nextState
+                      ? "Crash Detection System is now running in the background."
                       : "Crash Detection System background service has been disabled."
                   );
                 }}
                 activeOpacity={0.8}
                 style={[
                   styles.toggleOuter,
-                  { 
+                  {
                     backgroundColor: crashDetectionBg ? theme.success : theme.backgroundSelected,
-                    borderColor: crashDetectionBg ? theme.success : 'rgba(148, 163, 184, 0.2)' 
+                    borderColor: crashDetectionBg ? theme.success : 'rgba(148, 163, 184, 0.2)'
                   }
                 ]}
               >
-                <View 
+                <View
                   style={[
                     styles.toggleKnob,
-                    { 
+                    {
                       transform: [{ translateX: crashDetectionBg ? 16 : 0 }],
-                      backgroundColor: '#fff' 
+                      backgroundColor: '#fff'
                     }
-                  ]} 
+                  ]}
                 />
               </TouchableOpacity>
             </View>
@@ -401,8 +402,8 @@ export default function RescueScreen() {
                 "Are you sure you want to broadcast a critical emergency signal to municipal dispatch, squad vehicles, and nearby medical centers?",
                 [
                   { text: "Cancel", style: "cancel" },
-                  { 
-                    text: "YES, DISPATCH NOW", 
+                  {
+                    text: "YES, DISPATCH NOW",
                     style: "destructive",
                     onPress: () => {
                       Alert.alert("SOS Broadcasted", "Emergency response team and rescue units have been dispatched to your location.");
@@ -664,38 +665,66 @@ export default function RescueScreen() {
       {/* 4. SCANNER VIEW (COMPUTER VISION SIMULATOR) */}
       {activeView === 'scanner' && (
         <View style={styles.scannerWrapper}>
-          {/* Native Camera View */}
-          <CameraView style={StyleSheet.absoluteFill} facing={facingMode} flash={isFlashOn ? 'on' : 'off'} />
+          {!permission?.granted ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#090d16', padding: 24 }}>
+              <Ionicons name="camera-outline" size={64} color={theme.accent} style={{ marginBottom: 16 }} />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>
+                Camera Access Required
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, textAlign: 'center', marginBottom: 24, paddingHorizontal: 20 }}>
+                Please enable camera permissions to scan license plates and retrieve emergency rescue guides in real-time.
+              </Text>
+              <TouchableOpacity
+                onPress={requestPermission}
+                style={{ backgroundColor: theme.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12 }}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>Enable Camera</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setActiveView('dashboard')}
+                style={{ marginTop: 16 }}
+              >
+                <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              {/* Native Camera View */}
+              <CameraView style={StyleSheet.absoluteFill} facing={facingMode} flash={isFlashOn ? 'on' : 'off'} />
 
-          {/* Shading surrounding frames (leaving center clear) */}
-          <View style={styles.blackoutOverlayTop} />
-          <View style={styles.blackoutOverlayBottom} />
-          <View style={styles.blackoutOverlayLeft} />
-          <View style={styles.blackoutOverlayRight} />
+              {/* Shading surrounding frames (leaving center clear) */}
+              <View style={styles.blackoutOverlayTop} />
+              <View style={styles.blackoutOverlayBottom} />
+              <View style={styles.blackoutOverlayLeft} />
+              <View style={styles.blackoutOverlayRight} />
 
-          {/* Back button */}
-          <TouchableOpacity
-            onPress={() => {
-              stopScanningSimulation();
-              setActiveView('dashboard');
-            }}
-            style={styles.scannerBackBtn}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>← Back</Text>
-          </TouchableOpacity>
+              {/* Back button */}
+              <TouchableOpacity
+                onPress={() => {
+                  stopScanningSimulation();
+                  setActiveView('dashboard');
+                }}
+                style={styles.scannerBackBtn}
+              >
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>← Back</Text>
+              </TouchableOpacity>
 
           {/* Bounding scan box */}
-          <View style={styles.scannerGuideBox}>
+          <View style={[styles.scannerGuideBox, { borderWidth: 1, borderColor: 'rgba(6, 182, 212, 0.15)', borderRadius: 12, backgroundColor: 'rgba(15, 23, 42, 0.25)', overflow: 'hidden' }]}>
             <View style={styles.scannerLaserLine} />
 
+            {/* Target HUD Center Crosshair Markers */}
+            <View style={{ position: 'absolute', top: 8, bottom: 8, width: 1, backgroundColor: 'rgba(6, 182, 212, 0.2)' }} />
+            <View style={{ position: 'absolute', left: 8, right: 8, height: 1, backgroundColor: 'rgba(6, 182, 212, 0.2)' }} />
+
             {/* Bounding box brackets */}
-            <View style={[styles.cornerBracket, { top: -2, left: -2, borderTopWidth: 4, borderLeftWidth: 4 }]} />
-            <View style={[styles.cornerBracket, { top: -2, right: -2, borderTopWidth: 4, borderRightWidth: 4 }]} />
-            <View style={[styles.cornerBracket, { bottom: -2, left: -2, borderBottomWidth: 4, borderLeftWidth: 4 }]} />
-            <View style={[styles.cornerBracket, { bottom: -2, right: -2, borderBottomWidth: 4, borderRightWidth: 4 }]} />
+            <View style={[styles.cornerBracket, { top: -2, left: -2, borderTopWidth: 5, borderLeftWidth: 5, width: 24, height: 24 }]} />
+            <View style={[styles.cornerBracket, { top: -2, right: -2, borderTopWidth: 5, borderRightWidth: 5, width: 24, height: 24 }]} />
+            <View style={[styles.cornerBracket, { bottom: -2, left: -2, borderBottomWidth: 5, borderLeftWidth: 5, width: 24, height: 24 }]} />
+            <View style={[styles.cornerBracket, { bottom: -2, right: -2, borderBottomWidth: 5, borderRightWidth: 5, width: 24, height: 24 }]} />
 
             {/* Character Boxes (Computer Vision Highlights) */}
-            <View style={styles.scannerCharContainer}>
+            <View style={[styles.scannerCharContainer, recognized && { borderColor: theme.accent, shadowColor: theme.accent, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }]}>
               {activePlateText.split("").map((char, index) => {
                 const isActive = index < highlightedCharCount;
                 return (
@@ -718,7 +747,60 @@ export default function RescueScreen() {
             </View>
           </View>
 
-          {/* Controls */}
+          {/* Flash & Camera Swap controls positioned in between camera zone and bottom footer buttons */}
+          <View style={{ position: 'absolute', bottom: 140, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 24, zIndex: 50 }}>
+            {/* Flash Toggle */}
+            <TouchableOpacity
+              onPress={() => setIsFlashOn(!isFlashOn)}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: isFlashOn ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+                borderWidth: 2,
+                borderColor: isFlashOn ? '#ffffff' : 'rgba(255, 255, 255, 0.15)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: isFlashOn ? '#eab308' : '#000',
+                shadowOpacity: isFlashOn ? 0.35 : 0.15,
+                shadowRadius: 6,
+                elevation: 4,
+              }}
+            >
+              <Ionicons
+                name={isFlashOn ? "flashlight" : "flashlight-outline"}
+                size={22}
+                color={isFlashOn ? "#eab308" : "#ffffff"}
+              />
+            </TouchableOpacity>
+
+            {/* Camera Swap Toggle */}
+            <TouchableOpacity
+              onPress={() => setFacingMode((prev) => (prev === 'back' ? 'front' : 'back'))}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                borderWidth: 2,
+                borderColor: 'rgba(255, 255, 255, 0.15)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOpacity: 0.15,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <Ionicons
+                name="camera-reverse-outline"
+                size={24}
+                color="#ffffff"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Controls Panel */}
           <View style={styles.scannerBottomControls}>
             <Text style={styles.scannerStatusText}>
               {recognized ? "PLATE RECOGNIZED" : `EXTRACTING: ${Math.round(confidence)}%`}
@@ -726,6 +808,12 @@ export default function RescueScreen() {
 
             {recognized ? (
               <View style={styles.scannerOptionsRow}>
+                <TouchableOpacity
+                  onPress={startScanningSimulation}
+                  style={[styles.scannerOptionBtn, { backgroundColor: '#1e293b' }]}
+                >
+                  <Text style={styles.scannerOptionBtnText}>RE-SCAN</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={async () => {
                     try {
@@ -740,13 +828,7 @@ export default function RescueScreen() {
                   }}
                   style={[styles.scannerOptionBtn, { backgroundColor: theme.primary }]}
                 >
-                  <Text style={styles.scannerOptionBtnText}>View Safety Layout</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={startScanningSimulation}
-                  style={[styles.scannerOptionBtn, { backgroundColor: '#1e293b' }]}
-                >
-                  <Text style={styles.scannerOptionBtnText}>Re-Scan</Text>
+                  <Text style={styles.scannerOptionBtnText}>VIEW SAFETY LAYOUT</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -757,10 +839,12 @@ export default function RescueScreen() {
                 }}
                 style={[styles.manualTriggerBtn, { backgroundColor: theme.accent }]}
               >
-                <Text style={styles.manualTriggerBtnText}>Capture Plate</Text>
+                <Text style={styles.manualTriggerBtnText}>MANUAL CAPTURE</Text>
               </TouchableOpacity>
             )}
           </View>
+          </>
+          )}
         </View>
       )}
 
@@ -828,138 +912,138 @@ export default function RescueScreen() {
         <View style={{ flex: 1 }}>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.scrollContainer, { paddingBottom: 100 }]}>
             <View style={styles.backRow}>
-            <TouchableOpacity onPress={() => setActiveView('dashboard')} style={styles.backBtn}>
-              <Text style={[styles.backArrow, { color: theme.text }]}>← Back</Text>
-            </TouchableOpacity>
-            <Text style={[styles.viewTitle, { color: theme.text }]}>Safety Layout</Text>
-          </View>
-
-          {/* Vehicle Header */}
-          <View style={[styles.vehicleHeaderCard, { backgroundColor: theme.backgroundElement }]}>
-            <Text style={[styles.vehicleTitle, { color: theme.text }]}>
-              {vehicle.make} {vehicle.model} ({vehicle.year})
-            </Text>
-            <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18' }]}>
-              <Text style={[styles.fuelBadgeText, { color: theme.primary }]}>
-                {vehicle.fuelType || "PETROL"}
-              </Text>
-            </View>
-          </View>
-
-          {/* Tabs bar */}
-          <View style={styles.tabsBar}>
-            {(['safety', 'emergency', 'features', 'video'] as const).map((t) => (
-              <TouchableOpacity
-                key={t}
-                onPress={() => setActiveResultTab(t)}
-                style={[
-                  styles.tabButton,
-                  { borderBottomColor: activeResultTab === t ? theme.primary : 'transparent' }
-                ]}
-              >
-                <Text style={[styles.tabButtonText, { color: activeResultTab === t ? theme.primary : theme.textSecondary }]}>
-                  {t.toUpperCase()}
-                </Text>
+              <TouchableOpacity onPress={() => setActiveView('dashboard')} style={styles.backBtn}>
+                <Text style={[styles.backArrow, { color: theme.text }]}>← Back</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Tab Content 1: Safety Features */}
-          {activeResultTab === 'safety' && (
-            <View style={styles.tabContent}>
-              {(vehicle.safetyFeatures || vehicle.safetyGuidelines || []).map((feat: any, idx: number) => {
-                const icon = feat.icon === 'hammer' ? '🔨' : feat.icon === 'exit' ? '🚪' : '⚠️';
-                return (
-                  <View key={idx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement }]}>
-                    <Text style={[styles.infoCardTitle, { color: theme.text }]}>{icon} {feat.title}</Text>
-                    <Text style={[styles.infoCardText, { color: theme.textSecondary }]}>{feat.description}</Text>
-                    <Text style={[styles.infoCardLoc, { color: theme.primary }]}>📍 Location: {feat.location || "Under hood"}</Text>
-                  </View>
-                );
-              })}
+              <Text style={[styles.viewTitle, { color: theme.text }]}>Safety Layout</Text>
             </View>
-          )}
 
-          {/* Tab Content 2: Emergency Scenario Guide */}
-          {activeResultTab === 'emergency' && (
-            <View style={styles.tabContent}>
-              {(vehicle.emergencyProcedures || []).map((proc: any, idx: number) => (
-                <View key={idx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement }]}>
-                  <Text style={[styles.infoCardTitle, { color: theme.destructive }]}>⚠️ Scenario: {proc.scenario}</Text>
-                  <View style={{ gap: 8, marginTop: 8 }}>
-                    <View>
-                      <Text style={{ fontWeight: 'bold', color: theme.success, fontSize: 13, marginBottom: 4 }}>✓ WHAT TO DO</Text>
-                      {(proc.steps || proc.dos || []).map((st: string, sIdx: number) => (
-                        <Text key={sIdx} style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8, marginBottom: 2 }}>• {st}</Text>
-                      ))}
+            {/* Vehicle Header */}
+            <View style={[styles.vehicleHeaderCard, { backgroundColor: theme.backgroundElement }]}>
+              <Text style={[styles.vehicleTitle, { color: theme.text }]}>
+                {vehicle.make} {vehicle.model} ({vehicle.year})
+              </Text>
+              <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18' }]}>
+                <Text style={[styles.fuelBadgeText, { color: theme.primary }]}>
+                  {vehicle.fuelType || "PETROL"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Tabs bar */}
+            <View style={styles.tabsBar}>
+              {(['safety', 'emergency', 'features', 'video'] as const).map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  onPress={() => setActiveResultTab(t)}
+                  style={[
+                    styles.tabButton,
+                    { borderBottomColor: activeResultTab === t ? theme.primary : 'transparent' }
+                  ]}
+                >
+                  <Text style={[styles.tabButtonText, { color: activeResultTab === t ? theme.primary : theme.textSecondary }]}>
+                    {t.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Tab Content 1: Safety Features */}
+            {activeResultTab === 'safety' && (
+              <View style={styles.tabContent}>
+                {(vehicle.safetyFeatures || vehicle.safetyGuidelines || []).map((feat: any, idx: number) => {
+                  const icon = feat.icon === 'hammer' ? '🔨' : feat.icon === 'exit' ? '🚪' : '⚠️';
+                  return (
+                    <View key={idx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement }]}>
+                      <Text style={[styles.infoCardTitle, { color: theme.text }]}>{icon} {feat.title}</Text>
+                      <Text style={[styles.infoCardText, { color: theme.textSecondary }]}>{feat.description}</Text>
+                      <Text style={[styles.infoCardLoc, { color: theme.primary }]}>📍 Location: {feat.location || "Under hood"}</Text>
                     </View>
-                    {proc.donts && proc.donts.length > 0 && (
-                      <View style={{ marginTop: 4 }}>
-                        <Text style={{ fontWeight: 'bold', color: theme.destructive, fontSize: 13, marginBottom: 4 }}>✕ WHAT NOT TO DO</Text>
-                        {proc.donts.map((st: string, sIdx: number) => (
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Tab Content 2: Emergency Scenario Guide */}
+            {activeResultTab === 'emergency' && (
+              <View style={styles.tabContent}>
+                {(vehicle.emergencyProcedures || []).map((proc: any, idx: number) => (
+                  <View key={idx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement }]}>
+                    <Text style={[styles.infoCardTitle, { color: theme.destructive }]}>⚠️ Scenario: {proc.scenario}</Text>
+                    <View style={{ gap: 8, marginTop: 8 }}>
+                      <View>
+                        <Text style={{ fontWeight: 'bold', color: theme.success, fontSize: 13, marginBottom: 4 }}>✓ WHAT TO DO</Text>
+                        {(proc.steps || proc.dos || []).map((st: string, sIdx: number) => (
                           <Text key={sIdx} style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8, marginBottom: 2 }}>• {st}</Text>
                         ))}
                       </View>
-                    )}
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Tab Content 3: Vehicle Features */}
-          {activeResultTab === 'features' && (
-            <View style={styles.tabContent}>
-              {(vehicle.vehicleFeatures || vehicle.features || []).map((grp: any, idx: number) => (
-                <View key={idx} style={{ marginBottom: 12 }}>
-                  <Text style={[styles.groupCategoryTitle, { color: theme.textSecondary }]}>{grp.category.toUpperCase()}</Text>
-                  <View style={{ gap: 8, marginTop: 6 }}>
-                    {(grp.items || []).map((item: any, iIdx: number) => {
-                      const name = typeof item === 'string' ? item : item.name;
-                      const loc = typeof item === 'string' ? '' : item.location;
-                      return (
-                        <View key={iIdx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement, paddingVertical: 12 }]}>
-                          <Text style={{ fontWeight: 'bold', color: theme.text, fontSize: 13 }}>📍 {name}</Text>
-                          {loc ? <Text style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2, marginLeft: 18 }}>{loc}</Text> : null}
+                      {proc.donts && proc.donts.length > 0 && (
+                        <View style={{ marginTop: 4 }}>
+                          <Text style={{ fontWeight: 'bold', color: theme.destructive, fontSize: 13, marginBottom: 4 }}>✕ WHAT NOT TO DO</Text>
+                          {proc.donts.map((st: string, sIdx: number) => (
+                            <Text key={sIdx} style={{ color: theme.textSecondary, fontSize: 12, marginLeft: 8, marginBottom: 2 }}>• {st}</Text>
+                          ))}
                         </View>
-                      );
-                    })}
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Tab Content 4: Video Guide */}
-          {activeResultTab === 'video' && (
-            <View style={styles.tabContent}>
-              <View style={styles.videoPlayerBox}>
-                <Text style={{ color: '#fff', fontSize: 18 }}>📺 Video Guide Mock</Text>
-                <Text style={{ color: theme.accent, fontSize: 14, marginTop: 8 }}>Playing Time: {videoPlayTime}</Text>
+                ))}
               </View>
+            )}
 
-              {/* Seek Chapters */}
-              <Text style={[styles.sectionHeading, { color: theme.text, marginTop: 16 }] as any}>Chapters</Text>
-              <TouchableOpacity
-                onPress={() => setVideoPlayTime("0:15")}
-                style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
-              >
-                <Text style={[styles.chapterTitle, { color: theme.text }] as any}>0:15 - Glass Hammer Location</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setVideoPlayTime("1:40")}
-                style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
-              >
-                <Text style={[styles.chapterTitle, { color: theme.text }] as any}>1:40 - Battery Cabling Cut Point</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setVideoPlayTime("2:55")}
-                style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
-              >
-                <Text style={[styles.chapterTitle, { color: theme.text }] as any}>2:55 - Trunk Escape Release</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            {/* Tab Content 3: Vehicle Features */}
+            {activeResultTab === 'features' && (
+              <View style={styles.tabContent}>
+                {(vehicle.vehicleFeatures || vehicle.features || []).map((grp: any, idx: number) => (
+                  <View key={idx} style={{ marginBottom: 12 }}>
+                    <Text style={[styles.groupCategoryTitle, { color: theme.textSecondary }]}>{grp.category.toUpperCase()}</Text>
+                    <View style={{ gap: 8, marginTop: 6 }}>
+                      {(grp.items || []).map((item: any, iIdx: number) => {
+                        const name = typeof item === 'string' ? item : item.name;
+                        const loc = typeof item === 'string' ? '' : item.location;
+                        return (
+                          <View key={iIdx} style={[styles.infoCard, { backgroundColor: theme.backgroundElement, paddingVertical: 12 }]}>
+                            <Text style={{ fontWeight: 'bold', color: theme.text, fontSize: 13 }}>📍 {name}</Text>
+                            {loc ? <Text style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2, marginLeft: 18 }}>{loc}</Text> : null}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Tab Content 4: Video Guide */}
+            {activeResultTab === 'video' && (
+              <View style={styles.tabContent}>
+                <View style={styles.videoPlayerBox}>
+                  <Text style={{ color: '#fff', fontSize: 18 }}>📺 Video Guide Mock</Text>
+                  <Text style={{ color: theme.accent, fontSize: 14, marginTop: 8 }}>Playing Time: {videoPlayTime}</Text>
+                </View>
+
+                {/* Seek Chapters */}
+                <Text style={[styles.sectionHeading, { color: theme.text, marginTop: 16 }] as any}>Chapters</Text>
+                <TouchableOpacity
+                  onPress={() => setVideoPlayTime("0:15")}
+                  style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
+                >
+                  <Text style={[styles.chapterTitle, { color: theme.text }] as any}>0:15 - Glass Hammer Location</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setVideoPlayTime("1:40")}
+                  style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
+                >
+                  <Text style={[styles.chapterTitle, { color: theme.text }] as any}>1:40 - Battery Cabling Cut Point</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setVideoPlayTime("2:55")}
+                  style={[styles.chapterRow, { backgroundColor: theme.backgroundElement }] as any}
+                >
+                  <Text style={[styles.chapterTitle, { color: theme.text }] as any}>2:55 - Trunk Escape Release</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </ScrollView>
 
           {/* Sticky Bottom Footer */}
@@ -1238,9 +1322,9 @@ const styles = StyleSheet.create({
   },
   scannerGuideBox: {
     position: 'absolute',
-    top: '30%',
-    left: '10%',
-    right: '10%',
+    top: '35%',
+    left: '6%',
+    right: '6%',
     aspectRatio: 3.2 / 1,
     zIndex: 30,
     alignItems: 'center',
@@ -1322,7 +1406,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '30%',
+    height: '35%',
     backgroundColor: 'rgba(9, 13, 22, 0.85)',
   },
   blackoutOverlayBottom: {
@@ -1330,23 +1414,23 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    top: '55%',
+    top: '59.5%',
     backgroundColor: 'rgba(9, 13, 22, 0.85)',
   },
   blackoutOverlayLeft: {
     position: 'absolute',
-    top: '30%',
-    bottom: '45%',
+    top: '35%',
+    bottom: '40.5%',
     left: 0,
-    width: '10%',
+    width: '6%',
     backgroundColor: 'rgba(9, 13, 22, 0.85)',
   },
   blackoutOverlayRight: {
     position: 'absolute',
-    top: '30%',
-    bottom: '45%',
+    top: '35%',
+    bottom: '40.5%',
     right: 0,
-    width: '10%',
+    width: '6%',
     backgroundColor: 'rgba(9, 13, 22, 0.85)',
   },
   historyList: {
