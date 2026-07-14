@@ -12,7 +12,13 @@ MOCK_MAPPINGS = {
   ("TE57VRN", "UK"): "toyota-camry-2024",
   ("7XER187", "US"): "toyota-camry-2024",
   ("WBAFR7C57CC811956", "VIN"): "toyota-camry-2024",
-  ("WBAFR7C57CC811956", "GLOBAL"): "toyota-camry-2024"
+  ("WBAFR7C57CC811956", "GLOBAL"): "toyota-camry-2024",
+  ("KL47M0022", "IN"): "toyota-camry-2024",
+  ("KL47M0022", "GLOBAL"): "toyota-camry-2024",
+  ("KL47H0022", "IN"): "toyota-camry-2024",
+  ("KL47H0022", "GLOBAL"): "toyota-camry-2024",
+  ("MH200Y2366", "IN"): "bmw-740li-2012",
+  ("MH200Y2366", "GLOBAL"): "bmw-740li-2012"
 }
 
 class VehicleService:
@@ -39,6 +45,18 @@ class VehicleService:
         return None
 
     @classmethod
+    def get_by_qr_code(cls, qr_data: str) -> Optional[Vehicle]:
+        # If QR data matches a direct vehicle ID
+        vehicle = cls.get_by_id(qr_data)
+        if vehicle:
+            return vehicle
+        # Else lookup by VIN/Plate
+        result = cls.lookup(qr_data)
+        if result:
+            return cls.get_by_id(result.vehicle_id)
+        return None
+
+    @classmethod
     def lookup(cls, vin: str, country: Optional[str] = None) -> Optional[LookupResponse]:
         normalized_input = vin.strip().replace("-", "").replace(" ", "").upper()
         normalized_country = country.strip().upper() if country else "GLOBAL"
@@ -51,6 +69,36 @@ class VehicleService:
             vehicle_id = MOCK_MAPPINGS[(normalized_input, "GLOBAL")]
         elif len(normalized_input) == 17:
             vehicle_id = "toyota-camry-2024"
+
+        if not vehicle_id:
+            # Sliding window Hamming distance fuzzy match against mock registration numbers
+            best_match_id = None
+            best_distance = 999
+            for (mock_reg, mock_country), v_id in MOCK_MAPPINGS.items():
+                if mock_country == "VIN":
+                    continue
+                
+                m_len = len(mock_reg)
+                n_len = len(normalized_input)
+                
+                if n_len >= m_len:
+                    # Slide a window across the recognized text
+                    for i in range(n_len - m_len + 1):
+                        sub_str = normalized_input[i:i+m_len]
+                        dist = sum(1 for a, b in zip(sub_str, mock_reg) if a != b)
+                        if dist < best_distance:
+                            best_distance = dist
+                            best_match_id = v_id
+                else:
+                    # Input is shorter, compare prefix
+                    dist = sum(1 for a, b in zip(normalized_input, mock_reg[:n_len]) if a != b) + (m_len - n_len)
+                    if dist < best_distance:
+                        best_distance = dist
+                        best_match_id = v_id
+            
+            # If we found a match with at most 3 character differences, use it
+            if best_distance <= 3:
+                vehicle_id = best_match_id
 
         if not vehicle_id:
             # Fallback scan lookup by model matching in database
