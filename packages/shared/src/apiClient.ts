@@ -92,6 +92,50 @@ export function createApiClient(baseUrl: string) {
       return res.json();
     },
 
+    async scanPlateImage(fileBlob: Blob): Promise<ScanResult> {
+      const isRNFile = typeof fileBlob === 'object' && fileBlob !== null && 'uri' in (fileBlob as any);
+
+      if (isRNFile) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `${cleanUrl}/api/scan/plate`);
+
+          const formData = new FormData();
+          formData.append('file', fileBlob as any);
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                resolve(JSON.parse(xhr.responseText));
+              } catch (e) {
+                resolve(xhr.responseText as any);
+              }
+            } else {
+              reject(new Error(`License plate scanning failed with status ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => {
+            reject(new Error('License plate scanning failed due to network error'));
+          };
+
+          xhr.send(formData);
+        });
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileBlob, 'plate.jpg');
+
+      const res = await fetch(`${cleanUrl}/api/scan/plate`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        throw new Error('License plate scanning failed');
+      }
+      return res.json();
+    },
+
     async triggerAlert(alertRequest: AlertRequest): Promise<AlertResponse> {
       const res = await fetch(`${cleanUrl}/api/alerts`, {
         method: 'POST',
