@@ -285,5 +285,155 @@
     },
     "fetchedAt": 1784816884962,
     "ttl": 86400
+  },
+  "AP39CD7821": {
+    "data": {
+      "registration_number": "AP39CD7821",
+      "owner_name": "PRIYA SHARMA",
+      "father_name": "ASHOK SHARMA",
+      "dob": "1992-01-25",
+      "gender": "F",
+      "registration_date": "2021-08-18",
+      "maker_model": "HYUNDAI MOTOR INDIA LTD / CRETA",
+      "fuel_type": "DIESEL",
+      "color": "BLACK",
+      "vehicle_category": "LMV",
+      "body_type": "SUV",
+      "manufacturing_year": "2021",
+      "seating_capacity": "5",
+      "unladen_weight": "1370",
+      "chassis_number": "MALFC81ABCD123456",
+      "engine_number": "D15CR987654",
+      "current_address": "MVP Colony, Visakhapatnam, Andhra Pradesh - 530017",
+      "insurance_company": "HDFC ERGO",
+      "insurance_policy_number": "HDFC-782145",
+      "insurance_validity": "2027-08-17",
+      "pucc_validity": "2026-10-20",
+      "fitness_validity": "2036-08-17",
+      "tax_paid_up_to": "2036-08-17",
+      "is_financed": "YES",
+      "financier_name": "HDFC BANK LTD",
+      "vehicle_id": "hyundai-creta-2021",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in front passenger door pocket. Strike corners of side windows.",
+          "location": "Front passenger door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Engine Fire",
+          "dos": [
+            "Pull over safely",
+            "Turn off engine",
+            "Evacuate all passengers",
+            "Use extinguisher from 6 feet away"
+          ],
+          "donts": [
+            "Open hood fully",
+            "Use water on electrical fire"
+          ],
+          "videoTimestamp": "10"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Right rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/bmw-740li-2012-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/bmw-740li-2012.jpg"
+    },
+    "fetchedAt": 1784817545035,
+    "ttl": 86400
+  },
+  "7XER187": {
+    "data": {
+      "registration_number": "7XER187",
+      "owner_name": "JANE DOE",
+      "father_name": "JOHN DOE SR",
+      "dob": "1985-11-20",
+      "gender": "F",
+      "registration_date": "2024-02-15",
+      "maker_model": "TOYOTA / CAMRY",
+      "fuel_type": "HYBRID",
+      "color": "GREY",
+      "vehicle_category": "LMV",
+      "body_type": "SEDAN",
+      "manufacturing_year": "2024",
+      "seating_capacity": "5",
+      "unladen_weight": "1580",
+      "chassis_number": "4T1BF1FKXRU987654",
+      "engine_number": "A25AFKS112",
+      "current_address": "1600 Amphitheatre Pkwy, Mountain View, CA 94043",
+      "insurance_company": "State Farm",
+      "insurance_policy_number": "SF-998877",
+      "insurance_validity": "2027-02-14",
+      "pucc_validity": "2026-08-14",
+      "fitness_validity": "2039-02-14",
+      "tax_paid_up_to": "2039-02-14",
+      "is_financed": "NO",
+      "financier_name": "",
+      "vehicle_id": "toyota-camry-2024",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+          "location": "Driver door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        },
+        {
+          "title": "Emergency Trunk Release",
+          "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
+          "location": "Trunk interior, left side",
+          "icon": "exit",
+          "priority": "critical"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window",
+            "Leave belongings"
+          ],
+          "donts": [
+            "Wait for water to fill",
+            "Try to open door against water pressure",
+            "Call 112 before escaping"
+          ],
+          "videoTimestamp": "45"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Left rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/toyota-camry-2024-traveler-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
+    },
+    "fetchedAt": 1784817580528,
+    "ttl": 86400
   }
 }
