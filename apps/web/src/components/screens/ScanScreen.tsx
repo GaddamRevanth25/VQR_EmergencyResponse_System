@@ -13,6 +13,10 @@ export function ScanScreen() {
   const [confidence, setConfidence] = useState(0);
   const [recognized, setRecognized] = useState(false);
   const [isFlashOn, setIsFlashOn] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isCheckingReg, setIsCheckingReg] = useState(false);
+  const [regError, setRegError] = useState<string | null>(null);
+
 
   // Mock OCR choices
   const [countryType, setCountryType] = useState<"IN" | "UK" | "US">("IN");
@@ -108,12 +112,7 @@ export function ScanScreen() {
       if (response.prediction && response.prediction.predictedClass) {
         const plateText = response.prediction.predictedClass;
         setScannedRegText(plateText);
-        setRecognized(true);
-        if (response.success && response.vehicle) {
-          setScannedVehicle(response.vehicle);
-        } else {
-          setScannedVehicle(null);
-        }
+        setIsConfirming(true);
       } else {
         setErrorMsg("Failed to read any characters from the plate.");
       }
@@ -144,44 +143,59 @@ export function ScanScreen() {
     }
   };
 
-  // Triggering the scanning simulation
-  const triggerScanCycle = () => {
-    setIsScanning(true);
-    setConfidence(0);
-    setRecognized(false);
-    setScannedRegText("");
-    setScannedVehicle(null);
 
-    let currentConfidence = 0;
-    const interval = setInterval(() => {
-      currentConfidence += Math.random() * 12 + 8;
-      if (currentConfidence >= 100) {
-        setConfidence(100);
-        setRecognized(true);
-        setIsScanning(false);
-        clearInterval(interval);
-
-        // Assign a mock OCR reading based on selected country
-        if (countryType === "IN") {
-          setScannedRegText("MH02CL0555");
-        } else if (countryType === "UK") {
-          setScannedRegText("TE57VRN");
-        } else {
-          setScannedRegText("7XER187");
-        }
-      } else {
-        setConfidence(currentConfidence);
-      }
-    }, 200);
-  };
 
   const resetScanner = () => {
     setIsScanning(false);
     setConfidence(0);
     setRecognized(false);
+    setIsConfirming(false);
+    setIsCheckingReg(false);
+    setRegError(null);
     setScannedRegText("");
     setScannedVehicle(null);
     setErrorMsg(null);
+  };
+
+  const handleConfirmLookup = async () => {
+    if (!scannedRegText.trim()) return;
+    setIsCheckingReg(true);
+    setRegError(null);
+    try {
+      const response = await apiClient.lookupRegistration(scannedRegText);
+      const vehicleId = response.vehicleId;
+      const regNumber = response.registrationNumber;
+      const title = `${response.make} ${response.model} (${response.year})`;
+      
+      const saved = localStorage.getItem("vqr_recent_searches");
+      let recent = [];
+      if (saved) {
+        try { recent = JSON.parse(saved); } catch (e) {}
+      }
+      const searchItem = {
+        id: vehicleId,
+        title: title,
+        type: "scan",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+        params: { reg: regNumber }
+      };
+      const updated = [searchItem, ...recent.filter((s: any) => s.id !== vehicleId)].slice(0, 10);
+      localStorage.setItem("vqr_recent_searches", JSON.stringify(updated));
+
+      navigate(`/results/${vehicleId}?reg=${encodeURIComponent(regNumber)}`);
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.message || "";
+      const isNetwork = errMsg.toLowerCase().includes("fetch") || errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("failed");
+      setRegError(
+        isNetwork
+          ? "Network Connection Error: Failed to reach backend server. Make sure your FastAPI backend is running and listening on --host 0.0.0.0."
+          : errMsg || "Failed to find matching vehicle details. Verify plate and try again."
+      );
+    } finally {
+      setIsCheckingReg(false);
+    }
   };
 
   // Handle viewing the matched results from simulated OCR lookup
@@ -344,14 +358,14 @@ export function ScanScreen() {
                 <span
                   key={index}
                   className={`w-6 h-8 flex items-center justify-center font-mono text-sm font-black rounded border transition-all duration-300 ${
-                    recognized
+                    recognized || isConfirming
                       ? "bg-cyan-500 border-cyan-400 text-slate-950 scale-105"
                       : isActive
                       ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 scale-102"
                       : "bg-slate-950/60 border-slate-800 text-slate-600"
                   }`}
                 >
-                  {isActive || recognized ? char : "?"}
+                  {isActive || recognized || isConfirming ? char : "?"}
                 </span>
               );
             })}
@@ -378,7 +392,53 @@ export function ScanScreen() {
             </div>
           )}
 
-          {recognized ? (
+          {isConfirming ? (
+            <div className="bg-slate-900/95 border border-cyan-500/35 backdrop-blur-xl rounded-2xl p-4 mb-4 fade-in-up shadow-2xl text-center">
+              <div className="mx-auto grid size-9 place-items-center rounded-full bg-cyan-500/10 text-cyan-400 mb-2">
+                <ShieldCheck size={20} />
+              </div>
+              <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block">Verify Registration Number</span>
+              
+              <div className="mt-3 px-4">
+                <input
+                  type="text"
+                  value={scannedRegText}
+                  onChange={(e) => setScannedRegText(e.target.value.toUpperCase())}
+                  className="w-full text-center text-xl font-mono font-black tracking-widest text-white bg-slate-950/60 border border-slate-700 rounded-xl px-3 py-2.5 outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              {regError && (
+                <p className="text-xs text-red-400 font-bold mt-3 px-2 leading-relaxed">{regError}</p>
+              )}
+
+              <p className="text-[10px] text-slate-400 mt-2">Verify or edit the scanned number plate characters.</p>
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={resetScanner}
+                  disabled={isCheckingReg}
+                  className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer disabled:opacity-50"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleConfirmLookup}
+                  disabled={isCheckingReg || !scannedRegText.trim()}
+                  className="flex-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-cyan-600/20 transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {isCheckingReg ? (
+                    <>
+                      <span className="size-3.5 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
+                      CHECKING...
+                    </>
+                  ) : (
+                    "CONFIRM"
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : recognized ? (
             <div className="bg-slate-900/95 border border-cyan-500/35 backdrop-blur-xl rounded-2xl p-4 mb-4 fade-in-up shadow-2xl text-center">
               <div className="mx-auto grid size-9 place-items-center rounded-full bg-cyan-500/10 text-cyan-400 mb-2">
                 <ShieldCheck size={20} />

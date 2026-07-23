@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
-from ...schemas.vehicle import Vehicle, LookupRequest, LookupResponse
+from ...schemas.vehicle import Vehicle, LookupRequest, LookupResponse, RegistrationLookupRequest, RegistrationLookupResponse
 from ...services.vehicle_service import VehicleService
+from ...services.registration_lookup_service import RegistrationLookupService
 
 router = APIRouter(tags=["vehicles"])
 
@@ -47,3 +48,8 @@ def get_vehicle(vehicle_id: str):
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
     return vehicle
+
+@router.post("/vehicles/registration/lookup", response_model=RegistrationLookupResponse)
+def lookup_registration(request: RegistrationLookupRequest):
+    return RegistrationLookupService.lookup_registration(request.registration_number)
+
