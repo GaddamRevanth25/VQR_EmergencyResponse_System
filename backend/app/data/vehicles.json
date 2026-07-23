@@ -258,5 +258,224 @@
     ],
     "videoUrl": "/videos/yamaha-boat-safety.mp4",
     "thumbnailUrl": "/videos/thumbnails/yamaha-boat.jpg"
+  },
+  {
+    "id": "maruti-suzuki-baleno-2022",
+    "vehicleType": "CAR",
+    "make": "Maruti Suzuki",
+    "model": "Baleno",
+    "year": 2022,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Glass Hammer",
+        "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+        "location": "Driver door pocket",
+        "icon": "hammer",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Vehicle Submersion",
+        "dos": [
+          "Unbuckle immediately",
+          "Open window before water rises",
+          "Escape through window"
+        ],
+        "donts": [
+          "Wait for water to fill",
+          "Try to open door against water pressure"
+        ],
+        "videoTimestamp": "15"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
+  },
+  {
+    "id": "hyundai-creta-2021",
+    "vehicleType": "CAR",
+    "make": "Hyundai",
+    "model": "Creta",
+    "year": 2021,
+    "fuelType": "DIESEL",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Glass Hammer",
+        "description": "Located in front passenger door pocket. Strike corners of side windows.",
+        "location": "Front passenger door pocket",
+        "icon": "hammer",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Engine Fire",
+        "dos": [
+          "Pull over safely",
+          "Turn off engine",
+          "Evacuate all passengers",
+          "Use extinguisher from 6 feet away"
+        ],
+        "donts": [
+          "Open hood fully",
+          "Use water on electrical fire"
+        ],
+        "videoTimestamp": "10"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/bmw-740li-2012.jpg"
+  },
+  {
+    "id": "tata-nexon-2020",
+    "vehicleType": "CAR",
+    "make": "Tata",
+    "model": "Nexon",
+    "year": 2020,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Glass Hammer",
+        "description": "Located in driver's door pocket. Strike corners of side windows.",
+        "location": "Driver door pocket",
+        "icon": "hammer",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Vehicle Submersion",
+        "dos": [
+          "Unbuckle immediately",
+          "Open window before water rises",
+          "Escape through window"
+        ],
+        "donts": [
+          "Wait for water to fill"
+        ],
+        "videoTimestamp": "20"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
+  },
+  {
+    "id": "toyota-innova-crysta-2019",
+    "vehicleType": "CAR",
+    "make": "Toyota",
+    "model": "Innova Crysta",
+    "year": 2019,
+    "fuelType": "DIESEL",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Glass Hammer",
+        "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+        "location": "Driver door pocket",
+        "icon": "hammer",
+        "priority": "high"
+      },
+      {
+        "title": "Emergency Trunk Release",
+        "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
+        "location": "Trunk interior, left side",
+        "icon": "exit",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Vehicle Submersion",
+        "dos": [
+          "Unbuckle immediately",
+          "Open window before water rises",
+          "Escape through window"
+        ],
+        "donts": [
+          "Wait for water to fill",
+          "Try to open door against water pressure"
+        ],
+        "videoTimestamp": "45"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
+  },
+  {
+    "id": "mahindra-xuv700-2023",
+    "vehicleType": "CAR",
+    "make": "Mahindra",
+    "model": "XUV700",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Glass Hammer",
+        "description": "Located in front passenger door pocket. Strike corners of side windows.",
+        "location": "Front passenger door pocket",
+        "icon": "hammer",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Engine Fire",
+        "dos": [
+          "Pull over safely",
+          "Turn off engine",
+          "Evacuate all passengers",
+          "Use extinguisher from 6 feet away"
+        ],
+        "donts": [
+          "Open hood fully",
+          "Use water on electrical fire"
+        ],
+        "videoTimestamp": "10"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [
+          { "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }
+        ]
+      }
+    ],
+    "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/bmw-740li-2012.jpg"
   }
 ]
+

@@ -13,6 +13,7 @@ for detection in detections:
     x1, y1, x2, y2 = detection["bbox"]
 
     plate = image[y1:y2, x1:x2]
+    cv2.imwrite("cropped_plate.jpg", plate)
 
     text, confidence = plate_ocr_service.read_plate(plate)
 

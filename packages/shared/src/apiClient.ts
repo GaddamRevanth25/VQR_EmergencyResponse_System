@@ -1,4 +1,4 @@
-import type { Vehicle, ScanResult, AlertRequest, AlertResponse, LookupResponse } from './types';
+import type { Vehicle, ScanResult, AlertRequest, AlertResponse, LookupResponse, RegistrationLookupResponse } from './types';
 
 export function createApiClient(baseUrl: string) {
   const cleanUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
@@ -33,6 +33,21 @@ export function createApiClient(baseUrl: string) {
       }
       return res.json();
     },
+
+    async lookupRegistration(registrationNumber: string): Promise<RegistrationLookupResponse> {
+      const res = await fetch(`${cleanUrl}/api/vehicles/registration/lookup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ registrationNumber }),
+      });
+      if (!res.ok) {
+        throw new Error('Vehicle details not found for specified registration number');
+      }
+      return res.json();
+    },
+
 
     async lookupByDropdown(make: string, model: string, year: number): Promise<Vehicle> {
       const res = await fetch(`${cleanUrl}/api/vehicles/lookup/dropdown?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&year=${year}`);

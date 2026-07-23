@@ -1,0 +1,289 @@
+{
+  "TS09AB4567": {
+    "data": {
+      "registration_number": "TS09AB4567",
+      "owner_name": "RAHUL REDDY",
+      "father_name": "SURESH REDDY",
+      "dob": "1995-09-18",
+      "gender": "M",
+      "registration_date": "2022-03-11",
+      "maker_model": "MARUTI SUZUKI INDIA LTD / BALENO",
+      "fuel_type": "PETROL",
+      "color": "PEARL WHITE",
+      "vehicle_category": "LMV",
+      "body_type": "HATCHBACK",
+      "manufacturing_year": "2022",
+      "seating_capacity": "5",
+      "unladen_weight": "935",
+      "chassis_number": "MA3EJKL12AB987654",
+      "engine_number": "K15BN7654321",
+      "current_address": "12-5-87, Road No. 3, Kukatpally, Hyderabad - 500072",
+      "insurance_company": "ICICI Lombard General Insurance",
+      "insurance_policy_number": "ICICI-TS09AB4567-2026",
+      "insurance_validity": "2027-03-10",
+      "pucc_validity": "2026-12-31",
+      "fitness_validity": "2037-03-10",
+      "tax_paid_up_to": "2037-03-10",
+      "is_financed": "YES",
+      "financier_name": "State Bank of India",
+      "vehicle_id": "maruti-suzuki-baleno-2022",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+          "location": "Driver door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window"
+          ],
+          "donts": [
+            "Wait for water to fill",
+            "Try to open door against water pressure"
+          ],
+          "videoTimestamp": "15"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Left rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/toyota-camry-2024-traveler-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
+    },
+    "fetchedAt": 1784814904531,
+    "ttl": 86400
+  },
+  "TN10PQ2211": {
+    "data": {
+      "registration_number": "TN10PQ2211",
+      "owner_name": "SANTHOSH KUMAR",
+      "father_name": "MURUGAN",
+      "dob": "1990-04-14",
+      "gender": "M",
+      "registration_date": "2019-07-26",
+      "maker_model": "TOYOTA KIRLOSKAR / INNOVA CRYSTA",
+      "fuel_type": "DIESEL",
+      "color": "WHITE",
+      "vehicle_category": "LMV",
+      "body_type": "MUV",
+      "manufacturing_year": "2019",
+      "seating_capacity": "7",
+      "unladen_weight": "1785",
+      "chassis_number": "MBJGH12345TY78901",
+      "engine_number": "GD987654321",
+      "current_address": "Anna Nagar, Chennai, Tamil Nadu - 600040",
+      "insurance_company": "New India Assurance",
+      "insurance_policy_number": "NIA-445566",
+      "insurance_validity": "2027-06-15",
+      "pucc_validity": "2026-12-05",
+      "fitness_validity": "2034-07-25",
+      "tax_paid_up_to": "2034-07-25",
+      "is_financed": "YES",
+      "financier_name": "Axis Bank",
+      "vehicle_id": "toyota-innova-crysta-2019",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+          "location": "Driver door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        },
+        {
+          "title": "Emergency Trunk Release",
+          "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
+          "location": "Trunk interior, left side",
+          "icon": "exit",
+          "priority": "critical"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window"
+          ],
+          "donts": [
+            "Wait for water to fill",
+            "Try to open door against water pressure"
+          ],
+          "videoTimestamp": "45"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Left rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/toyota-camry-2024-traveler-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
+    },
+    "fetchedAt": 1784816007762,
+    "ttl": 86400
+  },
+  "MH12ZX6543": {
+    "data": {
+      "registration_number": "MH12ZX6543",
+      "owner_name": "ANJALI DESHMUKH",
+      "father_name": "PRADEEP DESHMUKH",
+      "dob": "1998-12-03",
+      "gender": "F",
+      "registration_date": "2023-01-12",
+      "maker_model": "MAHINDRA & MAHINDRA / XUV700",
+      "fuel_type": "PETROL",
+      "color": "RED",
+      "vehicle_category": "LMV",
+      "body_type": "SUV",
+      "manufacturing_year": "2023",
+      "seating_capacity": "7",
+      "unladen_weight": "1755",
+      "chassis_number": "MA1XUV700ABC98765",
+      "engine_number": "TGDI123987",
+      "current_address": "Baner, Pune, Maharashtra - 411045",
+      "insurance_company": "TATA AIG",
+      "insurance_policy_number": "TATAAIG-654321",
+      "insurance_validity": "2028-01-11",
+      "pucc_validity": "2027-01-11",
+      "fitness_validity": "2038-01-11",
+      "tax_paid_up_to": "2038-01-11",
+      "is_financed": "YES",
+      "financier_name": "ICICI Bank",
+      "vehicle_id": "mahindra-xuv700-2023",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in front passenger door pocket. Strike corners of side windows.",
+          "location": "Haert",
+          "icon": "hammer",
+          "priority": "high"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Engine Fire",
+          "dos": [
+            "Pull over safely",
+            "Turn off engine",
+            "Evacuate all passengers",
+            "Use extinguisher from 6 feet away"
+          ],
+          "donts": [
+            "Open hood fully",
+            "Use water on electrical fire"
+          ],
+          "videoTimestamp": "10"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Right rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/bmw-740li-2012-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/bmw-740li-2012.jpg"
+    },
+    "fetchedAt": 1784816139301,
+    "ttl": 86400
+  },
+  "MH02CL0555": {
+    "data": {
+      "registration_number": "MH02CL0555",
+      "owner_name": "PRIYA SHARMA",
+      "father_name": "ASHOK SHARMA",
+      "dob": "1992-01-25",
+      "gender": "F",
+      "registration_date": "2012-04-15",
+      "maker_model": "BMW / 740LI",
+      "fuel_type": "PETROL",
+      "color": "BLACK",
+      "vehicle_category": "LMV",
+      "body_type": "SEDAN",
+      "manufacturing_year": "2012",
+      "seating_capacity": "5",
+      "unladen_weight": "1910",
+      "chassis_number": "WBAFR7C57CC811956",
+      "engine_number": "N54B30A",
+      "current_address": "MVP Colony, Visakhapatnam, Andhra Pradesh - 530017",
+      "insurance_company": "TATA AIG",
+      "insurance_policy_number": "TATAAIG-88339",
+      "insurance_validity": "2027-04-14",
+      "pucc_validity": "2026-10-14",
+      "fitness_validity": "2027-04-14",
+      "tax_paid_up_to": "2027-04-14",
+      "is_financed": "NO",
+      "financier_name": "",
+      "vehicle_id": "bmw-740li-2012",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in front passenger door pocket. Strike corners of side windows.",
+          "location": "Front passenger door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window"
+          ],
+          "donts": [
+            "Wait for water to fill"
+          ],
+          "videoTimestamp": "30"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Right rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/bmw-740li-2012-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/bmw-740li-2012.jpg"
+    },
+    "fetchedAt": 1784816884962,
+    "ttl": 86400
+  }
+}

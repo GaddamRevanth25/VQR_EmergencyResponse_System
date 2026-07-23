@@ -41,7 +41,7 @@ class PlateOCR:
 
         plate = add_padding(plate_image)
 
-        plate = preprocess_plate(plate)
+        # plate = preprocess_plate(plate)
 
         result = self.reader.ocr(
             plate,
@@ -54,8 +54,11 @@ class PlateOCR:
         if len(result) == 0:
             return None, 0
 
-        best_text = None
-        best_confidence = 0
+        print("\nRAW OCR RESULT:")
+        print(result)
+
+        texts = []
+        confidences = []
 
         for line in result:
 
@@ -67,23 +70,29 @@ class PlateOCR:
                 text = item[1][0]
                 confidence = float(item[1][1])
 
-                cleaned = clean_plate_text(text)
+                texts.append(text)
+                confidences.append(confidence)
 
-                if cleaned is None:
-                    continue
-
-                if confidence > best_confidence:
-                    best_confidence = confidence
-                    best_text = cleaned
-
-        if best_text is None:
+        if not texts:
             return None, 0
 
+        # Join all OCR fragments
+        combined_text = "".join(texts)
+
+        print("Combined OCR :", combined_text)
+
+        cleaned = clean_plate_text(combined_text)
+
+        if cleaned is None:
+            return None, 0
+
+        average_confidence = sum(confidences) / len(confidences)
+
         logger.info(
-            f"OCR Result : {best_text} ({best_confidence:.2f})"
+            f"OCR Result : {cleaned} ({average_confidence:.2f})"
         )
 
-        return best_text, best_confidence
+        return cleaned, average_confidence
 
 
 plate_ocr_service = PlateOCR()
