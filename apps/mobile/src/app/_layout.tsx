@@ -8,6 +8,7 @@ import VQRSplashScreen from '@/components/auth/splash-screen';
 import VQRLoginScreen from '@/components/auth/login-screen';
 import VQRRegisterScreen from '@/components/auth/register-screen';
 import VQRTwoFactorScreen from '@/components/auth/two-factor-screen';
+import VQRVerifyEmailScreen from '@/components/auth/verify-email-screen';
 import AppTabs from '@/components/app-tabs';
 
 SplashScreen.preventAutoHideAsync();
@@ -15,6 +16,9 @@ SplashScreen.preventAutoHideAsync();
 function RootLayoutContent() {
   const { authState, setAuthState, isInitialized, loginSession, resolvedTheme } = useThemeAndAuth();
   const [regSuccessMsg, setRegSuccessMsg] = React.useState('');
+
+  const [tempToken, setTempToken] = React.useState('');
+  const [emailAddress, setEmailAddress] = React.useState('');
 
   // Hide the native splash screen as soon as state hydration completes
   useEffect(() => {
@@ -31,36 +35,29 @@ function RootLayoutContent() {
     setAuthState('login');
   };
 
-  const handleLoginSuccess = () => {
-    setAuthState('two-factor');
+  const handleLoginSuccess = (requires2fa: boolean, token?: string, email?: string, user?: any) => {
+    if (requires2fa && token && email) {
+      setTempToken(token);
+      setEmailAddress(email);
+      setAuthState('two-factor');
+    } else if (user) {
+      loginSession(user);
+    }
   };
 
-  const handleRegisterSuccess = (msg: string) => {
-    setRegSuccessMsg(msg);
+  const handleRegisterSuccess = (email: string) => {
+    setEmailAddress(email);
+    setRegSuccessMsg('Registration successful! Please confirm your email address.');
+    setAuthState('verify-email');
+  };
+
+  const handleVerifySuccess = (user: any) => {
+    loginSession(user);
+  };
+
+  const handleEmailVerifySuccess = () => {
+    setRegSuccessMsg('Email confirmed! You can now log in.');
     setAuthState('login');
-  };
-
-  const handleVerifySuccess = async () => {
-    try {
-      const savedUser = await AsyncStorage.getItem('@vqr_registered_user');
-      if (savedUser) {
-        const parsedUser = JSON.parse(savedUser);
-        loginSession(parsedUser);
-        return;
-      }
-    } catch (e) {}
-
-    // Save persistent user session on successful token/passkey verification
-    loginSession({
-      name: 'Officer Davis',
-      email: 'davis@vqr-response.gov',
-      phone: '+91 88xxx xx921',
-      role: 'Primary First Responder',
-      emergencyContactName: 'Jane Doe',
-      emergencyContactPhone: '+91 99xxx xx111',
-      emergencyContactRelation: 'Spouse',
-      bloodGroup: 'O+'
-    });
   };
 
   return (
@@ -73,6 +70,10 @@ function RootLayoutContent() {
         <VQRLoginScreen
           onLoginSuccess={handleLoginSuccess}
           onGoToRegister={() => setAuthState('register')}
+          onGoToVerifyEmail={(email) => {
+            setEmailAddress(email);
+            setAuthState('verify-email');
+          }}
           registrationSuccessMsg={regSuccessMsg}
           clearSuccessMsg={() => setRegSuccessMsg('')}
         />
@@ -85,8 +86,18 @@ function RootLayoutContent() {
         />
       )}
 
+      {authState === 'verify-email' && (
+        <VQRVerifyEmailScreen
+          email={emailAddress}
+          onVerifySuccess={handleEmailVerifySuccess}
+          onGoBack={() => setAuthState('register')}
+        />
+      )}
+
       {authState === 'two-factor' && (
         <VQRTwoFactorScreen
+          email={emailAddress}
+          tempToken={tempToken}
           onVerifySuccess={handleVerifySuccess}
           onGoBack={() => setAuthState('login')}
         />

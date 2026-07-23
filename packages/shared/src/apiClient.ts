@@ -1,4 +1,20 @@
-import type { Vehicle, ScanResult, AlertRequest, AlertResponse, LookupResponse, RegistrationLookupResponse } from './types';
+import type {
+  Vehicle,
+  ScanResult,
+  AlertRequest,
+  AlertResponse,
+  LookupResponse,
+  RegistrationLookupResponse,
+  UserLoginPayload,
+  UserRegisterPayload,
+  ConfirmEmailPayload,
+  RequestOtpPayload,
+  Verify2faPayload,
+  ResendVerificationEmailPayload,
+  Resend2faCodePayload,
+  TokenResponse,
+  UserResponse,
+} from './types';
 
 export function createApiClient(baseUrl: string) {
   const cleanUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
@@ -9,7 +25,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('Failed to fetch vehicles list');
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async getVehicle(id: string): Promise<Vehicle> {
@@ -17,7 +33,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error(`Failed to fetch vehicle with ID: ${id}`);
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async lookupVehicle(vin: string, country?: string): Promise<LookupResponse> {
@@ -31,7 +47,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('Vehicle not found for specified VIN/plate');
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async lookupRegistration(registrationNumber: string): Promise<RegistrationLookupResponse> {
@@ -45,7 +61,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('Vehicle details not found for specified registration number');
       }
-      return res.json();
+      return res.json() as any;
     },
 
 
@@ -54,7 +70,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('Vehicle not found for specified make, model, and year');
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async getMakes(vehicleType?: string): Promise<string[]> {
@@ -65,7 +81,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('Failed to fetch makes list');
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async getModels(make: string, vehicleType?: string): Promise<string[]> {
@@ -76,7 +92,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error(`Failed to fetch models for make: ${make}`);
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async getYears(make: string, model: string, vehicleType?: string): Promise<number[]> {
@@ -87,7 +103,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error(`Failed to fetch years for ${make} ${model}`);
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async scanVehicle(
@@ -104,7 +120,7 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('QR Code scan action failed');
       }
-      return res.json();
+      return res.json() as any;
     },
 
     async scanPlateImage(fileBlob: Blob): Promise<ScanResult> {
@@ -112,7 +128,7 @@ export function createApiClient(baseUrl: string) {
 
       if (isRNFile) {
         return new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
+          const xhr = new (globalThis as any).XMLHttpRequest();
           xhr.open('POST', `${cleanUrl}/api/scan/plate`);
 
           const formData = new FormData();
@@ -148,23 +164,73 @@ export function createApiClient(baseUrl: string) {
       if (!res.ok) {
         throw new Error('License plate scanning failed');
       }
-      return res.json();
+      return res.json() as any;
     },
 
-    async triggerAlert(alertRequest: AlertRequest): Promise<AlertResponse> {
-      const res = await fetch(`${cleanUrl}/api/alerts`, {
+    async _post(path: string, body: any, token?: string) {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${cleanUrl}${path}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(alertRequest),
+        headers,
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
-        throw new Error('Alert dispatch failed');
+        let msg = 'Request failed';
+        try {
+          const errData = await res.json() as any;
+          msg = errData.detail || errData.message || msg;
+        } catch (e) {}
+        throw new Error(msg);
       }
-      return res.json();
+      return res.json() as any;
+    },
+
+    async triggerAlert(payload: AlertRequest): Promise<AlertResponse> {
+      return this._post('/api/alerts', payload);
+    },
+
+    async register(payload: UserRegisterPayload): Promise<UserResponse> {
+      return this._post('/api/auth/register', payload);
+    },
+
+    async login(payload: UserLoginPayload): Promise<TokenResponse> {
+      return this._post('/api/auth/login', payload);
+    },
+
+    async confirmEmail(payload: ConfirmEmailPayload): Promise<UserResponse> {
+      return this._post('/api/auth/confirm-email', payload);
+    },
+
+    async registerBiometric(payload: { email: string; biometricPublicKey: string }): Promise<UserResponse> {
+      return this._post('/api/auth/register-biometric', payload);
+    },
+
+    async requestOtp(payload: RequestOtpPayload): Promise<{ status: string; message: string }> {
+      return this._post('/api/auth/request-otp', payload);
+    },
+
+    async verify2fa(payload: Verify2faPayload): Promise<TokenResponse> {
+      return this._post('/api/auth/verify-2fa', payload);
+    },
+
+    async resendVerificationEmail(payload: ResendVerificationEmailPayload): Promise<{ status: string; message: string }> {
+      return this._post('/api/auth/resend-verification-email', payload);
+    },
+
+    async resend2faCode(payload: Resend2faCodePayload): Promise<{ status: string; message: string }> {
+      return this._post('/api/auth/resend-2fa-code', payload);
+    },
+
+    async toggle2fa(payload: { enabled: boolean }, token: string): Promise<UserResponse> {
+      return this._post('/api/auth/toggle-2fa', payload, token);
     },
   };
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
+

@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routes import vehicles, scan, alerts
+from .api.routes import vehicles, scan, alerts, auth
+from .core.database import engine, Base
+from .models.user import User  # noqa: F401 – ensure model is registered with Base
+
+# Create all database tables on startup (no-op if they already exist)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="VQR Emergency Response API",
@@ -27,6 +32,7 @@ app.add_middleware(
 from fastapi.staticfiles import StaticFiles
 import os
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
 app.include_router(scan.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
@@ -43,3 +49,4 @@ def read_root():
         "service": "VQR Emergency Response System",
         "documentation": "/docs"
     }
+

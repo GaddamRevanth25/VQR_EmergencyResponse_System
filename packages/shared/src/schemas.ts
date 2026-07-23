@@ -126,3 +126,50 @@ export const ScanResultSchema = z.object({
   prediction: MLPredictionSchema.optional(),
   timestamp: z.string(),
 });
+
+export const UserLoginSchema = z.object({
+  loginType: z.enum(['email_password', 'phone_otp', 'biometric']),
+  email: z.string().email().optional(),
+  password: z.string().optional(),
+  phone: z.string().optional(),
+  otp: z.string().optional(),
+  biometricToken: z.string().optional(),
+  deviceId: z.string().optional(),
+});
+
+export const UserRegisterSchema = z.object({
+  email: z.string().email(),
+  name: z.string(),
+  phone: z.string(),
+  role: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelation: z.string().optional(),
+  password: z.string(),
+});
+
+export const ConfirmEmailSchema = z.object({
+  email: z.string().email(),
+  code: z.string(),
+});
+
+export const RequestOtpSchema = z.object({
+  phone: z.string(),
+});
+
+export const Verify2faSchema = z.object({
+  email: z.string().email(),
+  code: z.string(),
+  tempToken: z.string(),
+});
+
+export const ResendVerificationEmailSchema = z.object({
+  email: z.string().email(),
+});
+
+export const Resend2faCodeSchema = z.object({
+  email: z.string().email(),
+  tempToken: z.string(),
+});
+

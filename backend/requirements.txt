@@ -7,14 +7,20 @@ torch
 torchvision
 opencv-python-headless<5.0.0
 Pillow
-numpy<2.0.0
+numpy
 onnxruntime               # optional production inference
 scikit-learn              # crash model + utilities
 keras
 cv
 tensorflow
-scikit-image<0.24.0
-scipy<1.14.0
+scikit-image
+scipy
 imutils
-paddleocr==2.7.3
-paddlepaddle==2.6.2
+paddleocr
+paddlepaddle>=3.0.0
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+pyjwt
+email-validator
+twilio

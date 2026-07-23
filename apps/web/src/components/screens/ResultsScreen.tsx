@@ -76,7 +76,7 @@ const FALLBACK_VEHICLE: Vehicle = {
 
 export function ResultsScreen() {
   const { id } = useParams<{ id: string }>();
-  const [vehicle, setVehicle] = useState<any>(FALLBACK_VEHICLE);
+  const [vehicle, setVehicle] = useState<Vehicle>(FALLBACK_VEHICLE);
   const [activeTab, setActiveTab] = useState<"safety" | "guides" | "features" | "video">("safety");
   const [loading, setLoading] = useState(true);
   const [playingVideo, setPlayingVideo] = useState(false);
@@ -86,16 +86,9 @@ export function ResultsScreen() {
     async function loadVehicle() {
       setLoading(true);
       try {
-        const queryParams = new URLSearchParams(window.location.search);
-        const regParam = queryParams.get("reg");
-        if (regParam) {
-          const data = await apiClient.lookupRegistration(regParam);
-          setVehicle(data);
-        } else {
-          const vehicleId = id || "toyota-camry-2024";
-          const data = await apiClient.getVehicle(vehicleId);
-          setVehicle(data);
-        }
+        const vehicleId = id || "toyota-camry-2024";
+        const data = await apiClient.getVehicle(vehicleId);
+        setVehicle(data);
       } catch (err) {
         console.warn("Failed to load vehicle, defaulting to Camry simulation:", err);
         setVehicle(FALLBACK_VEHICLE);
@@ -151,35 +144,27 @@ export function ResultsScreen() {
 
   return (
     <PhoneShell title="VEHICLE SAFETY GUIDE">
-      <div className="relative min-h-[720px] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-500 flex flex-col">
+      <div className="relative min-h-[720px] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white pb-28 transition-colors duration-500 flex flex-col">
         {/* Results Header */}
-        <div className="bg-slate-950 p-6 text-white border-b border-white/5 rounded-b-[2rem] shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <Link to="/app" className="grid size-10 place-items-center rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 transition">
+        <div className="bg-slate-950 p-5 text-white border-b border-white/5">
+          <div className="flex items-center gap-3 mb-3">
+            <Link to="/app" className="grid size-9 place-items-center rounded-xl bg-white/10 hover:bg-white/20 transition">
               <ArrowLeft className="text-white" size={16} />
             </Link>
-            <p className="font-mono text-[10px] text-cyan-400 uppercase tracking-widest font-black">VEHICLE PROFILE</p>
+            <p className="font-mono text-xs text-cyan-400 uppercase tracking-widest">VEHICLE PROFILE</p>
           </div>
           
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-black leading-tight tracking-tight">{vehicle.make} {vehicle.model}</h2>
-              <p className="text-xs text-slate-400 font-bold mt-1">{vehicle.year} Model Year</p>
-              {vehicle.registrationNumber && (
-                <div className="inline-block bg-cyan-950/40 border border-cyan-800/30 rounded-lg px-2.5 py-1 mt-2.5">
-                  <p className="text-[11px] text-cyan-400 font-mono font-bold tracking-wider">REG: {vehicle.registrationNumber}</p>
-                </div>
-              )}
-              {vehicle.ownerName && (
-                <p className="text-xs text-slate-300 mt-2 font-medium">Owner: {vehicle.ownerName}</p>
-              )}
+              <h2 className="text-2xl font-black leading-tight">{vehicle.make} {vehicle.model}</h2>
+              <p className="text-xs text-slate-400 font-semibold">{vehicle.year} Model Year</p>
             </div>
             <Badge tone="green">{vehicle.fuelType}</Badge>
           </div>
         </div>
 
         {/* Tab Selector Row */}
-        <div className="flex border-b border-slate-200/60 dark:border-white/10 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+        <div className="flex border-b border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-900 sticky top-0 z-20">
           {[
             { id: "safety", label: "Safety Tools" },
             { id: "guides", label: "Emergency do's" },
@@ -189,7 +174,7 @@ export function ResultsScreen() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 py-4 text-center text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
+              className={`flex-1 py-3 text-center text-xs font-extrabold uppercase tracking-wider transition-all border-b-2 ${
                 activeTab === tab.id
                   ? "border-blue-600 text-blue-600 dark:border-cyan-400 dark:text-cyan-400"
                   : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -201,30 +186,26 @@ export function ResultsScreen() {
         </div>
 
         {/* Tab Contents Viewport */}
-        <div className="p-6 flex-1 overflow-y-auto space-y-6 pb-24">
+        <div className="p-5 flex-1 overflow-y-auto">
           {/* TAB 1: SAFETY FEATURES */}
           {activeTab === "safety" && (
-            <div className="space-y-6 animate-fade-in-up">
-              <div>
-                <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100">Your Safety Equipment</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Location guide for passenger safety items in this vehicle.</p>
-              </div>
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">Your Safety Equipment</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Location guide for passenger safety items in this vehicle.</p>
               
-              <div className="grid gap-6 sm:grid-cols-2">
-                {vehicle.safetyFeatures.map((f: any, i: number) => (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {vehicle.safetyFeatures.map((f, i) => (
                   <div 
                     key={i}
-                    className="flex gap-5 p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-sm hover:shadow-md transition-all duration-300"
+                    className="flex gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm"
                   >
-                    <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-xl">
+                    <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800">
                       {renderIcon(f.icon)}
                     </div>
-                    <div className="space-y-1.5">
-                      <h4 className="font-extrabold text-base text-slate-800 dark:text-slate-100">{f.title}</h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{f.description}</p>
-                      <div className="inline-block bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg mt-2">
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider font-semibold">📍 Location: {f.location}</span>
-                      </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{f.title}</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">{f.description}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-mono uppercase tracking-wider">📍 Location: {f.location}</p>
                     </div>
                   </div>
                 ))}
@@ -234,32 +215,30 @@ export function ResultsScreen() {
 
           {/* TAB 2: EMERGENCY GUIDES */}
           {activeTab === "guides" && (
-            <div className="space-y-6 animate-fade-in-up">
-              <div>
-                <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100">“What do I do if...”</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Critical step-by-step passenger emergency guides.</p>
-              </div>
+            <div className="space-y-5 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">“What do I do if...”</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Critical step-by-step passenger emergency guides.</p>
 
-              {vehicle.emergencyProcedures.map((guide: any, idx: number) => (
+              {vehicle.emergencyProcedures.map((guide, idx) => (
                 <div 
                   key={idx}
-                  className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/40 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                  className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm"
                 >
-                  <div className="bg-slate-100/70 dark:bg-slate-800/60 px-6 py-4 border-b border-slate-200/80 dark:border-white/5 flex items-center gap-2">
-                    <Compass className="text-cyan-500 size-5" />
-                    <h4 className="font-black text-base text-slate-800 dark:text-slate-100">{guide.scenario}</h4>
+                  <div className="bg-slate-100 dark:bg-slate-800 px-4 py-3 border-b border-slate-200 dark:border-white/5 flex items-center gap-2">
+                    <Compass className="text-cyan-500 size-4" />
+                    <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">{guide.scenario}</h4>
                   </div>
-                  <div className="p-6 grid gap-6 sm:grid-cols-2">
+                  <div className="p-4 grid gap-4 sm:grid-cols-2">
                     {/* Do's List */}
-                    <div className="space-y-3 p-4 rounded-2xl bg-green-500/5 border border-green-500/10">
-                      <div className="flex items-center gap-2 text-xs font-black uppercase text-green-600 dark:text-green-400 tracking-wider">
-                        <CheckCircle size={15} />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-black uppercase text-green-600 dark:text-green-400 tracking-wider">
+                        <CheckCircle size={14} />
                         <span>What to Do</span>
                       </div>
-                      <ul className="space-y-2">
-                        {guide.dos.map((item: string, i: number) => (
+                      <ul className="space-y-1.5">
+                        {guide.dos.map((item, i) => (
                           <li key={i} className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed flex items-start gap-2">
-                            <span className="text-green-500 font-bold select-none">•</span>
+                            <span className="text-green-500 select-none">•</span>
                             <span>{item}</span>
                           </li>
                         ))}
@@ -267,15 +246,15 @@ export function ResultsScreen() {
                     </div>
 
                     {/* Don'ts List */}
-                    <div className="space-y-3 p-4 rounded-2xl bg-red-500/5 border border-red-500/10">
-                      <div className="flex items-center gap-2 text-xs font-black uppercase text-red-600 dark:text-red-400 tracking-wider">
-                        <AlertTriangle size={15} />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-black uppercase text-red-600 dark:text-red-400 tracking-wider">
+                        <AlertTriangle size={14} />
                         <span>What NOT to Do</span>
                       </div>
-                      <ul className="space-y-2">
-                        {guide.donts.map((item: string, i: number) => (
+                      <ul className="space-y-1.5">
+                        {guide.donts.map((item, i) => (
                           <li key={i} className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed flex items-start gap-2">
-                            <span className="text-red-500 font-bold select-none">•</span>
+                            <span className="text-red-500 select-none">•</span>
                             <span>{item}</span>
                           </li>
                         ))}
@@ -290,28 +269,26 @@ export function ResultsScreen() {
           {/* TAB 3: VEHICLE FEATURES */}
           {activeTab === "features" && (
             <div className="space-y-6 animate-fade-in-up">
-              <div>
-                <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100">Everyday Vehicle Features</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Location map and guides for ports, fuel caps, and changing tires.</p>
-              </div>
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">Everyday Vehicle Features</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Location map and guides for ports, fuel caps, and changing tires.</p>
 
-              {vehicle.vehicleFeatures.map((group: any, idx: number) => (
-                <div key={idx} className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-white/5 pb-2">
+              {vehicle.vehicleFeatures.map((group, idx) => (
+                <div key={idx} className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-white/5 pb-1">
                     {group.category}
                   </h4>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {group.items.map((item: any, i: number) => (
+                  <div className="space-y-2.5">
+                    {group.items.map((item, i) => (
                       <div 
                         key={i}
-                        className="flex items-start gap-4 p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-sm"
+                        className="flex items-start gap-3.5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm"
                       >
-                        <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-cyan-400 text-lg">
+                        <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-cyan-400">
                           <MapPin size={18} />
                         </div>
                         <div>
                           <h5 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">{item.name}</h5>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed font-semibold">📍 {item.location}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">📍 {item.location}</p>
                         </div>
                       </div>
                     ))}
@@ -323,13 +300,11 @@ export function ResultsScreen() {
 
           {/* TAB 4: VIDEO BRIEFING GUIDE */}
           {activeTab === "video" && (
-            <div className="space-y-6 animate-fade-in-up">
-              <div>
-                <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100">Safety Video Briefing</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Visual walkthrough of safety exits, tools and emergency procedures.</p>
-              </div>
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-lg font-black tracking-tight mb-1 text-slate-800 dark:text-slate-100">Safety Video Briefing</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Visual walkthrough of safety exits, tools and emergency procedures.</p>
 
-              <div className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl border border-white/5">
+              <div className="overflow-hidden rounded-2xl bg-slate-950 text-white shadow-xl">
                 {playingVideo ? (
                   <video 
                     ref={videoRef}
@@ -342,26 +317,26 @@ export function ResultsScreen() {
                   <div className="relative aspect-video bg-gradient-to-br from-slate-900 to-blue-950 flex flex-col items-center justify-center p-6 border-b border-white/5">
                     <button 
                       onClick={() => setPlayingVideo(true)}
-                      className="grid size-20 place-items-center rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 active:scale-95 transition cursor-pointer mb-4"
+                      className="grid size-16 place-items-center rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 active:scale-95 transition cursor-pointer mb-3"
                     >
-                      <Play className="size-10 text-cyan-400" fill="currentColor" />
+                      <Play className="size-8 text-cyan-400" fill="currentColor" />
                     </button>
                     <span className="text-xs font-bold uppercase tracking-widest text-slate-300">Play Demonstration</span>
                   </div>
                 )}
                 
-                <div className="p-5 bg-slate-900">
-                  <span className="text-[10px] font-mono font-black tracking-wider text-cyan-400 uppercase block mb-4">
+                <div className="p-4 bg-slate-900">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-400 uppercase block mb-3">
                     Video chapters (Click to seek)
                   </span>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {vehicle.emergencyProcedures
-                      .filter((proc: any) => proc.videoTimestamp)
-                      .map((proc: any, idx: number) => (
+                      .filter((proc) => proc.videoTimestamp)
+                      .map((proc, idx) => (
                         <button
                           key={idx}
                           onClick={() => playChapter(proc.videoTimestamp!)}
-                          className="w-full flex items-center justify-between p-3 rounded-2xl text-left bg-slate-950/60 border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                          className="w-full flex items-center justify-between p-2 rounded-xl text-left bg-slate-950/60 border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
                         >
                           <span className="flex items-center gap-2 font-semibold">
                             <Video size={12} className="text-cyan-400" />
@@ -381,11 +356,11 @@ export function ResultsScreen() {
           )}
         </div>
 
-        {/* Sticky Premium Bottom Bar */}
-        <div className="sticky bottom-0 inset-x-0 bg-slate-50/80 dark:bg-slate-950/85 backdrop-blur-md border-t border-slate-200/80 dark:border-white/10 p-5 mt-auto z-20">
+        {/* Reset Search */}
+        <div className="absolute inset-x-5 bottom-5">
           <Link
             to="/app"
-            className="w-full rounded-3xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 py-4 font-black text-xs uppercase tracking-wider text-center block shadow-lg hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
+            className="w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white py-4 font-bold text-center block shadow-lg"
           >
             Start New Search
           </Link>

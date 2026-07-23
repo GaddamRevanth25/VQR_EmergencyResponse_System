@@ -17,10 +17,8 @@ logger = logging.getLogger("uvicorn.error")
 logger.info("Loading PaddleOCR...")
 
 ocr_reader = PaddleOCR(
-    use_angle_cls=False,
     lang="en",
-    use_gpu=False,
-    show_log=False
+    device="cpu"
 )
 
 logger.info("PaddleOCR Loaded.")

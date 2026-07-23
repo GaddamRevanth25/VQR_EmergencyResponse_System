@@ -3,7 +3,7 @@ import { useColorScheme as useRNColorScheme, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type AuthState = 'splash' | 'login' | 'register' | 'two-factor' | 'authenticated';
+export type AuthState = 'splash' | 'login' | 'register' | 'verify-email' | 'two-factor' | 'authenticated';
 
 export interface UserInfo {
   name: string;
