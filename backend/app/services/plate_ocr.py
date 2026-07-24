@@ -18,7 +18,8 @@ logger.info("Loading PaddleOCR...")
 
 ocr_reader = PaddleOCR(
     lang="en",
-    device="cpu"
+    device="cpu",
+    show_log=False
 )
 
 logger.info("PaddleOCR Loaded.")

@@ -435,5 +435,74 @@
     },
     "fetchedAt": 1784817580528,
     "ttl": 86400
+  },
+  "KA03MN9988": {
+    "data": {
+      "registration_number": "KA03MN9988",
+      "owner_name": "VIKRAM NAIK",
+      "father_name": "GOPAL NAIK",
+      "dob": "1987-06-09",
+      "gender": "M",
+      "registration_date": "2020-11-02",
+      "maker_model": "TATA MOTORS LTD / NEXON",
+      "fuel_type": "PETROL",
+      "color": "BLUE",
+      "vehicle_category": "LMV",
+      "body_type": "SUV",
+      "manufacturing_year": "2020",
+      "seating_capacity": "5",
+      "unladen_weight": "1250",
+      "chassis_number": "MAT612345XYZ98765",
+      "engine_number": "REVTRON654321",
+      "current_address": "HSR Layout, Bengaluru, Karnataka - 560102",
+      "insurance_company": "Bajaj Allianz",
+      "insurance_policy_number": "BAJAJ-998877",
+      "insurance_validity": "2027-01-15",
+      "pucc_validity": "2026-09-30",
+      "fitness_validity": "2035-11-01",
+      "tax_paid_up_to": "2035-11-01",
+      "is_financed": "NO",
+      "financier_name": "",
+      "vehicle_id": "tata-nexon-2020",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in driver's door pocket. Strike corners of side windows.",
+          "location": "Driver door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window"
+          ],
+          "donts": [
+            "Wait for water to fill"
+          ],
+          "videoTimestamp": "20"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Left rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/toyota-camry-2024-traveler-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
+    },
+    "fetchedAt": 1784875919907,
+    "ttl": 86400
   }
 }

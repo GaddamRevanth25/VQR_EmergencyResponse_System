@@ -42,14 +42,16 @@ export default function RescueScreen() {
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
   const apiClient = createApiClient(apiUrl);
 
-  // Load API URL (auto-detected from Expo Constants)
+  // Load API URL (auto-detected from Expo Constants with manual override support)
   useEffect(() => {
     const loadApiUrl = async () => {
       try {
-        // Always use the freshly auto-detected URL
-        setApiUrl(DEFAULT_API_URL);
-        await AsyncStorage.setItem('vqr_api_url', DEFAULT_API_URL);
-        console.log(`[RescueScreen] API URL auto-detected: ${DEFAULT_API_URL}`);
+        const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+        if (savedUrl) {
+          setApiUrl(savedUrl);
+        } else {
+          setApiUrl(DEFAULT_API_URL);
+        }
       } catch (e) { }
     };
     loadApiUrl();
@@ -308,7 +310,7 @@ export default function RescueScreen() {
     setLoading(true);
     try {
       const cleanedPlate = plateText.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-      const response = await apiClient.lookupVehicle(cleanedPlate, "GLOBAL");
+      const response = await apiClient.lookupRegistration(cleanedPlate);
       saveSearchToRecent(response, "scan");
       setVehicle(response);
       setRecognized(true);
@@ -317,12 +319,23 @@ export default function RescueScreen() {
     } catch (err: any) {
       console.error("Lookup error:", err);
       setVehicle(null);
-      setRecognized(true);
-      setIsConfirmingPlate(false);
-      Alert.alert(
-        "Plate Recognized",
-        `Confirmed plate "${plateText}", but no matching safety instructions were found in the database.`
-      );
+      
+      const errMsg = err.message || "";
+      const isNetworkError = errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch") || errMsg.toLowerCase().includes("failed");
+      
+      if (isNetworkError) {
+        Alert.alert(
+          "Network Connection Error",
+          `Could not connect to the backend server at ${apiUrl}.\n\nEnsure your PC's firewall allows port 8000 and the server is running with --host 0.0.0.0`
+        );
+      } else {
+        setRecognized(true);
+        setIsConfirmingPlate(false);
+        Alert.alert(
+          "Vehicle Not Found",
+          `Confirmed plate "${plateText}", but no matching safety instructions were found in the database.`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -343,12 +356,23 @@ export default function RescueScreen() {
     setLoading(true);
     setErrorMsg("");
     try {
-      const response = await apiClient.lookupVehicle(inputValue, inputType === "VIN" ? "US" : inputType);
+      let response;
+      if (inputType === "VIN") {
+        response = await apiClient.lookupVehicle(inputValue, "US");
+      } else {
+        response = await apiClient.lookupRegistration(inputValue);
+      }
       saveSearchToRecent(response, "manual");
       setVehicle(response);
       setActiveView("details");
-    } catch (err) {
-      setErrorMsg("No matching vehicle found in passenger database.");
+    } catch (err: any) {
+      const errMsg = err.message || "";
+      const isNetworkError = errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch");
+      if (isNetworkError) {
+        setErrorMsg(`Network Connection Error: Could not connect to backend server at ${apiUrl}.`);
+      } else {
+        setErrorMsg("No matching vehicle found in passenger database.");
+      }
     } finally {
       setLoading(false);
     }
@@ -1132,7 +1156,17 @@ export default function RescueScreen() {
               <Text style={[styles.vehicleTitle, { color: theme.text }]}>
                 {vehicle.make} {vehicle.model} ({vehicle.year})
               </Text>
-              <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18' }]}>
+              {vehicle.registrationNumber ? (
+                <Text style={{ color: theme.primary, fontFamily: 'monospace', fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>
+                  REGISTRATION: {vehicle.registrationNumber}
+                </Text>
+              ) : null}
+              {vehicle.ownerName ? (
+                <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
+                  OWNER: {vehicle.ownerName}
+                </Text>
+              ) : null}
+              <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18', marginTop: 8, alignSelf: 'flex-start' }]}>
                 <Text style={[styles.fuelBadgeText, { color: theme.primary }]}>
                   {vehicle.fuelType || "PETROL"}
                 </Text>
@@ -1662,19 +1696,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   vehicleHeaderCard: {
-    padding: 16,
-    borderRadius: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    padding: 20,
+    borderRadius: 22,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 6,
   },
   vehicleTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '900',
+    letterSpacing: -0.5,
   },
   fuelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   fuelBadgeText: {
@@ -1685,38 +1720,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
+    marginVertical: 10,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 2,
   },
   tabButtonText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
   },
   tabContent: {
-    marginTop: 12,
-    gap: 10,
+    marginTop: 14,
+    gap: 12,
   },
   infoCard: {
-    padding: 14,
-    borderRadius: 16,
+    padding: 18,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   infoCardTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
+    lineHeight: 18,
   },
   infoCardText: {
     fontSize: 12,
-    lineHeight: 16,
-    marginTop: 4,
+    lineHeight: 18,
+    marginTop: 6,
   },
   infoCardLoc: {
     fontSize: 11,
     fontWeight: '700',
-    marginTop: 6,
+    marginTop: 10,
   },
   videoPlayerBox: {
     aspectRatio: 16 / 9,

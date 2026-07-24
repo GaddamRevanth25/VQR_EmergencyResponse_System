@@ -54,7 +54,7 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
       } catch (e) {}
 
       // Detailed user-facing error formatting (Task 8)
-      const isDev = typeof __DEV__ !== 'undefined' && __DEV__;
+      const isDev = !!((globalThis as any).__DEV__ || (globalThis as any).process?.env?.NODE_ENV !== 'production');
       if (isDev) {
         msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: ${res.status}\n• Response Body: ${responseBody}\n• Axios error.code: HTTP_ERROR_${res.status}\n• Axios error.message: Request failed with status code ${res.status}\n• Axios response.data: ${responseBody}\n• Stack trace: ${new Error().stack || 'Not available'}`;
       }
@@ -80,7 +80,7 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
     console.error("=========================================");
 
     let msg = `Network connection failed (Unable to connect to server at ${url}). Please ensure the backend is running and reachable on your network.`;
-    const isDev = typeof __DEV__ !== 'undefined' && __DEV__;
+    const isDev = !!((globalThis as any).__DEV__ || (globalThis as any).process?.env?.NODE_ENV !== 'production');
     if (isDev) {
       msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: Connection Refused / Network Error\n• Response Body: N/A\n• Axios error.code: ERR_NETWORK\n• Axios error.message: ${err.message || err}\n• Axios response.data: N/A\n• Stack trace: ${err.stack || 'Not available'}`;
     }
