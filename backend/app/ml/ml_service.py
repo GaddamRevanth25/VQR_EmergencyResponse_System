@@ -1,54 +1,116 @@
-import os
-import time
-import logging
-from typing import Optional, List
+"""
+ml_service.py
+===============
+Top-level façade the FastAPI backend (or a direct in-process caller) talks
+to. This is the one class the rest of the VQR application should import --
+everything else in app/ml is an implementation detail behind it.
 
-logger = logging.getLogger("uvicorn.error")
+Typical FastAPI usage:
+
+    from app.ml.ml_service import MLService
+    service = MLService()
+
+    @app.post("/sensor-event")
+    def sensor_event(evt: SensorEvent):
+        service.ingest(evt.sensor_type, evt.values, evt.timestamp)
+        result = service.step()
+        if result and result.should_alert:
+            ...create emergency alert using result.severity...
+
+Threading/async note: this class holds mutable rolling buffers and is NOT
+thread-safe by itself -- in a FastAPI deployment, run one MLService instance
+per active device/session (e.g. keyed by device_id in a dict), not one
+shared global instance across all users.
+"""
+from __future__ import annotations
+
+import logging
+from typing import Callable, Optional
+
+from app.ml import config
+from app.ml.communication_manager import BackendConfig, CommunicationManager
+from app.ml.decision_engine import DecisionEngine, DecisionResult
+from app.ml.offline_queue import OfflineQueue, QueuedAlert
+from app.ml.predict import PredictorJoblib
+from app.ml.sensor_manager import SensorManager
+
+logger = logging.getLogger(__name__)
+
 
 class MLService:
-    _instance = None
+    def __init__(
+        self,
+        is_online: Optional[Callable[[], bool]] = None,
+        upload_fn: Optional[Callable[[dict], bool]] = None,
+    ):
+        self.predictor = PredictorJoblib()
+        window_size = int(config.WINDOW_SECONDS * config.ASSUMED_IMU_HZ)
+        self.sensor_manager = SensorManager(window_size, self.predictor.feature_columns)
+        self.decision_engine = DecisionEngine()
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(MLService, cls).__new__(cls, *args, **kwargs)
-            cls._instance._model_loaded = False
-            cls._instance._model = None
-        return cls._instance
+        self.comms: Optional[CommunicationManager] = None
+        if is_online is not None and upload_fn is not None:
+            self.comms = CommunicationManager(
+                is_online=is_online, upload_fn=upload_fn, queue=OfflineQueue(),
+            )
 
-    def load_model(self):
-        if self._model_loaded:
-            return
+    # -- sensor ingestion ----------------------------------------------------
+    def ingest_accel(self, x: float, y: float, z: float):
+        self.sensor_manager.push_accel(x, y, z)
 
-        logger.info("MLService: Lazy loading model weights on first scan call...")
+    def ingest_gyro(self, x: float, y: float, z: float):
+        self.sensor_manager.push_gyro(x, y, z)
 
-        # Locate weights directory
-        weights_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "ml_models"
+    def ingest_magnetometer(self, x: float, y: float, z: float):
+        self.sensor_manager.push_magnetometer(x, y, z)
+
+    def ingest_gps(self, lat: float, lon: float, speed: float, ts: float):
+        self.sensor_manager.push_gps(lat, lon, speed, ts)
+
+    # -- main loop -------------------------------------------------------------
+    def step(
+        self,
+        battery_low: bool = False,
+        vehicle_context: Optional[str] = None,
+        vehicle_id: Optional[str] = None,
+    ) -> Optional[DecisionResult]:
+        """Call this once per new window (e.g. every `step` samples, or on a
+        fixed timer). Returns None if there isn't enough buffered data yet
+        for a decision -- this is normal at startup, not an error.
+
+        `vehicle_id` should be the most recently scanned/selected vehicle
+        (cached on-device per the VQR doc's Persistent Vehicle Context
+        principle) so any resulting alert carries make/model safety
+        context automatically."""
+        feature_row = self.sensor_manager.build_feature_row()
+        if feature_row is None:
+            return None
+
+        probability = self.predictor.predict_proba(feature_row)
+        result = self.decision_engine.decide(
+            probability, feature_row, battery_low=battery_low, vehicle_context=vehicle_context,
         )
-        os.makedirs(weights_dir, exist_ok=True)
 
-        # Simulate loading latency
-        time.sleep(0.8)
+        if result.should_alert and self.comms is not None:
+            gps = self.sensor_manager.last_gps or {}
+            alert = QueuedAlert(
+                window_id=f"live_{int(gps.get('ts', 0))}",
+                severity=result.severity.value if result.severity else "unknown",
+                probability=probability,
+                lat=gps.get("lat"), lon=gps.get("lon"),
+                timestamp=gps.get("ts", 0.0),
+                sensor_snapshot=feature_row,
+                vehicle_id=vehicle_id,
+            )
+            self.comms.submit_alert(alert)
 
-        self._model = "MOCK_ONNX_MODEL_SESSION_LOADED"
-        self._model_loaded = True
-        logger.info("MLService: Model weights loaded successfully.")
+        return result
 
-    def predict_vehicle(self, image_bytes: Optional[bytes] = None, qr_data: Optional[str] = None) -> dict:
-        """
-        Isolated vehicle prediction engine.
-        Ensures lazy loading of model weights is triggered upon invocation.
-        """
-        self.load_model()
+    def sync_now(self):
+        if self.comms is not None:
+            self.comms.sync_pending()
 
-        # Swappable live/mock prediction interface:
-        # Returns simulated predictions for scanning/classification flow
-        predicted_class = qr_data if qr_data else "toyota-camry-2024"
-        return {
-            "predicted_class": predicted_class,
-            "confidence": 0.945,
-            "bounding_box": [45.0, 60.0, 420.0, 380.0]
-        }
-
-ml_service = MLService()
+    def refresh_backend_config(self) -> Optional[BackendConfig]:
+        if self.comms is not None:
+            return self.comms.refresh_backend_config()
+        return None
