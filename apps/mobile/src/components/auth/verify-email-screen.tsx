@@ -13,6 +13,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApiClient } from '@vqr/shared';
+import { DEFAULT_API_URL } from '@/constants/config';
+
 
 interface VQRVerifyEmailScreenProps {
   email: string;
@@ -71,7 +73,7 @@ export default function VQRVerifyEmailScreen({
     setLoading(true);
     try {
       const savedUrl = await AsyncStorage.getItem('vqr_api_url');
-      const apiUrl = savedUrl || 'http://localhost:8000';
+      const apiUrl = savedUrl || DEFAULT_API_URL;
       const apiClient = createApiClient(apiUrl);
 
       await apiClient.confirmEmail({ email, code: fullCode });
@@ -88,7 +90,7 @@ export default function VQRVerifyEmailScreen({
     setLoading(true);
     try {
       const savedUrl = await AsyncStorage.getItem('vqr_api_url');
-      const apiUrl = savedUrl || 'http://localhost:8000';
+      const apiUrl = savedUrl || DEFAULT_API_URL;
       const apiClient = createApiClient(apiUrl);
       
       await apiClient.resendVerificationEmail({ email });

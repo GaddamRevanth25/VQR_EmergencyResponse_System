@@ -15,9 +15,8 @@ import { createApiClient } from '@vqr/shared';
 import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
+import { DEFAULT_API_URL } from '@/constants/config';
 
-// Host configurations
-const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 
 const MOCK_DEFAULT_HISTORY = [
   {

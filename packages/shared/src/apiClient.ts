@@ -16,60 +16,118 @@ import type {
   UserResponse,
 } from './types';
 
+// Helper to log network requests and responses, with developer-friendly diagnostics
+async function fetchWithLogging(url: string, options: RequestInit = {}): Promise<Response> {
+  const method = options.method || 'GET';
+  const requestBody = options.body;
+  const headers = options.headers || {};
+  const baseURL = url.split('/api')[0] || '';
+
+  // Log complete request details (Task 2)
+  console.log("=== API REQUEST START ===");
+  console.log(`- Full Request URL: ${url}`);
+  console.log(`- HTTP Method: ${method}`);
+  console.log(`- Headers:`, JSON.stringify(headers));
+  console.log(`- Request Body:`, requestBody ? (typeof requestBody === 'string' ? requestBody : JSON.stringify(requestBody)) : 'None');
+  console.log(`- Configuration: Fetch Client, Timeout: None (Default), Base URL: ${baseURL}`);
+  console.log("=========================");
+
+  try {
+    const res = await fetch(url, options);
+
+    if (!res.ok) {
+      let responseBody = '';
+      try {
+        responseBody = await res.clone().text();
+      } catch (e) {}
+
+      console.error("=== API REQUEST FAILED (HTTP ERROR) ===");
+      console.error(`- Full Request URL: ${url}`);
+      console.error(`- Response Status: ${res.status}`);
+      console.error(`- Response Body: ${responseBody}`);
+      console.error("======================================");
+
+      let msg = `Request failed with status ${res.status}`;
+      try {
+        const errData = JSON.parse(responseBody);
+        msg = errData.detail || errData.message || msg;
+      } catch (e) {}
+
+      // Detailed user-facing error formatting (Task 8)
+      const isDev = typeof __DEV__ !== 'undefined' && __DEV__;
+      if (isDev) {
+        msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: ${res.status}\n• Response Body: ${responseBody}\n• Axios error.code: HTTP_ERROR_${res.status}\n• Axios error.message: Request failed with status code ${res.status}\n• Axios response.data: ${responseBody}\n• Stack trace: ${new Error().stack || 'Not available'}`;
+      }
+
+      throw new Error(msg);
+    }
+
+    console.log(`=== API REQUEST SUCCESS ===`);
+    console.log(`- URL: ${url}`);
+    console.log(`- Status: ${res.status}`);
+    console.log(`===========================`);
+    return res;
+  } catch (err: any) {
+    if (err.message && err.message.includes('[DEBUG INFO]')) {
+      throw err;
+    }
+
+    console.error("=== API REQUEST FAILED (NETWORK ERROR) ===");
+    console.error(`- Full Request URL: ${url}`);
+    console.error(`- Error Name: ${err.name || 'Error'}`);
+    console.error(`- Error Message: ${err.message || err}`);
+    console.error(`- Error Stack: ${err.stack || 'Not available'}`);
+    console.error("=========================================");
+
+    let msg = `Network connection failed (Unable to connect to server at ${url}). Please ensure the backend is running and reachable on your network.`;
+    const isDev = typeof __DEV__ !== 'undefined' && __DEV__;
+    if (isDev) {
+      msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: Connection Refused / Network Error\n• Response Body: N/A\n• Axios error.code: ERR_NETWORK\n• Axios error.message: ${err.message || err}\n• Axios response.data: N/A\n• Stack trace: ${err.stack || 'Not available'}`;
+    }
+    throw new Error(msg);
+  }
+}
+
 export function createApiClient(baseUrl: string) {
   const cleanUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
+  console.log(`[API Client] Initialized with baseUrl: "${cleanUrl}"`);
+
   return {
     async listVehicles(): Promise<Vehicle[]> {
-      const res = await fetch(`${cleanUrl}/api/vehicles`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch vehicles list');
-      }
+      const res = await fetchWithLogging(`${cleanUrl}/api/vehicles`);
       return res.json() as any;
     },
 
     async getVehicle(id: string): Promise<Vehicle> {
-      const res = await fetch(`${cleanUrl}/api/vehicles/${id}`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch vehicle with ID: ${id}`);
-      }
+      const res = await fetchWithLogging(`${cleanUrl}/api/vehicles/${id}`);
       return res.json() as any;
     },
 
     async lookupVehicle(vin: string, country?: string): Promise<LookupResponse> {
-      const res = await fetch(`${cleanUrl}/api/vehicles/lookup`, {
+      const res = await fetchWithLogging(`${cleanUrl}/api/vehicles/lookup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ vin, country }),
       });
-      if (!res.ok) {
-        throw new Error('Vehicle not found for specified VIN/plate');
-      }
       return res.json() as any;
     },
 
     async lookupRegistration(registrationNumber: string): Promise<RegistrationLookupResponse> {
-      const res = await fetch(`${cleanUrl}/api/vehicles/registration/lookup`, {
+      const res = await fetchWithLogging(`${cleanUrl}/api/vehicles/registration/lookup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ registrationNumber }),
       });
-      if (!res.ok) {
-        throw new Error('Vehicle details not found for specified registration number');
-      }
       return res.json() as any;
     },
 
-
     async lookupByDropdown(make: string, model: string, year: number): Promise<Vehicle> {
-      const res = await fetch(`${cleanUrl}/api/vehicles/lookup/dropdown?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&year=${year}`);
-      if (!res.ok) {
-        throw new Error('Vehicle not found for specified make, model, and year');
-      }
+      const res = await fetchWithLogging(`${cleanUrl}/api/vehicles/lookup/dropdown?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&year=${year}`);
       return res.json() as any;
     },
 
@@ -77,10 +135,7 @@ export function createApiClient(baseUrl: string) {
       const url = vehicleType 
         ? `${cleanUrl}/api/makes?vehicleType=${encodeURIComponent(vehicleType)}` 
         : `${cleanUrl}/api/makes`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error('Failed to fetch makes list');
-      }
+      const res = await fetchWithLogging(url);
       return res.json() as any;
     },
 
@@ -88,10 +143,7 @@ export function createApiClient(baseUrl: string) {
       const url = vehicleType
         ? `${cleanUrl}/api/makes/${encodeURIComponent(make)}/models?vehicleType=${encodeURIComponent(vehicleType)}`
         : `${cleanUrl}/api/makes/${encodeURIComponent(make)}/models`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch models for make: ${make}`);
-      }
+      const res = await fetchWithLogging(url);
       return res.json() as any;
     },
 
@@ -99,10 +151,7 @@ export function createApiClient(baseUrl: string) {
       const url = vehicleType
         ? `${cleanUrl}/api/makes/${encodeURIComponent(make)}/models/${encodeURIComponent(model)}/years?vehicleType=${encodeURIComponent(vehicleType)}`
         : `${cleanUrl}/api/makes/${encodeURIComponent(make)}/models/${encodeURIComponent(model)}/years`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch years for ${make} ${model}`);
-      }
+      const res = await fetchWithLogging(url);
       return res.json() as any;
     },
 
@@ -110,16 +159,13 @@ export function createApiClient(baseUrl: string) {
       qrData: string,
       coords?: { latitude?: number; longitude?: number; scannedBy?: string }
     ): Promise<ScanResult> {
-      const res = await fetch(`${cleanUrl}/api/scan`, {
+      const res = await fetchWithLogging(`${cleanUrl}/api/scan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ qrData, ...coords }),
       });
-      if (!res.ok) {
-        throw new Error('QR Code scan action failed');
-      }
       return res.json() as any;
     },
 
@@ -157,13 +203,10 @@ export function createApiClient(baseUrl: string) {
       const formData = new FormData();
       formData.append('file', fileBlob, 'plate.jpg');
 
-      const res = await fetch(`${cleanUrl}/api/scan/plate`, {
+      const res = await fetchWithLogging(`${cleanUrl}/api/scan/plate`, {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) {
-        throw new Error('License plate scanning failed');
-      }
       return res.json() as any;
     },
 
@@ -174,19 +217,11 @@ export function createApiClient(baseUrl: string) {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const res = await fetch(`${cleanUrl}${path}`, {
+      const res = await fetchWithLogging(`${cleanUrl}${path}`, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        let msg = 'Request failed';
-        try {
-          const errData = await res.json() as any;
-          msg = errData.detail || errData.message || msg;
-        } catch (e) {}
-        throw new Error(msg);
-      }
       return res.json() as any;
     },
 
@@ -233,4 +268,3 @@ export function createApiClient(baseUrl: string) {
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
-

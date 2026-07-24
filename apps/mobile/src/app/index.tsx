@@ -19,9 +19,8 @@ import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { DEFAULT_API_URL } from '@/constants/config';
 
-// Host configurations
-const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 
 const VEHICLE_TYPES = [
   { code: "CAR", name: "Car" },
@@ -43,14 +42,14 @@ export default function RescueScreen() {
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
   const apiClient = createApiClient(apiUrl);
 
-  // Load saved API URL on mount
+  // Load API URL (auto-detected from Expo Constants)
   useEffect(() => {
     const loadApiUrl = async () => {
       try {
-        const savedUrl = await AsyncStorage.getItem('vqr_api_url');
-        if (savedUrl) {
-          setApiUrl(savedUrl);
-        }
+        // Always use the freshly auto-detected URL
+        setApiUrl(DEFAULT_API_URL);
+        await AsyncStorage.setItem('vqr_api_url', DEFAULT_API_URL);
+        console.log(`[RescueScreen] API URL auto-detected: ${DEFAULT_API_URL}`);
       } catch (e) { }
     };
     loadApiUrl();

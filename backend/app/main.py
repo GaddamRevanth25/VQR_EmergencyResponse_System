@@ -13,17 +13,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS for Web (5173) and Expo Dev (8081)
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
-]
-
+# Configure CORS – allow all origins for development flexibility
+# (the mobile app auto-detects the dev machine's LAN IP, which varies per network)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

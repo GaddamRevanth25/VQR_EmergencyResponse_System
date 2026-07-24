@@ -14,6 +14,8 @@ import { useThemeAndAuth, ThemePreference } from '../context/ThemeAndAuthContext
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApiClient } from '@vqr/shared';
+import { DEFAULT_API_URL } from '@/constants/config';
+
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -50,7 +52,7 @@ export default function ProfileScreen() {
       }
 
       const savedUrl = await AsyncStorage.getItem('vqr_api_url');
-      const apiUrl = savedUrl || 'http://localhost:8000';
+      const apiUrl = savedUrl || DEFAULT_API_URL;
       const apiClient = createApiClient(apiUrl);
 
       await apiClient.registerBiometric({
@@ -89,7 +91,7 @@ export default function ProfileScreen() {
       const nextVal = !is2FaEnabled;
 
       const savedUrl = await AsyncStorage.getItem('vqr_api_url');
-      const apiUrl = savedUrl || 'http://localhost:8000';
+      const apiUrl = savedUrl || DEFAULT_API_URL;
       const apiClient = createApiClient(apiUrl);
 
       await apiClient.toggle2fa({ enabled: nextVal }, token);
