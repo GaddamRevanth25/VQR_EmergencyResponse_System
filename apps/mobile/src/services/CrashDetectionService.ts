@@ -244,7 +244,7 @@ class CrashDetectionServiceClass {
   private startSensorSubscriptions(): void {
     // Configure accelerometer
     Accelerometer.setUpdateInterval(SENSOR_INTERVAL_MS);
-    this.accelSubscription = Accelerometer.addListener((data) => {
+    this.accelSubscription = Accelerometer.addListener((data: any) => {
       this.accelBuffer.push({
         x: data.x,
         y: data.y,
@@ -260,7 +260,7 @@ class CrashDetectionServiceClass {
 
     // Configure gyroscope
     Gyroscope.setUpdateInterval(SENSOR_INTERVAL_MS);
-    this.gyroSubscription = Gyroscope.addListener((data) => {
+    this.gyroSubscription = Gyroscope.addListener((data: any) => {
       this.gyroBuffer.push({
         x: data.x,
         y: data.y,
@@ -515,7 +515,7 @@ class CrashDetectionServiceClass {
 
 // ── Background Task Definition ──────────────────────────────────
 
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
+TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }: { data: any; error: any }) => {
   if (error) {
     console.error('[CrashDetection] Background task error:', error);
     return;

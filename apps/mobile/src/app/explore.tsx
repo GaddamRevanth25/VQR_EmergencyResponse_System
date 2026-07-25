@@ -475,9 +475,16 @@ export default function ExploreScreen() {
                       <Text style={{ fontSize: 18 }}>⏱️</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.cardTitle, { color: theme.text }]}>
-                        {s.title}
-                      </Text>
+                      {(() => {
+                        const displayTitle = (!s.title || s.title.includes('undefined'))
+                          ? (s.make && s.model ? `${s.make} ${s.model} ${s.year ? `(${s.year})` : ''}` : (s.params && s.params.reg ? `Vehicle: ${s.params.reg}` : 'Unknown Vehicle'))
+                          : s.title;
+                        return (
+                          <Text style={[styles.cardTitle, { color: theme.text }]}>
+                            {displayTitle}
+                          </Text>
+                        );
+                      })()}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                         <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 11 }}>{s.type.toUpperCase()}</Text>
                         <Text style={{ color: theme.textSecondary, fontSize: 10 }}>•</Text>

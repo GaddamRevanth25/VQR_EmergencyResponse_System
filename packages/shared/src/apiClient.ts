@@ -276,10 +276,10 @@ export function createApiClient(baseUrl: string) {
       return this._post('/api/auth/toggle-2fa', payload, token);
     },
 
-<<<<<<< HEAD
-    async triggerSOS(latitude?: number, longitude?: number, token?: string): Promise<{ success: boolean; message: string; contactName: string; contactPhone: string }> {
+    async triggerManualSOS(latitude?: number, longitude?: number, token?: string): Promise<{ success: boolean; message: string; contactName: string; contactPhone: string }> {
       return this._post('/api/sos/trigger', { latitude, longitude }, token);
-=======
+    },
+
     // ── Crash Detection & SOS ──────────────────────────────────────
 
     async detectCrash(features: number[], token: string): Promise<CrashDetectResponse> {
@@ -312,7 +312,6 @@ export function createApiClient(baseUrl: string) {
 
     getCrashEventsStreamUrl(): string {
       return `${cleanUrl}/api/v1/sos/events/stream`;
->>>>>>> 95a0c49c6f766b59d1bd9079267c26ece4556928
     },
   };
 }

@@ -84,8 +84,7 @@ export default function RescueScreen() {
   const blinkAnim = useRef(new Animated.Value(1)).current;
 
   // ── Crash Detection Service ──
-  // TODO: Replace '' with actual auth token from your auth context
-  const authToken = ''; // Will be wired to real auth token
+  const authToken = userInfo ? (userInfo as any).token || '' : '';
   const crashDetection = useCrashDetection(apiUrl, authToken);
 
   // Selected vehicle & results tabs states
@@ -347,7 +346,7 @@ export default function RescueScreen() {
     }
 
     try {
-      const res = await apiClient.triggerSOS(lat, lon, token);
+      const res = await apiClient.triggerManualSOS(lat, lon, token);
       if (res.success) {
         Alert.alert(
           "SOS Dispatch Alerted",
@@ -460,14 +459,40 @@ export default function RescueScreen() {
   };
 
   const saveSearchToRecent = async (item: any, type: string) => {
+    // Extract properties with safe fallback checks
+    const make = item.make || (item.params && item.params.make) || '';
+    const model = item.model || (item.params && item.params.model) || '';
+    const year = item.year || (item.params && item.params.year) || '';
+    const reg = item.registrationNumber || item.reg || (item.params && item.params.reg) || '';
+
+    let title = '';
+    if (make && model) {
+      title = `${make} ${model} ${year ? `(${year})` : ''}`.trim();
+    } else if (item.title && !item.title.includes('undefined')) {
+      title = item.title;
+    } else if (reg) {
+      title = `Vehicle: ${reg}`;
+    } else {
+      title = 'Unknown Vehicle';
+    }
+
     const searchItem = {
       id: item.vehicleId || item.id,
-      title: `${item.make} ${item.model} (${item.year})`,
+      title: title,
+      make: make,
+      model: model,
+      year: year,
       type,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-      params: { reg: item.registrationNumber }
+      params: { 
+        reg,
+        make,
+        model,
+        year
+      }
     };
+
     const updated = [searchItem, ...recentSearches.filter(s => s.id !== searchItem.id)].slice(0, 10);
     setRecentSearches(updated);
     try {
@@ -491,15 +516,6 @@ export default function RescueScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Crash Alert Full-Screen Overlay */}
-      <CrashAlertOverlay
-        visible={crashDetection.crashDetected}
-        confidence={crashDetection.crashData?.confidence ?? 0}
-        latitude={crashDetection.crashData?.latitude}
-        longitude={crashDetection.crashData?.longitude}
-        onDismiss={crashDetection.dismissCrashAlert}
-        onConfirmSOS={crashDetection.confirmSOS}
-      />
       {/* Background neon blobs */}
       <View style={styles.neonBlobContainer} pointerEvents="none">
         <View style={[styles.neonBlob1, { backgroundColor: theme.primary + '11' }]} />
@@ -1359,6 +1375,17 @@ export default function RescueScreen() {
           </View>
         </View>
       )}
+
+      {/* Crash Alert Full-Screen Overlay */}
+      <CrashAlertOverlay
+        visible={crashDetection.crashDetected}
+        confidence={crashDetection.crashData?.confidence ?? 0}
+        latitude={crashDetection.crashData?.latitude}
+        longitude={crashDetection.crashData?.longitude}
+        countdown={crashDetection.countdown}
+        onDismiss={crashDetection.dismissCrashAlert}
+        onConfirmSOS={crashDetection.confirmSOS}
+      />
     </SafeAreaView>
   );
 }

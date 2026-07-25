@@ -30,7 +30,7 @@ export function HomeScreen({
     setLoading(true);
     setStatusMsg(null);
     try {
-      const res = await apiClient.triggerSOS(undefined, undefined, token);
+      const res = await apiClient.triggerManualSOS(undefined, undefined, token);
       if (res.success) {
         setStatusMsg({
           type: "success",

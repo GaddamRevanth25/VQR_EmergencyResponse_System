@@ -173,17 +173,31 @@ class NotificationService:
     ) -> None:
         """Send emergency SMS with Google Maps link and HTML Email to emergency contacts."""
         maps_link = f"https://maps.google.com/maps?q={latitude},{longitude}" if (latitude is not None and longitude is not None) else "Location unavailable"
+        sms_body = (
+            f"🚨 SOS Alert: {user_name} has triggered an emergency alert at {created_at_str} ({maps_link}). "
+            f"Please check on them immediately."
+        )
+
+        twilio_configured = bool(settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN and settings.TWILIO_PHONE_NUMBER)
+
+        if not twilio_configured:
+            _logger.warning("Twilio credentials not configured in environment variables. Skipping live SMS, Voice, and Email alerts.")
+            _logger.info(
+                f"\n=== MOCK TWILIO NOTIFICATION DISPATCHED ===\n"
+                f"To: {contact_phone or 'N/A'}\n"
+                f"Message: {sms_body}\n"
+                f"===========================================\n"
+            )
+            return
 
         # ── SMS ──
         if contact_phone:
-            sms_body = (
-                f"🚨 SOS Alert: {user_name} has triggered an emergency alert at {created_at_str} ({maps_link}). "
-                f"Please check on them immediately."
-            )
             try:
                 NotificationService._send_sms(contact_phone, sms_body)
             except Exception as e:
                 _logger.error(f"Failed to send emergency SMS to {contact_phone}: {e}")
+                # Skip voice calls and emails if SMS dispatch failed
+                return
 
             # ── Voice Call (Twilio Voice API) ──
             spoken_alert = f"Emergency Alert! {user_name} has triggered a high confidence vehicle emergency alert. Please check on them immediately."

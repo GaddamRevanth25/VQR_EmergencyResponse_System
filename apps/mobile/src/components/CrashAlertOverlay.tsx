@@ -16,7 +16,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Modal,
   Animated,
   Easing,
   Platform,
@@ -28,6 +27,7 @@ interface CrashAlertOverlayProps {
   confidence: number;
   latitude?: number;
   longitude?: number;
+  countdown: number;
   onDismiss: () => void;     // "I'm OK"
   onConfirmSOS: () => void;  // "Send SOS NOW"
 }
@@ -40,19 +40,18 @@ export default function CrashAlertOverlay({
   confidence,
   latitude,
   longitude,
+  countdown,
   onDismiss,
   onConfirmSOS,
 }: CrashAlertOverlayProps) {
-  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+  console.log(`[CrashAlertOverlay] Render state: visible=${visible}, countdown=${countdown}, confidence=${confidence}`);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
-  // Reset countdown when overlay appears
+  // Reset countdown entry animation
   useEffect(() => {
     if (visible) {
-      setCountdown(COUNTDOWN_SECONDS);
-
       // Entry scale animation
       Animated.spring(scaleAnim, {
         toValue: 1,
@@ -63,23 +62,6 @@ export default function CrashAlertOverlay({
     } else {
       scaleAnim.setValue(0.8);
     }
-  }, [visible]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!visible) return;
-
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
   }, [visible]);
 
   // Pulse animation
@@ -131,13 +113,7 @@ export default function CrashAlertOverlay({
   const confidencePercent = (confidence * 100).toFixed(0);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent={false}
-      statusBarTranslucent
-      onRequestClose={onDismiss}
-    >
+    <View style={styles.modalOverlay}>
       <View style={styles.container}>
         {/* Pulsing red background */}
         <Animated.View
@@ -208,11 +184,19 @@ export default function CrashAlertOverlay({
           </Text>
         </Animated.View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 99999,
+  },
   container: {
     flex: 1,
     backgroundColor: '#1a0000',
@@ -221,7 +205,11 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   pulseBackground: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     backgroundColor: '#dc2626',
   },
   content: {
