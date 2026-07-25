@@ -115,6 +115,32 @@ export default function ProfileScreen() {
     role: 'Primary First Responder',
   };
 
+  const handleSimulateCrash = async () => {
+    const { CrashDetectionService } = require('@/services/CrashDetectionService');
+    const { router } = require('expo-router');
+
+    const success = CrashDetectionService.simulateCrash(0.98);
+    if (success) {
+      Alert.alert(
+        "Crash Simulated",
+        "Mock sensor impact data successfully injected. Redirecting to Home screen to present the verification countdown.",
+        [
+          {
+            text: "View Confirmation",
+            onPress: () => {
+              router.replace('/');
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert(
+        "Simulation Ignored",
+        "Crash detection service is currently inactive. Please toggle 'Crash Detection' to ON in the Home screen settings before simulating a crash."
+      );
+    }
+  };
+
   const handleThemeChange = (pref: ThemePreference) => {
     setThemePreference(pref);
   };
@@ -281,6 +307,35 @@ export default function ProfileScreen() {
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Cloud Connection</Text>
               <Text style={[styles.infoValue, { color: theme.primary }]}>Connected</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Developer Settings (Method 2 Simulation) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Developer & Testing Tools</Text>
+          <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+            <View style={{ paddingVertical: 12, paddingHorizontal: 12 }}>
+              <Text style={{ color: theme.text, fontSize: 14, fontWeight: 'bold' }}>
+                Simulate Vehicle Crash
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2, marginBottom: 12 }}>
+                Injects high G-force mock sensor data to test the crash dialog and emergency notification flow.
+              </Text>
+              <TouchableOpacity
+                style={{
+                  paddingVertical: 12,
+                  borderRadius: 10,
+                  backgroundColor: theme.primary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={handleSimulateCrash}
+              >
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>
+                  ⚡ Trigger Simulated Crash
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

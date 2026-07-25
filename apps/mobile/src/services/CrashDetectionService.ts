@@ -232,6 +232,43 @@ class CrashDetectionServiceClass {
   }
 
   /**
+   * Simulate a vehicle crash event programmatically for testing purposes.
+   * Feeds fake high G-force statistical readings into the model's callback pipeline.
+   */
+  simulateCrash(confidence: number = 0.95): boolean {
+    if (!this.state.isActive) {
+      console.warn('[CrashDetection] Simulation ignored: Service is not active.');
+      return false;
+    }
+    if (this.onCrashDetected) {
+      console.log('[CrashDetection] 🚨 Programmatic crash simulation triggered');
+      this.onCrashDetected({
+        confidence,
+        latitude: this.state.lastLocation?.latitude || 17.4875,
+        longitude: this.state.lastLocation?.longitude || 78.3953,
+        sensorFeatures: [
+          0.1, 0.2, 9.8,  // Accelerometer mean
+          0.05, 0.05, 0.1, // Accelerometer std
+          0.2, 0.3, 10.0, // Accelerometer max
+          0.0, 0.1, 9.6,  // Accelerometer min
+          0.0, 0.0, 0.0,  // Gyroscope mean
+          0.01, 0.01, 0.01, // Gyroscope std
+          0.05, 0.05, 0.05, // Gyroscope max
+          5.8             // Accelerometer magnitude (high-g simulation)
+        ],
+        sensorSnapshot: {
+          accel: [],
+          gyro: []
+        }
+      });
+      return true;
+    } else {
+      console.warn('[CrashDetection] Cannot simulate crash: no callback registered.');
+      return false;
+    }
+  }
+
+  /**
    * Subscribe to state changes.
    */
   onStateChange(listener: (state: CrashDetectionState) => void): () => void {
