@@ -268,6 +268,10 @@ export function createApiClient(baseUrl: string) {
     async toggle2fa(payload: { enabled: boolean }, token: string): Promise<UserResponse> {
       return this._post('/api/auth/toggle-2fa', payload, token);
     },
+
+    async triggerSOS(latitude?: number, longitude?: number, token?: string): Promise<{ success: boolean; message: string; contactName: string; contactPhone: string }> {
+      return this._post('/api/sos/trigger', { latitude, longitude }, token);
+    },
   };
 }
 

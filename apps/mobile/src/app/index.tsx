@@ -20,6 +20,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { DEFAULT_API_URL } from '@/constants/config';
+import { useThemeAndAuth } from '@/context/ThemeAndAuthContext';
+import * as Location from 'expo-location';
 
 
 const VEHICLE_TYPES = [
@@ -39,6 +41,8 @@ const COUNTRIES = [
 
 export default function RescueScreen() {
   const theme = useTheme();
+  const { userInfo } = useThemeAndAuth();
+  const [sosLoading, setSosLoading] = useState(false);
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
   const apiClient = createApiClient(apiUrl);
 
@@ -301,6 +305,60 @@ export default function RescueScreen() {
     }
   };
 
+  const handleTriggerSOS = async () => {
+    if (!userInfo) {
+      Alert.alert("Authentication Required", "You must be logged in to trigger an SOS alert.");
+      return;
+    }
+
+    const token = (userInfo as any).token;
+    if (!token) {
+      Alert.alert("Authentication Error", "Active session token not found. Please log in again.");
+      return;
+    }
+
+    setSosLoading(true);
+    let lat: number | undefined = undefined;
+    let lon: number | undefined = undefined;
+
+    try {
+      // 1. Request foreground location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        // 2. Fetch current user location with balanced accuracy for fast response
+        const locationResult = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        lat = locationResult.coords.latitude;
+        lon = locationResult.coords.longitude;
+      } else {
+        // Permission denied fallback warning (non-blocking)
+        console.warn("Location permission not granted. SOS alert will omit coordinates.");
+      }
+    } catch (locErr) {
+      console.warn("Could not retrieve GPS coordinates:", locErr);
+    }
+
+    try {
+      const res = await apiClient.triggerSOS(lat, lon, token);
+      if (res.success) {
+        Alert.alert(
+          "SOS Dispatch Alerted",
+          `Alert sent to emergency services and your contact, ${res.contactName} (${res.contactPhone}).`
+        );
+      }
+    } catch (err: any) {
+      console.error(err);
+      const errorDetail = err.message || "An unexpected error occurred.";
+      Alert.alert(
+        "SOS Trigger Failed",
+        `Failed to send alert: ${errorDetail}\n\nCall emergency services (112 / 911) directly if you are in danger.`
+      );
+    } finally {
+      setSosLoading(false);
+    }
+  };
+
   // 2nd-layer confirmation and database search
   const handleConfirmSearch = async (plateText: string) => {
     if (!plateText || plateText.trim() === "") {
@@ -548,25 +606,31 @@ export default function RescueScreen() {
 
           {/* Critical SOS Dispatch button */}
           <TouchableOpacity
+            disabled={sosLoading}
             onPress={() => {
               Alert.alert(
                 "CRITICAL EMERGENCY ALERT",
-                "Are you sure you want to broadcast a critical emergency signal to municipal dispatch, squad vehicles, and nearby medical centers?",
+                "Are you sure you want to broadcast a critical emergency signal to municipal dispatch and your pre-configured emergency contact?",
                 [
                   { text: "Cancel", style: "cancel" },
                   {
                     text: "YES, DISPATCH NOW",
                     style: "destructive",
-                    onPress: () => {
-                      Alert.alert("SOS Broadcasted", "Emergency response team and rescue units have been dispatched to your location.");
-                    }
+                    onPress: handleTriggerSOS
                   }
                 ]
               );
             }}
-            style={[styles.homeDispatchBtn, { backgroundColor: theme.destructive }]}
+            style={[
+              styles.homeDispatchBtn,
+              { backgroundColor: theme.destructive, opacity: sosLoading ? 0.6 : 1 }
+            ]}
           >
-            <Text style={styles.homeDispatchBtnText}>🚨 TRIGGER CRITICAL DISPATCH (SOS)</Text>
+            {sosLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.homeDispatchBtnText}>🚨 TRIGGER CRITICAL DISPATCH (SOS)</Text>
+            )}
           </TouchableOpacity>
 
           {/* Three Primary Actions Grid */}

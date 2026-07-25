@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routes import vehicles, scan, alerts, auth
+from .api.routes import vehicles, scan, alerts, auth, sos
 from .core.database import engine, Base
 from .models.user import User  # noqa: F401 – ensure model is registered with Base
 
@@ -30,6 +30,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
 app.include_router(scan.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
+app.include_router(sos.router, prefix="/api")
 
 # Mount public static files directory
 public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")

@@ -51,6 +51,8 @@ function AppContent() {
     setIsLoggedIn(false);
     setIsProfileOpen(false);
     localStorage.removeItem("vqr_is_logged_in");
+    localStorage.removeItem("vqr_access_token");
+    localStorage.removeItem("vqr_user_info");
   };
 
   // Sync theme changes to the document root element and localStorage

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Siren, Search, Camera, ChevronRight, Sparkles, BookOpen } from "lucide-react";
 import { PhoneShell } from "../PhoneShell";
 import { Badge } from "../Badge";
+import { apiClient } from "../../lib/api";
 
 export function HomeScreen({
   emergency,
@@ -10,6 +12,41 @@ export function HomeScreen({
   emergency: boolean;
   setEmergency: (v: boolean) => void;
 }) {
+  const [loading, setLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleTriggerSOS = async () => {
+    const confirmDispatch = window.confirm(
+      "Are you sure you want to broadcast a critical emergency signal to municipal dispatch and your pre-configured emergency contact?"
+    );
+    if (!confirmDispatch) return;
+
+    const token = localStorage.getItem("vqr_access_token");
+    if (!token) {
+      setStatusMsg({ type: "error", text: "Active session token not found. Please log in again." });
+      return;
+    }
+
+    setLoading(true);
+    setStatusMsg(null);
+    try {
+      const res = await apiClient.triggerSOS(undefined, undefined, token);
+      if (res.success) {
+        setStatusMsg({
+          type: "success",
+          text: `🚨 SOS Dispatch Alerted! Distress message sent successfully to your contact, ${res.contactName} (${res.contactPhone}).`
+        });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setStatusMsg({
+        type: "error",
+        text: `Failed to trigger alert: ${err.message || "Twilio gateway failure."}`
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <PhoneShell title="VQR PASSENGER PORTAL">
       <div className="relative min-h-[720px] bg-gradient-to-b from-white to-slate-100 dark:from-slate-900 dark:to-slate-950 p-5 text-slate-900 dark:text-white transition-colors duration-500 flex flex-col justify-between">
@@ -40,6 +77,39 @@ export function HomeScreen({
               <b>Emergency Mode Armed</b> · Ready for quick procedures lookup.
             </div>
           )}
+
+          {/* Web SOS Panic Button Card */}
+          <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-left shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-500/25">
+                  <Siren size={18} className="animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400">Emergency Distress Beacon</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                    Trigger a panic signal to notify your registered emergency contacts and local responders instantly.
+                  </p>
+                </div>
+              </div>
+              <button
+                disabled={loading}
+                onClick={handleTriggerSOS}
+                className="shrink-0 px-4 py-2.5 rounded-xl text-xs font-black uppercase bg-red-600 hover:bg-red-700 active:scale-95 text-white shadow-lg shadow-red-500/25 transition disabled:opacity-60 disabled:scale-100"
+              >
+                {loading ? "Triggering..." : "Trigger SOS"}
+              </button>
+            </div>
+            {statusMsg && (
+              <div className={`mt-3.5 p-3 rounded-xl text-xs font-semibold ${
+                statusMsg.type === "success" 
+                  ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20" 
+                  : "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
+              }`}>
+                {statusMsg.text}
+              </div>
+            )}
+          </div>
 
           {/* Heading */}
           <div className="mt-10 text-center">
