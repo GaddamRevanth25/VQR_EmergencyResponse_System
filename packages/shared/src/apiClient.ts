@@ -59,7 +59,9 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
         msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: ${res.status}\n• Response Body: ${responseBody}\n• Axios error.code: HTTP_ERROR_${res.status}\n• Axios error.message: Request failed with status code ${res.status}\n• Axios response.data: ${responseBody}\n• Stack trace: ${new Error().stack || 'Not available'}`;
       }
 
-      throw new Error(msg);
+      const error = new Error(msg);
+      (error as any).status = res.status;
+      throw error;
     }
 
     console.log(`=== API REQUEST SUCCESS ===`);
@@ -188,7 +190,9 @@ export function createApiClient(baseUrl: string) {
                 resolve(xhr.responseText as any);
               }
             } else {
-              reject(new Error(`License plate scanning failed with status ${xhr.status}`));
+              const error = new Error(`License plate scanning failed with status ${xhr.status}`);
+              (error as any).status = xhr.status;
+              reject(error);
             }
           };
 
