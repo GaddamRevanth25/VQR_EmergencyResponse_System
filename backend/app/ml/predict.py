@@ -55,7 +55,7 @@ class PredictorONNX:
     """On-device inference path. Requires only `onnxruntime` + `numpy` --
     deliberately no sklearn/pandas dependency so it stays lightweight on
     mobile. NOTE: imputation/scaling must be replicated here using the
-    stats saved in vqr_crash_model_meta.json (see notes in ml_service.py);
+    stats saved in vqr_crash_model_meta.json (see notes in crash_service.py);
     this class assumes the caller passes an already-imputed, already-scaled
     row for maximum portability across platforms."""
 

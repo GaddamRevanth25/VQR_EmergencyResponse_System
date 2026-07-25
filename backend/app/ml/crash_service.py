@@ -1,13 +1,13 @@
 """
-ml_service.py
-===============
+crash_service.py
+================
 Top-level façade the FastAPI backend (or a direct in-process caller) talks
 to. This is the one class the rest of the VQR application should import --
 everything else in app/ml is an implementation detail behind it.
 
 Typical FastAPI usage:
 
-    from app.ml.ml_service import MLService
+    from app.ml.crash_service import MLService
     service = MLService()
 
     @app.post("/sensor-event")

@@ -6,7 +6,7 @@ mirroring `vehicle_classifier.py` + `MockVehicleClassifier` exactly so the
 same `ML_MODE=mock|live` switch and route-handler code path works for both
 models.
 
-Live implementation wraps everything already built in ml_service.py /
+Live implementation wraps everything already built in crash_service.py /
 predict.py / decision_engine.py / severity_classifier.py -- this file adds
 no new detection logic, it's purely the adapter to the doc's expected
 interface shape.

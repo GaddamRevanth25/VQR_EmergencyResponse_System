@@ -5,7 +5,7 @@ from datetime import datetime
 from ...schemas.scan import ScanRequest, ScanResult, MLPrediction
 from ...services.vehicle_service import VehicleService
 from ...services.plate_ocr_service import detect_and_recognize_plate
-from ...ml.ml_service import ml_service
+from ...ml.crash_service import ml_service
 
 
 router = APIRouter(prefix="/scan", tags=["scan"])
