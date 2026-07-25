@@ -5,9 +5,10 @@ pydantic
 pydantic-settings
 torch
 torchvision
-opencv-python-headless
+opencv-python-headless<5       # OpenCV 4.x for numpy 1.x compatibility
+ultralytics                   # YOLO plate detection dependency
 Pillow
-numpy
+numpy<2                      # required for cv2 and paddle compatibility
 onnxruntime               # optional production inference
 scikit-learn              # crash model + utilities
 keras
@@ -24,3 +25,4 @@ passlib[bcrypt]
 pyjwt
 email-validator
 twilio
+sse-starlette             # SSE for real-time crash event streaming

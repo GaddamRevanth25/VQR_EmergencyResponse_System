@@ -14,21 +14,20 @@ from .plate_utils import (
 
 logger = logging.getLogger("uvicorn.error")
 
-logger.info("Loading PaddleOCR...")
-
-ocr_reader = PaddleOCR(
-    lang="en",
-    device="cpu",
-    show_log=False
-)
-
-logger.info("PaddleOCR Loaded.")
-
 
 class PlateOCR:
 
     def __init__(self):
-        self.reader = ocr_reader
+        self._reader = None
+
+    @property
+    def reader(self):
+        if self._reader is None:
+            logger.info("Loading PaddleOCR...")
+            from paddleocr import PaddleOCR
+            self._reader = PaddleOCR(lang="en", device="cpu", show_log=False)
+            logger.info("PaddleOCR Loaded.")
+        return self._reader
 
     def read_plate(self, plate_image):
 
