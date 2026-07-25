@@ -14,6 +14,13 @@ import type {
   Resend2faCodePayload,
   TokenResponse,
   UserResponse,
+  CrashDetectResponse,
+  SOSTriggerRequest,
+  SOSTriggerResponse,
+  SOSStatusResponse,
+  SOSResolveRequest,
+  SOSResolveResponse,
+  CrashEvent,
 } from './types';
 
 // Helper to log network requests and responses, with developer-friendly diagnostics
@@ -267,6 +274,40 @@ export function createApiClient(baseUrl: string) {
 
     async toggle2fa(payload: { enabled: boolean }, token: string): Promise<UserResponse> {
       return this._post('/api/auth/toggle-2fa', payload, token);
+    },
+
+    // ── Crash Detection & SOS ──────────────────────────────────────
+
+    async detectCrash(features: number[], token: string): Promise<CrashDetectResponse> {
+      return this._post('/api/v1/crash/detect', { features }, token);
+    },
+
+    async triggerSOS(payload: SOSTriggerRequest, token: string): Promise<SOSTriggerResponse> {
+      return this._post('/api/v1/sos/trigger', payload, token);
+    },
+
+    async getSOSStatus(sessionId: string, token: string): Promise<SOSStatusResponse> {
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetchWithLogging(`${cleanUrl}/api/v1/sos/${sessionId}/status`, { headers });
+      return res.json() as any;
+    },
+
+    async resolveSOSSession(sessionId: string, payload: SOSResolveRequest, token: string): Promise<SOSResolveResponse> {
+      return this._post(`/api/v1/sos/${sessionId}/resolve`, payload, token);
+    },
+
+    async getCrashEvents(token: string, limit: number = 50): Promise<CrashEvent[]> {
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetchWithLogging(`${cleanUrl}/api/v1/sos/events?limit=${limit}`, { headers });
+      return res.json() as any;
+    },
+
+    getCrashEventsStreamUrl(): string {
+      return `${cleanUrl}/api/v1/sos/events/stream`;
     },
   };
 }

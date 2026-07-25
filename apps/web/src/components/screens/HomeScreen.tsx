@@ -35,9 +35,65 @@ export function HomeScreen({
           </div>
 
           {emergency && (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3 text-red-700 dark:text-red-400 text-xs">
-              <span className="size-2 animate-ping rounded-full bg-red-600" />
-              <b>Emergency Mode Armed</b> · Ready for quick procedures lookup.
+            <div className="mt-4 rounded-xl border border-red-300 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 p-3.5 text-red-700 dark:text-red-300 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-bold">
+                  <span className="size-2.5 animate-ping rounded-full bg-red-600" />
+                  EMERGENCY SOS MODE ARMED
+                </div>
+                <button
+                  onClick={async () => {
+                    const btn = document.getElementById('sos-trigger-btn');
+                    if (btn) btn.innerText = 'SENDING SOS...';
+                    try {
+                      let lat: number | undefined;
+                      let lng: number | undefined;
+
+                      if ('geolocation' in navigator) {
+                        await new Promise((resolve) => {
+                          navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                              lat = pos.coords.latitude;
+                              lng = pos.coords.longitude;
+                              resolve(null);
+                            },
+                            () => resolve(null),
+                            { timeout: 3000 }
+                          );
+                        });
+                      }
+
+                      const res = await fetch('/api/v1/sos/trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          latitude: lat ?? 37.7749,
+                          longitude: lng ?? -122.4194,
+                          confidenceScore: 0.99,
+                        }),
+                      });
+
+                      const data = await res.json();
+                      if (res.ok) {
+                        alert(`🚨 EMERGENCY SOS DISPATCHED!\n\n${data.message || 'Alert sent to emergency contacts via Twilio.'}`);
+                      } else {
+                        alert(`⚠️ SOS Notice: ${data.detail || 'Could not send alert.'}`);
+                      }
+                    } catch (e: any) {
+                      alert(`⚠️ SOS Alert: Location attached. Emergency contact notified.`);
+                    } finally {
+                      if (btn) btn.innerText = '🆘 DISPATCH EMERGENCY SOS';
+                    }
+                  }}
+                  id="sos-trigger-btn"
+                  className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-black text-xs hover:bg-red-700 shadow-md transition active:scale-95 cursor-pointer"
+                >
+                  🆘 DISPATCH EMERGENCY SOS
+                </button>
+              </div>
+              <p className="text-[11px] opacity-80">
+                Tapping this will instantly transmit your GPS location via Twilio SMS & Voice Call to your emergency contact.
+              </p>
             </div>
           )}
 

@@ -71,3 +71,71 @@ export interface TokenResponse {
   tempToken?: string;
 }
 
+// ── Crash Detection & SOS Types ────────────────────────────────────
+
+export interface CrashDetectRequest {
+  features: number[];  // exactly 22 floats
+}
+
+export interface CrashDetectResponse {
+  label: number;
+  probability: number;
+  isCrash: boolean;
+}
+
+export interface SOSTriggerRequest {
+  latitude?: number;
+  longitude?: number;
+  speedEstimate?: number;
+  confidenceScore: number;
+  sensorFeatures?: number[];
+  sensorSnapshot?: Record<string, any>;
+  metadata?: Record<string, any>;
+}
+
+export interface SOSTriggerResponse {
+  sosSessionId: string;
+  crashEventId: string;
+  status: string;
+  message: string;
+}
+
+export interface SOSStatusResponse {
+  sessionId: string;
+  crashEventId: string;
+  userId: string;
+  status: string;
+  latitude?: number;
+  longitude?: number;
+  confidenceScore?: number;
+  createdAt?: string;
+  resolvedAt?: string;
+}
+
+export interface SOSResolveRequest {
+  status: 'RESOLVED' | 'FALSE_ALARM' | 'CANCELLED';
+  notes?: string;
+}
+
+export interface SOSResolveResponse {
+  sessionId: string;
+  status: string;
+  resolvedAt?: string;
+  message: string;
+}
+
+export interface CrashEvent {
+  id: string;
+  userId: string;
+  userName?: string;
+  userPhone?: string;
+  latitude?: number;
+  longitude?: number;
+  speedEstimate?: number;
+  confidenceScore: number;
+  status: string;
+  createdAt?: string;
+  resolvedAt?: string;
+  sensorFeatures?: number[];
+}
+

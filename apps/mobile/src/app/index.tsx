@@ -16,6 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { createApiClient } from '@vqr/shared';
 import { useTheme } from '@/hooks/use-theme';
+import { useCrashDetection } from '@/hooks/useCrashDetection';
+import CrashAlertOverlay from '@/components/CrashAlertOverlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,6 +78,11 @@ export default function RescueScreen() {
   const [searchHistoryQuery, setSearchHistoryQuery] = useState('');
   const [crashDetectionBg, setCrashDetectionBg] = useState(false);
   const blinkAnim = useRef(new Animated.Value(1)).current;
+
+  // ── Crash Detection Service ──
+  // TODO: Replace '' with actual auth token from your auth context
+  const authToken = ''; // Will be wired to real auth token
+  const crashDetection = useCrashDetection(apiUrl, authToken);
 
   // Selected vehicle & results tabs states
   const [vehicle, setVehicle] = useState<any>(null);
@@ -426,6 +433,15 @@ export default function RescueScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Crash Alert Full-Screen Overlay */}
+      <CrashAlertOverlay
+        visible={crashDetection.crashDetected}
+        confidence={crashDetection.crashData?.confidence ?? 0}
+        latitude={crashDetection.crashData?.latitude}
+        longitude={crashDetection.crashData?.longitude}
+        onDismiss={crashDetection.dismissCrashAlert}
+        onConfirmSOS={crashDetection.confirmSOS}
+      />
       {/* Background neon blobs */}
       <View style={styles.neonBlobContainer} pointerEvents="none">
         <View style={[styles.neonBlob1, { backgroundColor: theme.primary + '11' }]} />
@@ -460,22 +476,37 @@ export default function RescueScreen() {
               )}
               <Text style={{ fontSize: 8, fontWeight: '900', letterSpacing: 0.5, color: theme.textSecondary }}>CRASH DETECT</Text>
               <TouchableOpacity
-                onPress={() => {
+                onPress={async () => {
                   const nextState = !crashDetectionBg;
                   setCrashDetectionBg(nextState);
-                  Alert.alert(
-                    "Crash Detection",
-                    nextState
-                      ? "Crash Detection System is now running in the background."
-                      : "Crash Detection System background service has been disabled."
-                  );
+                  try {
+                    if (nextState) {
+                      await crashDetection.startDetection();
+                      Alert.alert(
+                        "Crash Detection Active",
+                        "Crash Detection System is now monitoring sensors continuously in the background. You will be alerted if a crash is detected."
+                      );
+                    } else {
+                      await crashDetection.stopDetection();
+                      Alert.alert(
+                        "Crash Detection Disabled",
+                        "Crash Detection System background service has been disabled."
+                      );
+                    }
+                  } catch (error: any) {
+                    setCrashDetectionBg(false);
+                    Alert.alert(
+                      "Crash Detection Error",
+                      error.message || "Failed to toggle crash detection."
+                    );
+                  }
                 }}
                 activeOpacity={0.8}
                 style={[
                   styles.toggleOuter,
                   {
-                    backgroundColor: crashDetectionBg ? theme.success : theme.backgroundSelected,
-                    borderColor: crashDetectionBg ? theme.success : 'rgba(148, 163, 184, 0.2)'
+                    backgroundColor: crashDetection.isActive ? theme.success : theme.backgroundSelected,
+                    borderColor: crashDetection.isActive ? theme.success : 'rgba(148, 163, 184, 0.2)'
                   }
                 ]}
               >
@@ -483,7 +514,7 @@ export default function RescueScreen() {
                   style={[
                     styles.toggleKnob,
                     {
-                      transform: [{ translateX: crashDetectionBg ? 16 : 0 }],
+                      transform: [{ translateX: crashDetection.isActive ? 16 : 0 }],
                       backgroundColor: '#fff'
                     }
                   ]}
@@ -504,45 +535,6 @@ export default function RescueScreen() {
             <Text style={[styles.heroHeading, { color: theme.text }]}>Know Your Vehicle.{"\n"}Travel Safer.</Text>
             <Text style={[styles.heroSub, { color: theme.textSecondary }]}>
               Identify emergency features, extraction safety guides, and safety tips in seconds.
-            </Text>
-          </View>
-
-          {/* API Configuration Card */}
-          <View style={{
-            padding: 16,
-            borderRadius: 16,
-            backgroundColor: theme.backgroundElement,
-            borderWidth: 1,
-            borderColor: theme.backgroundSelected,
-            marginBottom: 20,
-            marginHorizontal: 16,
-          }}>
-            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
-              🌐 Backend API Connection
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <TextInput
-                value={apiUrl}
-                onChangeText={handleSaveApiUrl}
-                placeholder="e.g. http://192.168.1.100:8000"
-                placeholderTextColor={theme.textSecondary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={{
-                  flex: 1,
-                  borderWidth: 1,
-                  borderColor: 'rgba(148, 163, 184, 0.2)',
-                  borderRadius: 10,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  fontSize: 13,
-                  color: theme.text,
-                  backgroundColor: 'rgba(0,0,0,0.1)'
-                }}
-              />
-            </View>
-            <Text style={{ fontSize: 10, color: theme.textSecondary, marginTop: 6, lineHeight: 14 }}>
-              Required for physical device testing. Enter your server's local IP address (e.g. http://192.168.1.100:8000). Default is http://10.0.2.2:8000 (Android emulator) or http://localhost:8000 (iOS).
             </Text>
           </View>
 

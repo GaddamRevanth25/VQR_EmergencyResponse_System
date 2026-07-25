@@ -19,6 +19,7 @@ class User(Base):
     emergency_contact_name = Column(String(100), nullable=True)
     emergency_contact_phone = Column(String(20), nullable=True)
     emergency_contact_relation = Column(String(50), nullable=True)
+    emergency_contact_email = Column(String(100), nullable=True)
     biometric_public_key = Column(String, nullable=True)
     
     # Advanced Auth & 2FA fields

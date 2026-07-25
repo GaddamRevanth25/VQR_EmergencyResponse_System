@@ -59,6 +59,17 @@ export function Navbar({
           <a href="/#features" className={`transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-950"}`}>Features</a>
           <a href="/#how-it-works" className={`transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-950"}`}>How it Works</a>
           <a href="/#rescue-data" className={`transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-950"}`}>Safety Catalog</a>
+          {isLoggedIn && (
+            <Link
+              to="/crash-events"
+              className={`flex items-center gap-1.5 font-bold transition ${
+                isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"
+              }`}
+            >
+              <span className="size-2 rounded-full bg-red-600 animate-ping" />
+              Crash Events
+            </Link>
+          )}
         </div>
 
         {/* Controls & Auth Area */}
@@ -102,6 +113,16 @@ export function Navbar({
                     <div className={`rounded-xl px-3 py-2 text-xs font-semibold ${isDark ? "text-slate-400 bg-white/5" : "text-slate-500 bg-slate-50"}`}>
                       Station 4 · Shift B
                     </div>
+                    <Link
+                      to="/crash-events"
+                      onClick={() => setIsProfileOpen(false)}
+                      className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition ${
+                        isDark ? "text-red-400 hover:bg-white/5" : "text-red-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="size-2 rounded-full bg-red-600 animate-ping" />
+                      Crash Monitoring
+                    </Link>
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);

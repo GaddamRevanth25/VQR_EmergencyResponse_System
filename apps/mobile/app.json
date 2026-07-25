@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.anonymous.mobile",
+      "infoPlist": {
+        "NSMotionUsageDescription": "VQR uses motion sensors (accelerometer/gyroscope) to detect vehicle crashes.",
+        "NSLocationWhenInUseUsageDescription": "VQR uses your location to send emergency coordinates when a crash is detected.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "VQR continuously monitors your location in the background for emergency SOS dispatch.",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +24,15 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE"
+      ]
     },
     "web": {
       "output": "static",
@@ -32,6 +46,12 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "VQR needs continuous location access to dispatch emergency services when a crash occurs."
         }
       ]
     ],

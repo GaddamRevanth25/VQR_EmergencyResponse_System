@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routes import vehicles, scan, alerts, auth
+from .api.routes import vehicles, scan, alerts, auth, crash
 from .core.database import engine, Base
 from .models.user import User  # noqa: F401 – ensure model is registered with Base
+from .models.crash_event import CrashEvent  # noqa: F401
+from .models.sos_session import SOSSession  # noqa: F401
 
 # Create all database tables on startup (no-op if they already exist)
 Base.metadata.create_all(bind=engine)
@@ -30,6 +32,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
 app.include_router(scan.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
+app.include_router(crash.router, prefix="/api")
 
 # Mount public static files directory
 public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")

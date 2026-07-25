@@ -16,24 +16,7 @@ from typing import Optional
 
 from ..core.config import settings
 
-# ── Auth-code file logger ───────────────────────────────────────────
-_LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
-os.makedirs(_LOG_DIR, exist_ok=True)
-
-_code_logger = logging.getLogger("auth_codes")
-_code_logger.setLevel(logging.INFO)
-_code_logger.propagate = False  # don't echo to uvicorn root logger
-
-if not _code_logger.handlers:
-    _handler = RotatingFileHandler(
-        os.path.join(_LOG_DIR, "auth_codes.log"),
-        maxBytes=5 * 1024 * 1024,  # 5 MB
-        backupCount=3,
-    )
-    _handler.setFormatter(logging.Formatter("%(asctime)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-    _code_logger.addHandler(_handler)
-
-# Standard logger for errors
+# Standard logger for application info and errors
 _logger = logging.getLogger("uvicorn.error")
 
 
@@ -51,14 +34,16 @@ class NotificationService:
         msg["Subject"] = subject
         msg.attach(MIMEText(html_body, "html"))
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-            server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
-
-        _logger.info(f"Email sent to {to_email}: {subject}")
+        try:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+                server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
+            _logger.info(f"Email sent to {to_email}: {subject}")
+        except Exception as e:
+            _logger.warning(f"SMTP email delivery to {to_email} skipped: {e}")
 
     @staticmethod
     def _send_sms(phone: str, body: str) -> None:
@@ -70,12 +55,30 @@ class NotificationService:
         from twilio.rest import Client
 
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        client.messages.create(
+        message = client.messages.create(
             body=body,
             from_=settings.TWILIO_PHONE_NUMBER,
             to=phone,
         )
-        _logger.info(f"SMS sent to {phone}")
+        _logger.info(f"Twilio SMS sent to {phone} (SID: {message.sid})")
+
+    @staticmethod
+    def _send_voice_call(phone: str, spoken_message: str) -> None:
+        """Trigger an automated voice call via Twilio Voice API with TwiML speech synthesis."""
+        if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
+            _logger.warning(f"Twilio not configured – Voice call to {phone} skipped.")
+            return
+
+        from twilio.rest import Client
+
+        twiml = f'<Response><Say voice="alice" language="en-US">{spoken_message}</Say></Response>'
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        call = client.calls.create(
+            twiml=twiml,
+            from_=settings.TWILIO_PHONE_NUMBER,
+            to=phone,
+        )
+        _logger.info(f"Twilio Voice Call initiated to {phone} (SID: {call.sid})")
 
     # ── Public API (called by auth routes) ──────────────────────────
 
@@ -84,7 +87,6 @@ class NotificationService:
         email: str, name: str, verification_code: str
     ) -> None:
         """Send a welcome email that includes the 6-digit verification code."""
-        _code_logger.info(f"VERIFICATION | {email} | Code: {verification_code}")
 
         html = f"""\
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;
@@ -107,7 +109,6 @@ class NotificationService:
         email: str, phone: Optional[str], code: str
     ) -> None:
         """Send 2FA verification code via email and (optionally) SMS."""
-        _code_logger.info(f"2FA          | {email} | Code: {code}")
 
         html = f"""\
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;
@@ -135,7 +136,6 @@ class NotificationService:
     @staticmethod
     def send_sms_otp(phone: str, otp_code: str) -> None:
         """Send a phone-login OTP via SMS."""
-        _code_logger.info(f"OTP          | {phone} | Code: {otp_code}")
 
         try:
             NotificationService._send_sms(
@@ -159,3 +159,85 @@ class NotificationService:
         </div>"""
 
         NotificationService._send_email(email, "VQR – New Login Detected", html)
+
+    @staticmethod
+    def send_crash_sos_notifications(
+        user_name: str,
+        user_phone: Optional[str],
+        contact_phone: Optional[str],
+        contact_email: Optional[str],
+        latitude: Optional[float],
+        longitude: Optional[float],
+        confidence_score: float,
+        created_at_str: str,
+    ) -> None:
+        """Send emergency SMS with Google Maps link and HTML Email to emergency contacts."""
+        maps_link = f"https://maps.google.com/maps?q={latitude},{longitude}" if (latitude is not None and longitude is not None) else "Location unavailable"
+
+        # ── SMS ──
+        if contact_phone:
+            sms_body = (
+                f"🚨 SOS Alert: {user_name} has triggered an emergency alert at {created_at_str} ({maps_link}). "
+                f"Please check on them immediately."
+            )
+            try:
+                NotificationService._send_sms(contact_phone, sms_body)
+            except Exception as e:
+                _logger.error(f"Failed to send emergency SMS to {contact_phone}: {e}")
+
+            # ── Voice Call (Twilio Voice API) ──
+            spoken_alert = f"Emergency Alert! {user_name} has triggered a high confidence vehicle emergency alert. Please check on them immediately."
+            try:
+                NotificationService._send_voice_call(contact_phone, spoken_alert)
+            except Exception as e:
+                _logger.error(f"Failed to trigger emergency voice call to {contact_phone}: {e}")
+
+        # ── Email ──
+        if contact_email:
+            html = f"""\
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:28px;
+                        border:2px solid #ef4444;border-radius:16px;background:#fef2f2;">
+                <h1 style="color:#dc2626;margin-top:0;">🚨 VEHICLE CRASH DETECTED</h1>
+                <p style="font-size:16px;color:#1f2937;">
+                    <strong>{user_name}</strong> may have been involved in a vehicle crash.
+                    The VQR Emergency Response System detected a high-confidence impact event.
+                </p>
+
+                <div style="background:#fff;border:1px solid #fecaca;border-radius:12px;padding:16px;margin:20px 0;">
+                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                        <tr>
+                            <td style="padding:6px 0;color:#6b7280;"><strong>User</strong></td>
+                            <td style="padding:6px 0;color:#111827;">{user_name} ({user_phone or 'N/A'})</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0;color:#6b7280;"><strong>Time</strong></td>
+                            <td style="padding:6px 0;color:#111827;">{created_at_str}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0;color:#6b7280;"><strong>Confidence</strong></td>
+                            <td style="padding:6px 0;color:#111827;">{confidence_score:.0%}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0;color:#6b7280;"><strong>Location</strong></td>
+                            <td style="padding:6px 0;color:#111827;">
+                                {"<a href='" + maps_link + "' style='color:#2563eb;'>View on Google Maps</a>" if latitude is not None else "Unavailable"}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <p style="color:#dc2626;font-weight:bold;">
+                    Please try to contact {user_name} immediately.
+                    If unreachable, call local emergency services.
+                </p>
+            </div>"""
+
+            try:
+                NotificationService._send_email(
+                    contact_email,
+                    f"🚨 VQR CRASH ALERT — {user_name} may need help",
+                    html,
+                )
+            except Exception as e:
+                _logger.error(f"Failed to send emergency email to {contact_email}: {e}")
+
