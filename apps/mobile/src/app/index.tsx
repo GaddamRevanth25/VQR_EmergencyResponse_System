@@ -19,9 +19,8 @@ import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { DEFAULT_API_URL } from '@/constants/config';
 
-// Host configurations
-const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 
 const VEHICLE_TYPES = [
   { code: "CAR", name: "Car" },
@@ -40,7 +39,30 @@ const COUNTRIES = [
 
 export default function RescueScreen() {
   const theme = useTheme();
-  const apiClient = createApiClient(DEFAULT_API_URL);
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
+  const apiClient = createApiClient(apiUrl);
+
+  // Load API URL (auto-detected from Expo Constants with manual override support)
+  useEffect(() => {
+    const loadApiUrl = async () => {
+      try {
+        const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+        if (savedUrl) {
+          setApiUrl(savedUrl);
+        } else {
+          setApiUrl(DEFAULT_API_URL);
+        }
+      } catch (e) { }
+    };
+    loadApiUrl();
+  }, []);
+
+  const handleSaveApiUrl = async (url: string) => {
+    setApiUrl(url);
+    try {
+      await AsyncStorage.setItem('vqr_api_url', url);
+    } catch (e) { }
+  };
 
   // View States: 'dashboard' | 'manual' | 'scanner' | 'dropdowns' | 'details' | 'history'
   const [activeView, setActiveView] = useState<'dashboard' | 'manual' | 'scanner' | 'dropdowns' | 'details' | 'history'>('dashboard');
@@ -75,11 +97,14 @@ export default function RescueScreen() {
   const [inputValue, setInputValue] = useState('');
 
   // Camera Scanner States
+  const cameraRef = useRef<any>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [facingMode, setFacingMode] = useState<'back' | 'front'>('back');
   const [confidence, setConfidence] = useState(0);
   const [recognized, setRecognized] = useState(false);
   const [scannedRegText, setScannedRegText] = useState('');
+  const [isConfirmingPlate, setIsConfirmingPlate] = useState(false);
+  const [editedPlateText, setEditedPlateText] = useState('');
 
   // Scanning animation values
   const [scanAnim] = useState(() => new Animated.Value(0));
@@ -162,7 +187,7 @@ export default function RescueScreen() {
     setSelectedMake("");
     setSelectedModel("");
     setSelectedYear("");
-  }, [selectedType]);
+  }, [selectedType, apiUrl]);
 
   // Fetch models when make changes
   useEffect(() => {
@@ -181,7 +206,7 @@ export default function RescueScreen() {
     fetchModels();
     setSelectedModel("");
     setSelectedYear("");
-  }, [selectedMake, selectedType]);
+  }, [selectedMake, selectedType, apiUrl]);
 
   // Fetch years when model changes
   useEffect(() => {
@@ -199,9 +224,9 @@ export default function RescueScreen() {
     }
     fetchYears();
     setSelectedYear("");
-  }, [selectedModel, selectedMake, selectedType]);
+  }, [selectedModel, selectedMake, selectedType, apiUrl]);
 
-  // Camera Scanning simulation
+  // Camera Scanning animation
   const startScanningSimulation = () => {
     setConfidence(0);
     setRecognized(false);
@@ -224,26 +249,105 @@ export default function RescueScreen() {
         }),
       ])
     ).start();
-
-    if (progressInterval.current) clearInterval(progressInterval.current);
-    progressInterval.current = setInterval(() => {
-      setConfidence((prev) => {
-        const next = prev + Math.floor(Math.random() * 12 + 8);
-        if (next >= 100) {
-          clearInterval(progressInterval.current);
-          setRecognized(true);
-          const matchedPlate = inputType === "IN" ? "MH02CL0555" : inputType === "UK" ? "TE57VRN" : "7XER187";
-          setScannedRegText(matchedPlate);
-          return 100;
-        }
-        return next;
-      });
-    }, 250);
   };
 
   const stopScanningSimulation = () => {
-    if (progressInterval.current) clearInterval(progressInterval.current);
     scanAnim.setValue(0);
+  };
+
+  // Perform real capture and backend plate OCR scan
+  const handleCapture = async () => {
+    if (!cameraRef.current) {
+      Alert.alert("Error", "Camera is not ready yet.");
+      return;
+    }
+    setLoading(true);
+    setConfidence(0);
+    setRecognized(false);
+    setScannedRegText("");
+    setIsConfirmingPlate(false);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        skipProcessing: true,
+      });
+
+      if (!photo || !photo.uri) {
+        throw new Error("Failed to capture image");
+      }
+
+      const file = {
+        uri: photo.uri,
+        name: 'plate.jpg',
+        type: 'image/jpeg',
+      } as any;
+
+      const scanResult = await apiClient.scanPlateImage(file);
+
+      if (scanResult.prediction?.predictedClass) {
+        const plate = scanResult.prediction.predictedClass;
+        setScannedRegText(plate);
+        setEditedPlateText(plate);
+        setConfidence(100);
+        setIsConfirmingPlate(true); // Open the verification screen/card
+      } else {
+        Alert.alert("OCR Failed", "No license plate characters could be recognized in the image.");
+      }
+    } catch (err: any) {
+      console.error("Capture and scan error:", err);
+      Alert.alert("Capture Error", err.message || "Failed to scan license plate.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2nd-layer confirmation and database search
+  const handleConfirmSearch = async (plateText: string) => {
+    if (!plateText || plateText.trim() === "") {
+      Alert.alert("Error", "Please enter a valid license plate number.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const cleanedPlate = plateText.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      const response = await apiClient.lookupRegistration(cleanedPlate);
+      saveSearchToRecent(response, "scan");
+      setVehicle(response);
+      setRecognized(true);
+      setIsConfirmingPlate(false);
+      setActiveView("details");
+    } catch (err: any) {
+      console.error("Lookup error:", err);
+      setVehicle(null);
+      
+      const errMsg = err.message || "";
+      const isNetworkError = errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch") || errMsg.toLowerCase().includes("failed");
+      
+      if (isNetworkError) {
+        Alert.alert(
+          "Network Connection Error",
+          `Could not connect to the backend server at ${apiUrl}.\n\nEnsure your PC's firewall allows port 8000 and the server is running with --host 0.0.0.0`
+        );
+      } else {
+        setRecognized(true);
+        setIsConfirmingPlate(false);
+        Alert.alert(
+          "Vehicle Not Found",
+          `Confirmed plate "${plateText}", but no matching safety instructions were found in the database.`
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setIsConfirmingPlate(false);
+    setConfidence(0);
+    setRecognized(false);
+    setScannedRegText("");
+    setEditedPlateText("");
+    setVehicle(null);
   };
 
   // Perform vehicle lookups
@@ -252,12 +356,23 @@ export default function RescueScreen() {
     setLoading(true);
     setErrorMsg("");
     try {
-      const response = await apiClient.lookupVehicle(inputValue, inputType === "VIN" ? "US" : inputType);
+      let response;
+      if (inputType === "VIN") {
+        response = await apiClient.lookupVehicle(inputValue, "US");
+      } else {
+        response = await apiClient.lookupRegistration(inputValue);
+      }
       saveSearchToRecent(response, "manual");
       setVehicle(response);
       setActiveView("details");
-    } catch (err) {
-      setErrorMsg("No matching vehicle found in passenger database.");
+    } catch (err: any) {
+      const errMsg = err.message || "";
+      const isNetworkError = errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch");
+      if (isNetworkError) {
+        setErrorMsg(`Network Connection Error: Could not connect to backend server at ${apiUrl}.`);
+      } else {
+        setErrorMsg("No matching vehicle found in passenger database.");
+      }
     } finally {
       setLoading(false);
     }
@@ -297,9 +412,7 @@ export default function RescueScreen() {
 
   // Bounding box characters helper
   const getActivePlateText = () => {
-    if (inputType === "IN") return "MH02CL0555";
-    if (inputType === "UK") return "TE57VRN";
-    return "7XER187";
+    return scannedRegText || "AWAITING";
   };
   const activePlateText = getActivePlateText();
   const highlightedCharCount = Math.floor((confidence / 100) * activePlateText.length);
@@ -391,6 +504,45 @@ export default function RescueScreen() {
             <Text style={[styles.heroHeading, { color: theme.text }]}>Know Your Vehicle.{"\n"}Travel Safer.</Text>
             <Text style={[styles.heroSub, { color: theme.textSecondary }]}>
               Identify emergency features, extraction safety guides, and safety tips in seconds.
+            </Text>
+          </View>
+
+          {/* API Configuration Card */}
+          <View style={{
+            padding: 16,
+            borderRadius: 16,
+            backgroundColor: theme.backgroundElement,
+            borderWidth: 1,
+            borderColor: theme.backgroundSelected,
+            marginBottom: 20,
+            marginHorizontal: 16,
+          }}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
+              🌐 Backend API Connection
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <TextInput
+                value={apiUrl}
+                onChangeText={handleSaveApiUrl}
+                placeholder="e.g. http://192.168.1.100:8000"
+                placeholderTextColor={theme.textSecondary}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={{
+                  flex: 1,
+                  borderWidth: 1,
+                  borderColor: 'rgba(148, 163, 184, 0.2)',
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  fontSize: 13,
+                  color: theme.text,
+                  backgroundColor: 'rgba(0,0,0,0.1)'
+                }}
+              />
+            </View>
+            <Text style={{ fontSize: 10, color: theme.textSecondary, marginTop: 6, lineHeight: 14 }}>
+              Required for physical device testing. Enter your server's local IP address (e.g. http://192.168.1.100:8000). Default is http://10.0.2.2:8000 (Android emulator) or http://localhost:8000 (iOS).
             </Text>
           </View>
 
@@ -690,7 +842,7 @@ export default function RescueScreen() {
           ) : (
             <>
               {/* Native Camera View */}
-              <CameraView style={StyleSheet.absoluteFill} facing={facingMode} flash={isFlashOn ? 'on' : 'off'} />
+              <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facingMode} flash={isFlashOn ? 'on' : 'off'} mode="picture" />
 
               {/* Shading surrounding frames (leaving center clear) */}
               <View style={styles.blackoutOverlayTop} />
@@ -702,6 +854,7 @@ export default function RescueScreen() {
               <TouchableOpacity
                 onPress={() => {
                   stopScanningSimulation();
+                  handleCancelConfirm();
                   setActiveView('dashboard');
                 }}
                 style={styles.scannerBackBtn}
@@ -709,141 +862,221 @@ export default function RescueScreen() {
                 <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>← Back</Text>
               </TouchableOpacity>
 
-          {/* Bounding scan box */}
-          <View style={[styles.scannerGuideBox, { borderWidth: 1, borderColor: 'rgba(6, 182, 212, 0.15)', borderRadius: 12, backgroundColor: 'rgba(15, 23, 42, 0.25)', overflow: 'hidden' }]}>
-            <View style={styles.scannerLaserLine} />
+              {/* Bounding scan box */}
+              <View style={[styles.scannerGuideBox, { borderWidth: 1, borderColor: 'rgba(6, 182, 212, 0.15)', borderRadius: 12, backgroundColor: 'rgba(15, 23, 42, 0.25)', overflow: 'hidden' }]}>
+                <View style={styles.scannerLaserLine} />
 
-            {/* Target HUD Center Crosshair Markers */}
-            <View style={{ position: 'absolute', top: 8, bottom: 8, width: 1, backgroundColor: 'rgba(6, 182, 212, 0.2)' }} />
-            <View style={{ position: 'absolute', left: 8, right: 8, height: 1, backgroundColor: 'rgba(6, 182, 212, 0.2)' }} />
 
-            {/* Bounding box brackets */}
-            <View style={[styles.cornerBracket, { top: -2, left: -2, borderTopWidth: 5, borderLeftWidth: 5, width: 24, height: 24 }]} />
-            <View style={[styles.cornerBracket, { top: -2, right: -2, borderTopWidth: 5, borderRightWidth: 5, width: 24, height: 24 }]} />
-            <View style={[styles.cornerBracket, { bottom: -2, left: -2, borderBottomWidth: 5, borderLeftWidth: 5, width: 24, height: 24 }]} />
-            <View style={[styles.cornerBracket, { bottom: -2, right: -2, borderBottomWidth: 5, borderRightWidth: 5, width: 24, height: 24 }]} />
 
-            {/* Character Boxes (Computer Vision Highlights) */}
-            <View style={[styles.scannerCharContainer, recognized && { borderColor: theme.accent, shadowColor: theme.accent, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }]}>
-              {activePlateText.split("").map((char, index) => {
-                const isActive = index < highlightedCharCount;
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      styles.scannerCharBox,
-                      {
-                        backgroundColor: recognized ? theme.accent : isActive ? theme.accent + '33' : 'rgba(0,0,0,0.6)',
-                        borderColor: (isActive || recognized) ? theme.accent : '#475569',
-                      }
-                    ]}
-                  >
-                    <Text style={[styles.scannerCharText, { color: (isActive || recognized) ? '#fff' : '#64748b' }]}>
-                      {isActive || recognized ? char : "?"}
-                    </Text>
+                {/* Bounding box brackets */}
+                <View style={[styles.cornerBracket, { top: -2, left: -2, borderTopWidth: 5, borderLeftWidth: 5, width: 24, height: 24 }]} />
+                <View style={[styles.cornerBracket, { top: -2, right: -2, borderTopWidth: 5, borderRightWidth: 5, width: 24, height: 24 }]} />
+                <View style={[styles.cornerBracket, { bottom: -2, left: -2, borderBottomWidth: 5, borderLeftWidth: 5, width: 24, height: 24 }]} />
+                <View style={[styles.cornerBracket, { bottom: -2, right: -2, borderBottomWidth: 5, borderRightWidth: 5, width: 24, height: 24 }]} />
+
+                {/* Character Boxes (Computer Vision Highlights - Only visible after successful matching) */}
+                {recognized && (
+                  <View style={[styles.scannerCharContainer, { borderColor: theme.accent, shadowColor: theme.accent, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }]}>
+                    {activePlateText.split("").map((char, index) => {
+                      const isActive = index < highlightedCharCount;
+                      return (
+                        <View
+                          key={index}
+                          style={[
+                            styles.scannerCharBox,
+                            {
+                              backgroundColor: theme.accent,
+                              borderColor: theme.accent,
+                            }
+                          ]}
+                        >
+                          <Text style={[styles.scannerCharText, { color: '#fff' }]}>
+                            {char}
+                          </Text>
+                        </View>
+                      );
+                    })}
                   </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Flash & Camera Swap controls positioned in between camera zone and bottom footer buttons */}
-          <View style={{ position: 'absolute', bottom: 140, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 24, zIndex: 50 }}>
-            {/* Flash Toggle */}
-            <TouchableOpacity
-              onPress={() => setIsFlashOn(!isFlashOn)}
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: 26,
-                backgroundColor: isFlashOn ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
-                borderWidth: 2,
-                borderColor: isFlashOn ? '#ffffff' : 'rgba(255, 255, 255, 0.15)',
-                justifyContent: 'center',
-                alignItems: 'center',
-                shadowColor: isFlashOn ? '#eab308' : '#000',
-                shadowOpacity: isFlashOn ? 0.35 : 0.15,
-                shadowRadius: 6,
-                elevation: 4,
-              }}
-            >
-              <Ionicons
-                name={isFlashOn ? "flashlight" : "flashlight-outline"}
-                size={22}
-                color={isFlashOn ? "#eab308" : "#ffffff"}
-              />
-            </TouchableOpacity>
-
-            {/* Camera Swap Toggle */}
-            <TouchableOpacity
-              onPress={() => setFacingMode((prev) => (prev === 'back' ? 'front' : 'back'))}
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: 26,
-                backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                borderWidth: 2,
-                borderColor: 'rgba(255, 255, 255, 0.15)',
-                justifyContent: 'center',
-                alignItems: 'center',
-                shadowColor: '#000',
-                shadowOpacity: 0.15,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <Ionicons
-                name="camera-reverse-outline"
-                size={24}
-                color="#ffffff"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Controls Panel */}
-          <View style={styles.scannerBottomControls}>
-            <Text style={styles.scannerStatusText}>
-              {recognized ? "PLATE RECOGNIZED" : `EXTRACTING: ${Math.round(confidence)}%`}
-            </Text>
-
-            {recognized ? (
-              <View style={styles.scannerOptionsRow}>
-                <TouchableOpacity
-                  onPress={startScanningSimulation}
-                  style={[styles.scannerOptionBtn, { backgroundColor: '#1e293b' }]}
-                >
-                  <Text style={styles.scannerOptionBtnText}>RE-SCAN</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={async () => {
-                    try {
-                      const response = await apiClient.lookupVehicle(scannedRegText, inputType === "VIN" ? "US" : inputType);
-                      saveSearchToRecent(response, "scan");
-                      setVehicle(response);
-                      stopScanningSimulation();
-                      setActiveView("details");
-                    } catch (err) {
-                      Alert.alert("Error", "Details not found in DB.");
-                    }
-                  }}
-                  style={[styles.scannerOptionBtn, { backgroundColor: theme.primary }]}
-                >
-                  <Text style={styles.scannerOptionBtnText}>VIEW SAFETY LAYOUT</Text>
-                </TouchableOpacity>
+                )}
               </View>
-            ) : (
-              <TouchableOpacity
-                onPress={() => {
-                  setConfidence(100);
-                  setRecognized(true);
-                }}
-                style={[styles.manualTriggerBtn, { backgroundColor: theme.accent }]}
-              >
-                <Text style={styles.manualTriggerBtnText}>MANUAL CAPTURE</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          </>
+
+              {/* Flash & Camera Swap controls positioned in between camera zone and bottom footer buttons (hidden during verification to clean up layout) */}
+              {!isConfirmingPlate && (
+                <View style={{ position: 'absolute', bottom: 140, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 24, zIndex: 50 }}>
+                  {/* Flash Toggle */}
+                  <TouchableOpacity
+                    onPress={() => setIsFlashOn(!isFlashOn)}
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 26,
+                      backgroundColor: isFlashOn ? '#ffffff' : 'rgba(15, 23, 42, 0.75)',
+                      borderWidth: 2,
+                      borderColor: isFlashOn ? '#ffffff' : 'rgba(255, 255, 255, 0.15)',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      shadowColor: isFlashOn ? '#eab308' : '#000',
+                      shadowOpacity: isFlashOn ? 0.35 : 0.15,
+                      shadowRadius: 6,
+                      elevation: 4,
+                    }}
+                  >
+                    <Ionicons
+                      name={isFlashOn ? "flashlight" : "flashlight-outline"}
+                      size={22}
+                      color={isFlashOn ? "#eab308" : "#ffffff"}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Camera Swap Toggle */}
+                  <TouchableOpacity
+                    onPress={() => setFacingMode((prev) => (prev === 'back' ? 'front' : 'back'))}
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 26,
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      borderWidth: 2,
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      shadowColor: '#000',
+                      shadowOpacity: 0.15,
+                      shadowRadius: 4,
+                      elevation: 3,
+                    }}
+                  >
+                    <Ionicons
+                      name="camera-reverse-outline"
+                      size={24}
+                      color="#ffffff"
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Controls Panel */}
+              <View style={styles.scannerBottomControls}>
+                {isConfirmingPlate ? (
+                  <View style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    borderWidth: 1.5,
+                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: 20,
+                    padding: 20,
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.5,
+                    shadowRadius: 16,
+                    elevation: 10,
+                  }}>
+                    <Text style={[styles.scannerStatusText, { color: theme.accent, marginBottom: 8 }]}>
+                      CONFIRM DETECTED PLATE
+                    </Text>
+                    <TextInput
+                      value={editedPlateText}
+                      onChangeText={setEditedPlateText}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      placeholder="Enter plate number"
+                      placeholderTextColor="#475569"
+                      style={{
+                        width: '80%',
+                        backgroundColor: '#0f172a',
+                        borderWidth: 1.5,
+                        borderColor: theme.accent,
+                        borderRadius: 10,
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        color: '#fff',
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+                        marginBottom: 16,
+                        letterSpacing: 2,
+                      }}
+                    />
+                    <View style={styles.scannerOptionsRow}>
+                      <TouchableOpacity
+                        onPress={handleCancelConfirm}
+                        style={[styles.scannerOptionBtn, { backgroundColor: '#1e293b' }]}
+                      >
+                        <Text style={styles.scannerOptionBtnText}>CANCEL</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleConfirmSearch(editedPlateText)}
+                        disabled={loading}
+                        style={[styles.scannerOptionBtn, { backgroundColor: theme.primary, opacity: loading ? 0.6 : 1 }]}
+                      >
+                        {loading ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <Text style={styles.scannerOptionBtnText}>CONFIRM</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : recognized ? (
+                  <View style={styles.scannerOptionsRow}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setConfidence(0);
+                        setRecognized(false);
+                        setScannedRegText("");
+                        setVehicle(null);
+                      }}
+                      style={[styles.scannerOptionBtn, { backgroundColor: '#1e293b' }]}
+                    >
+                      <Text style={styles.scannerOptionBtnText}>RE-SCAN</Text>
+                    </TouchableOpacity>
+                    {vehicle && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          saveSearchToRecent(vehicle, "scan");
+                          setActiveView("details");
+                        }}
+                        style={[styles.scannerOptionBtn, { backgroundColor: theme.primary }]}
+                      >
+                        <Text style={styles.scannerOptionBtnText}>VIEW SAFETY LAYOUT</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : (
+                  <View style={{
+                    width: '100%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    borderWidth: 1.2,
+                    borderColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: 18,
+                    paddingVertical: 18,
+                    paddingHorizontal: 16,
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOpacity: 0.35,
+                    shadowRadius: 10,
+                    elevation: 5,
+                  }}>
+                    <Text style={[styles.scannerStatusText, { marginBottom: 12, letterSpacing: 0.5 }]}>
+                      {loading ? "SCANNING..." : "ALIGN LICENSE PLATE"}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleCapture}
+                      disabled={loading}
+                      style={[styles.manualTriggerBtn, { backgroundColor: theme.accent, opacity: loading ? 0.6 : 1, width: '90%', alignItems: 'center' }]}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.manualTriggerBtnText}>CAPTURE</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </>
           )}
         </View>
       )}
@@ -923,7 +1156,17 @@ export default function RescueScreen() {
               <Text style={[styles.vehicleTitle, { color: theme.text }]}>
                 {vehicle.make} {vehicle.model} ({vehicle.year})
               </Text>
-              <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18' }]}>
+              {vehicle.registrationNumber ? (
+                <Text style={{ color: theme.primary, fontFamily: 'monospace', fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>
+                  REGISTRATION: {vehicle.registrationNumber}
+                </Text>
+              ) : null}
+              {vehicle.ownerName ? (
+                <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
+                  OWNER: {vehicle.ownerName}
+                </Text>
+              ) : null}
+              <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18', marginTop: 8, alignSelf: 'flex-start' }]}>
                 <Text style={[styles.fuelBadgeText, { color: theme.primary }]}>
                   {vehicle.fuelType || "PETROL"}
                 </Text>
@@ -1453,19 +1696,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   vehicleHeaderCard: {
-    padding: 16,
-    borderRadius: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    padding: 20,
+    borderRadius: 22,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 6,
   },
   vehicleTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '900',
+    letterSpacing: -0.5,
   },
   fuelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   fuelBadgeText: {
@@ -1476,38 +1720,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
+    marginVertical: 10,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 2,
   },
   tabButtonText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
   },
   tabContent: {
-    marginTop: 12,
-    gap: 10,
+    marginTop: 14,
+    gap: 12,
   },
   infoCard: {
-    padding: 14,
-    borderRadius: 16,
+    padding: 18,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   infoCardTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
+    lineHeight: 18,
   },
   infoCardText: {
     fontSize: 12,
-    lineHeight: 16,
-    marginTop: 4,
+    lineHeight: 18,
+    marginTop: 6,
   },
   infoCardLoc: {
     fontSize: 11,
     fontWeight: '700',
-    marginTop: 6,
+    marginTop: 10,
   },
   videoPlayerBox: {
     aspectRatio: 16 / 9,

@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routes import vehicles, scan, alerts
+from .api.routes import vehicles, scan, alerts, auth
+from .core.database import engine, Base
+from .models.user import User  # noqa: F401 – ensure model is registered with Base
+
+# Create all database tables on startup (no-op if they already exist)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="VQR Emergency Response API",
@@ -8,17 +13,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS for Web (5173) and Expo Dev (8081)
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
-]
-
+# Configure CORS – allow all origins for development flexibility
+# (the mobile app auto-detects the dev machine's LAN IP, which varies per network)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,6 +26,7 @@ app.add_middleware(
 from fastapi.staticfiles import StaticFiles
 import os
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
 app.include_router(scan.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
@@ -43,3 +43,4 @@ def read_root():
         "service": "VQR Emergency Response System",
         "documentation": "/docs"
     }
+

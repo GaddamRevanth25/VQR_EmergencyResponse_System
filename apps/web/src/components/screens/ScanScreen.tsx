@@ -9,7 +9,7 @@ export function ScanScreen() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [confidence, setConfidence] = useState(0);
   const [recognized, setRecognized] = useState(false);
   const [isFlashOn, setIsFlashOn] = useState(false);
@@ -17,6 +17,7 @@ export function ScanScreen() {
   // Mock OCR choices
   const [countryType, setCountryType] = useState<"IN" | "UK" | "US">("IN");
   const [scannedRegText, setScannedRegText] = useState("");
+  const [scannedVehicle, setScannedVehicle] = useState<any>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,50 +74,103 @@ export function ScanScreen() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      triggerScanCycle();
+      performRealScan(file);
     }
   };
 
-  // Triggering the scanning simulation
-  const triggerScanCycle = () => {
+  // Perform a real scan using the backend API
+  const performRealScan = async (fileBlob: Blob) => {
     setIsScanning(true);
     setConfidence(0);
     setRecognized(false);
     setScannedRegText("");
+    setScannedVehicle(null);
+    setErrorMsg(null);
 
+    // Run progress bar animation simulation up to 85%
     let currentConfidence = 0;
-    const interval = setInterval(() => {
-      currentConfidence += Math.random() * 12 + 8;
-      if (currentConfidence >= 100) {
-        setConfidence(100);
-        setRecognized(true);
-        setIsScanning(false);
-        clearInterval(interval);
-
-        // Assign a mock OCR reading based on selected country
-        if (countryType === "IN") {
-          setScannedRegText("MH02CL0555");
-        } else if (countryType === "UK") {
-          setScannedRegText("TE57VRN");
-        } else {
-          setScannedRegText("7XER187");
-        }
+    const progressInterval = setInterval(() => {
+      currentConfidence += Math.random() * 15 + 5;
+      if (currentConfidence >= 85) {
+        setConfidence(85);
+        clearInterval(progressInterval);
       } else {
         setConfidence(currentConfidence);
       }
-    }, 200);
+    }, 100);
+
+    try {
+      const response = await apiClient.scanPlateImage(fileBlob);
+      clearInterval(progressInterval);
+      setConfidence(100);
+      setIsScanning(false);
+
+      if (response.prediction && response.prediction.predictedClass) {
+        const plateText = response.prediction.predictedClass;
+        setScannedRegText(plateText);
+        setRecognized(true);
+        if (response.success && response.vehicle) {
+          setScannedVehicle(response.vehicle);
+        } else {
+          setScannedVehicle(null);
+        }
+      } else {
+        setErrorMsg("Failed to read any characters from the plate.");
+      }
+    } catch (err: any) {
+      clearInterval(progressInterval);
+      setIsScanning(false);
+      setErrorMsg("Failed to process scan: " + (err?.message || "OCR engine error"));
+    }
   };
 
-  // Automatically start scan on component mount or reset
-  useEffect(() => {
-    triggerScanCycle();
-  }, [countryType]);
+  const handleCaptureFrame = () => {
+    if (videoRef.current && stream && stream.active) {
+      const video = videoRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            performRealScan(blob);
+          }
+        }, "image/jpeg", 0.95);
+      }
+    } else {
+      setErrorMsg("Camera stream is currently inactive. Please check permissions or upload an image file using GALLERY.");
+    }
+  };
+
+
+
+  const resetScanner = () => {
+    setIsScanning(false);
+    setConfidence(0);
+    setRecognized(false);
+    setScannedRegText("");
+    setScannedVehicle(null);
+    setErrorMsg(null);
+  };
 
   // Handle viewing the matched results from simulated OCR lookup
   const handleViewDetails = async () => {
+    if (!scannedRegText) return;
+    
     try {
-      const response = await apiClient.lookupVehicle(scannedRegText, countryType);
+      let vehicleId = scannedVehicle?.id;
+      let regNumber = scannedRegText;
+      let title = scannedVehicle ? `${scannedVehicle.make} ${scannedVehicle.model} (${scannedVehicle.year})` : `Recognized Plate ${scannedRegText}`;
       
+      if (!vehicleId) {
+        const response = await apiClient.lookupVehicle(scannedRegText, countryType);
+        vehicleId = response.vehicleId;
+        regNumber = response.registrationNumber;
+        title = `${response.make} ${response.model} (${response.year})`;
+      }
+
       // Save to localStorage preferences
       const saved = localStorage.getItem("vqr_recent_searches");
       let recent = [];
@@ -124,19 +178,19 @@ export function ScanScreen() {
         try { recent = JSON.parse(saved); } catch (e) {}
       }
       const searchItem = {
-        id: response.vehicleId,
-        title: `${response.make} ${response.model} (${response.year})`,
+        id: vehicleId,
+        title: title,
         type: "scan",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-        params: { reg: response.registrationNumber }
+        params: { reg: regNumber }
       };
-      const updated = [searchItem, ...recent.filter((s: any) => s.id !== response.vehicleId)].slice(0, 10);
+      const updated = [searchItem, ...recent.filter((s: any) => s.id !== vehicleId)].slice(0, 10);
       localStorage.setItem("vqr_recent_searches", JSON.stringify(updated));
 
-      navigate(`/results/${response.vehicleId}`);
+      navigate(`/results/${vehicleId}`);
     } catch (err) {
-      alert("Plate registered but details not found in Mock passenger DB.");
+      alert("Plate recognized but details not found in database.");
     }
   };
 
@@ -151,7 +205,7 @@ export function ScanScreen() {
     return "7XER187";
   };
 
-  const activePlateText = getSimulatedPlateText();
+  const activePlateText = scannedRegText || getSimulatedPlateText();
   const highlightedCharCount = Math.floor((confidence / 100) * activePlateText.length);
 
   return (
@@ -306,7 +360,7 @@ export function ScanScreen() {
 
               <div className="flex gap-3 mt-4">
                 <button
-                  onClick={() => triggerScanCycle()}
+                  onClick={resetScanner}
                   className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-700 transition cursor-pointer"
                 >
                   RE-SCAN
@@ -322,14 +376,7 @@ export function ScanScreen() {
           ) : (
             <div className="flex items-center justify-center gap-3 mb-4">
               <button
-                onClick={() => {
-                  setConfidence(100);
-                  setRecognized(true);
-                  setIsScanning(false);
-                  if (countryType === "IN") setScannedRegText("MH02CL0555");
-                  else if (countryType === "UK") setScannedRegText("TE57VRN");
-                  else setScannedRegText("7XER187");
-                }}
+                onClick={handleCaptureFrame}
                 className="rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-6 py-3.5 tracking-widest active:scale-95 transition cursor-pointer"
               >
                 MANUAL CAPTURE

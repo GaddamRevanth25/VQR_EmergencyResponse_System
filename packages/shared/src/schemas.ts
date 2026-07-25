@@ -60,6 +60,44 @@ export const LookupResponseSchema = z.object({
   videoUrl: z.string(),
 });
 
+export const RegistrationLookupResponseSchema = z.object({
+  registrationNumber: z.string(),
+  ownerName: z.string(),
+  fatherName: z.string(),
+  dob: z.string(),
+  gender: z.string(),
+  registrationDate: z.string(),
+  makerModel: z.string(),
+  fuelType: z.string(),
+  color: z.string(),
+  vehicleCategory: z.string(),
+  bodyType: z.string(),
+  manufacturingYear: z.string(),
+  seatingCapacity: z.string(),
+  unladenWeight: z.string(),
+  chassisNumber: z.string(),
+  engineNumber: z.string(),
+  currentAddress: z.string(),
+  insuranceCompany: z.string(),
+  insurancePolicyNumber: z.string(),
+  insuranceValidity: z.string(),
+  puccValidity: z.string(),
+  fitnessValidity: z.string(),
+  taxPaidUpTo: z.string(),
+  isFinanced: z.string(),
+  financierName: z.string(),
+  vehicleId: z.string(),
+  make: z.string(),
+  model: z.string(),
+  year: z.number(),
+  safetyFeatures: z.array(SafetyFeatureSchema),
+  emergencyProcedures: z.array(EmergencyProcedureSchema),
+  vehicleFeatures: z.array(VehicleFeatureGroupSchema),
+  videoUrl: z.string(),
+  thumbnailUrl: z.string(),
+});
+
+
 export const ScanRequestSchema = z.object({
   qrData: z.string(),
   latitude: z.number().optional(),
@@ -88,3 +126,50 @@ export const ScanResultSchema = z.object({
   prediction: MLPredictionSchema.optional(),
   timestamp: z.string(),
 });
+
+export const UserLoginSchema = z.object({
+  loginType: z.enum(['email_password', 'phone_otp', 'biometric']),
+  email: z.string().email().optional(),
+  password: z.string().optional(),
+  phone: z.string().optional(),
+  otp: z.string().optional(),
+  biometricToken: z.string().optional(),
+  deviceId: z.string().optional(),
+});
+
+export const UserRegisterSchema = z.object({
+  email: z.string().email(),
+  name: z.string(),
+  phone: z.string(),
+  role: z.string().optional(),
+  bloodGroup: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelation: z.string().optional(),
+  password: z.string(),
+});
+
+export const ConfirmEmailSchema = z.object({
+  email: z.string().email(),
+  code: z.string(),
+});
+
+export const RequestOtpSchema = z.object({
+  phone: z.string(),
+});
+
+export const Verify2faSchema = z.object({
+  email: z.string().email(),
+  code: z.string(),
+  tempToken: z.string(),
+});
+
+export const ResendVerificationEmailSchema = z.object({
+  email: z.string().email(),
+});
+
+export const Resend2faCodeSchema = z.object({
+  email: z.string().email(),
+  tempToken: z.string(),
+});
+

@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme as useRNColorScheme, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_API_URL } from '../constants/config';
+
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type AuthState = 'splash' | 'login' | 'register' | 'two-factor' | 'authenticated';
+export type AuthState = 'splash' | 'login' | 'register' | 'verify-email' | 'two-factor' | 'authenticated';
 
 export interface UserInfo {
   name: string;
@@ -97,6 +99,11 @@ export const ThemeAndAuthPropsProvider: React.FC<{ children: React.ReactNode }> 
         const storedAuth = await safeStorage.getItem('@vqr_auth_state');
         const storedUser = await safeStorage.getItem('@vqr_user_info');
         const storedTheme = await safeStorage.getItem('@vqr_theme_pref');
+
+        // Always write the freshly auto-detected URL on startup
+        // This ensures IP changes (e.g. switching networks) are picked up automatically
+        console.log(`[ThemeAndAuthContext] API URL auto-detected: "${DEFAULT_API_URL}"`);
+        await safeStorage.setItem('vqr_api_url', DEFAULT_API_URL);
 
         if (storedTheme) {
           setThemePreferenceState(storedTheme as ThemePreference);

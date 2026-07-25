@@ -15,9 +15,8 @@ import { createApiClient } from '@vqr/shared';
 import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
+import { DEFAULT_API_URL } from '@/constants/config';
 
-// Host configurations
-const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 
 const MOCK_DEFAULT_HISTORY = [
   {
@@ -144,8 +143,21 @@ export default function ExploreScreen() {
   const [activeResultTab, setActiveResultTab] = useState<'safety' | 'emergency' | 'features' | 'video'>('safety');
   const [videoPlayTime, setVideoPlayTime] = useState('0:00');
 
-  const backendUrl = DEFAULT_API_URL;
-  const apiClient = createApiClient(backendUrl);
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
+  const apiClient = createApiClient(apiUrl);
+
+  // Load saved API URL on mount
+  useEffect(() => {
+    const loadApiUrl = async () => {
+      try {
+        const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+        if (savedUrl) {
+          setApiUrl(savedUrl);
+        }
+      } catch (e) { }
+    };
+    loadApiUrl();
+  }, []);
 
   const loadHistory = async () => {
     try {

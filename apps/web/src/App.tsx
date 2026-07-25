@@ -306,7 +306,7 @@ function AppContent() {
                 <Navigate to="/app" replace />
               ) : (
                 <main className="flex-1 flex items-center justify-center p-4">
-                  <RegisterScreen onRegisterSuccess={handleLoginSuccess} />
+                  <RegisterScreen />
                 </main>
               )
             }

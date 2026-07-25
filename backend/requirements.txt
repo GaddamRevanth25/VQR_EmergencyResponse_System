@@ -12,3 +12,15 @@ onnxruntime               # optional production inference
 scikit-learn              # crash model + utilities
 keras
 cv
+tensorflow
+scikit-image
+scipy
+imutils
+paddleocr==2.7.3
+paddlepaddle==2.6.2
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+pyjwt
+email-validator
+twilio

@@ -1,6 +1,8 @@
 import { createApiClient } from "@vqr/shared";
 
-// Standard local FastAPI backend URL
-const BACKEND_URL = "http://localhost:8000";
+// Dynamically target the backend on the same host (works on any network)
+const BACKEND_URL = typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:8000`
+  : 'http://localhost:8000';
 
 export const apiClient = createApiClient(BACKEND_URL);

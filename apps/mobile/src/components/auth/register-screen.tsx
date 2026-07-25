@@ -11,9 +11,12 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createApiClient } from '@vqr/shared';
+import { DEFAULT_API_URL } from '@/constants/config';
+
 
 interface VQRRegisterScreenProps {
-  onRegisterSuccess: (message: string) => void;
+  onRegisterSuccess: (email: string) => void;
   onGoToLogin: () => void;
 }
 
@@ -34,7 +37,7 @@ export default function VQRRegisterScreen({
   const [bloodGroup, setBloodGroup] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       Alert.alert('Validation Error', 'Please fill out all required fields.');
       return;
@@ -64,25 +67,30 @@ export default function VQRRegisterScreen({
 
     setLoading(true);
 
-    // Save registration details to AsyncStorage so it can be loaded on login
     const registrationDetails = {
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
-      role: 'Primary First Responder',
+      role: 'User',
       emergencyContactName: emergencyContactName.trim(),
       emergencyContactPhone: emergencyContactPhone.trim(),
       emergencyContactRelation: emergencyContactRelation.trim(),
-      bloodGroup: bloodGroup.trim()
+      bloodGroup: bloodGroup.trim(),
+      password: password
     };
 
-    setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem('@vqr_registered_user', JSON.stringify(registrationDetails));
-      } catch (e) {}
+    try {
+      const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+      const apiUrl = savedUrl || DEFAULT_API_URL;
+      const apiClient = createApiClient(apiUrl);
+      
+      await apiClient.register(registrationDetails);
       setLoading(false);
-      onRegisterSuccess('Registration successful! Please login with your details.');
-    }, 1200);
+      onRegisterSuccess(email.trim());
+    } catch (err: any) {
+      setLoading(false);
+      Alert.alert('Registration Failed', err.message || 'An error occurred during registration.');
+    }
   };
 
   return (

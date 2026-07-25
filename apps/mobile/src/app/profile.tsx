@@ -12,11 +12,102 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/use-theme';
 import { useThemeAndAuth, ThemePreference } from '../context/ThemeAndAuthContext';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createApiClient } from '@vqr/shared';
+import { DEFAULT_API_URL } from '@/constants/config';
+
+
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { userInfo, themePreference, setThemePreference, logout } = useThemeAndAuth();
+  const { userInfo, themePreference, setThemePreference, logout, loginSession } = useThemeAndAuth();
 
-  // Fallback default user values
+  const [isBiometricEnrolled, setIsBiometricEnrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkEnrollment = async () => {
+      const secret = await AsyncStorage.getItem('vqr_biometric_secret');
+      setIsBiometricEnrolled(!!secret);
+    };
+    checkEnrollment();
+  }, []);
+
+  const handleEnrollBiometrics = async () => {
+    if (isBiometricEnrolled) {
+      await AsyncStorage.removeItem('vqr_biometric_secret');
+      setIsBiometricEnrolled(false);
+      Alert.alert('Biometric login disabled', 'Passkey login has been removed from this device.');
+      return;
+    }
+
+    if (!userInfo || !userInfo.email) {
+      Alert.alert('Error', 'Please log in to enroll biometrics.');
+      return;
+    }
+
+    try {
+      const chars = '0123456789abcdef';
+      let secret = '';
+      for (let i = 0; i < 32; i++) {
+        secret += chars[Math.floor(Math.random() * chars.length)];
+      }
+
+      const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+      const apiUrl = savedUrl || DEFAULT_API_URL;
+      const apiClient = createApiClient(apiUrl);
+
+      await apiClient.registerBiometric({
+        email: userInfo.email,
+        biometricPublicKey: secret,
+      });
+
+      await AsyncStorage.setItem('vqr_biometric_secret', secret);
+      setIsBiometricEnrolled(true);
+      Alert.alert('Success', 'Biometrics (Face/Finger ID) enrolled successfully on this device!');
+    } catch (e: any) {
+      Alert.alert('Enrollment Failed', e.message || 'An error occurred during enrollment.');
+    }
+  };
+
+  const [is2FaEnabled, setIs2FaEnabled] = React.useState(false);
+
+  React.useEffect(() => {
+    if (userInfo) {
+      setIs2FaEnabled(!!(userInfo as any).two_factor_enabled || !!(userInfo as any).twoFactorEnabled);
+    }
+  }, [userInfo]);
+
+  const handleToggle2FA = async () => {
+    if (!userInfo) {
+      Alert.alert('Error', 'Please log in to configure 2FA.');
+      return;
+    }
+    const token = (userInfo as any).token;
+    if (!token) {
+      Alert.alert('Error', 'Session token is missing. Please log out and sign in again.');
+      return;
+    }
+
+    try {
+      const nextVal = !is2FaEnabled;
+
+      const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+      const apiUrl = savedUrl || DEFAULT_API_URL;
+      const apiClient = createApiClient(apiUrl);
+
+      await apiClient.toggle2fa({ enabled: nextVal }, token);
+
+      setIs2FaEnabled(nextVal);
+
+      const updatedUser = { ...userInfo, two_factor_enabled: nextVal, twoFactorEnabled: nextVal };
+      await AsyncStorage.setItem('@vqr_user_info', JSON.stringify(updatedUser));
+      loginSession(updatedUser);
+
+      Alert.alert('Success', `Two-Factor Authentication (2FA) has been ${nextVal ? 'enabled' : 'disabled'}.`);
+    } catch (e: any) {
+      Alert.alert('Toggle Failed', e.message || 'An error occurred while toggling 2FA.');
+    }
+  };
+
   const user = userInfo || {
     name: 'Officer Davis',
     email: 'davis@vqr-response.gov',
@@ -112,6 +203,62 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               );
             })}
+          </View>
+        </View>
+
+        {/* Biometrics & Security Settings */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Security & Passkeys</Text>
+          <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+            {/* 2FA Toggle Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: theme.backgroundSelected }}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={{ color: theme.text, fontSize: 14, fontWeight: 'bold' }}>
+                  Two-Factor Authentication (2FA)
+                </Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2 }}>
+                  Require SMS/Email OTP code or biometric token on login
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  backgroundColor: is2FaEnabled ? theme.destructive + '15' : theme.primary + '15',
+                }}
+                onPress={handleToggle2FA}
+              >
+                <Text style={{ color: is2FaEnabled ? theme.destructive : theme.primary, fontSize: 12, fontWeight: 'bold' }}>
+                  {is2FaEnabled ? 'Disable' : 'Enable'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Biometric Toggle Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12 }}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={{ color: theme.text, fontSize: 14, fontWeight: 'bold' }}>
+                  Biometric Authentication
+                </Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2 }}>
+                  Use Face ID or Touch ID for passwordless logins
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  backgroundColor: isBiometricEnrolled ? theme.destructive + '15' : theme.primary + '15',
+                }}
+                onPress={handleEnrollBiometrics}
+              >
+                <Text style={{ color: isBiometricEnrolled ? theme.destructive : theme.primary, fontSize: 12, fontWeight: 'bold' }}>
+                  {isBiometricEnrolled ? 'Disable' : 'Enroll'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
