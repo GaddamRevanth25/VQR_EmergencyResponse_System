@@ -9,6 +9,7 @@ import { ScanScreen } from "./components/screens/ScanScreen";
 import { ResultsScreen } from "./components/screens/ResultsScreen";
 import { DropdownSearchScreen } from "./components/screens/DropdownSearchScreen";
 import { HistoryScreen } from "./components/screens/HistoryScreen";
+import { CrashEventsScreen } from "./components/screens/CrashEventsScreen";
 import { LandingPage } from "./components/screens/LandingPage";
 import { Navbar } from "./components/Navbar";
 
@@ -365,6 +366,17 @@ function AppContent() {
               <ProtectedRoute>
                 <main className="flex-1 flex items-center justify-center p-4">
                   <HistoryScreen />
+                </main>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/crash-events"
+            element={
+              <ProtectedRoute>
+                <main className="flex-1 flex items-center justify-center p-4">
+                  <CrashEventsScreen />
                 </main>
               </ProtectedRoute>
             }

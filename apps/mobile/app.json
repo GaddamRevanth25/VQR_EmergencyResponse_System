@@ -11,7 +11,14 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.anonymous.mobile",
       "infoPlist": {
+<<<<<<< HEAD
         "NSLocationWhenInUseUsageDescription": "VQR Passenger Portal needs location access to pinpoint your GPS coordinates and attach them to your distress SMS when you trigger the SOS button."
+=======
+        "NSMotionUsageDescription": "VQR uses motion sensors (accelerometer/gyroscope) to detect vehicle crashes.",
+        "NSLocationWhenInUseUsageDescription": "VQR uses your location to send emergency coordinates when a crash is detected.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "VQR continuously monitors your location in the background for emergency SOS dispatch.",
+        "UIBackgroundModes": ["location"]
+>>>>>>> 95a0c49c6f766b59d1bd9079267c26ece4556928
       }
     },
     "android": {
@@ -23,8 +30,17 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
+<<<<<<< HEAD
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
+=======
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE"
+>>>>>>> 95a0c49c6f766b59d1bd9079267c26ece4556928
       ]
     },
     "web": {
@@ -39,6 +55,12 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "VQR needs continuous location access to dispatch emergency services when a crash occurs."
         }
       ]
     ],
