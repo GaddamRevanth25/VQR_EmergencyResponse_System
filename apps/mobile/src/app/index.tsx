@@ -321,7 +321,7 @@ export default function RescueScreen() {
       setVehicle(null);
       
       const errMsg = err.message || "";
-      const isNetworkError = errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch") || errMsg.toLowerCase().includes("failed");
+      const isNetworkError = !err.status && (errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch") || errMsg.toLowerCase().includes("failed"));
       
       if (isNetworkError) {
         Alert.alert(
@@ -367,7 +367,7 @@ export default function RescueScreen() {
       setActiveView("details");
     } catch (err: any) {
       const errMsg = err.message || "";
-      const isNetworkError = errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch");
+      const isNetworkError = !err.status && (errMsg.toLowerCase().includes("network") || errMsg.toLowerCase().includes("fetch"));
       if (isNetworkError) {
         setErrorMsg(`Network Connection Error: Could not connect to backend server at ${apiUrl}.`);
       } else {
