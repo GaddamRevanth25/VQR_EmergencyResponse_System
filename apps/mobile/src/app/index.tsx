@@ -416,15 +416,26 @@ export default function RescueScreen() {
 
   // Perform vehicle lookups
   const handleLookup = async () => {
-    if (!inputValue) return;
+    if (!inputValue || !inputValue.trim()) return;
     setLoading(true);
     setErrorMsg("");
     try {
       let response;
-      if (inputType === "VIN") {
-        response = await apiClient.lookupVehicle(inputValue, "US");
+      const cleanInput = inputValue.trim().replace(/\s+/g, "").replace(/-/g, "");
+      const isVin = inputType === "VIN" || cleanInput.length === 17;
+
+      if (isVin) {
+        try {
+          response = await apiClient.lookupVehicle(cleanInput, "GLOBAL");
+        } catch (e) {
+          response = await apiClient.lookupRegistration(cleanInput);
+        }
       } else {
-        response = await apiClient.lookupRegistration(inputValue);
+        try {
+          response = await apiClient.lookupRegistration(cleanInput);
+        } catch (e) {
+          response = await apiClient.lookupVehicle(cleanInput, inputType);
+        }
       }
       saveSearchToRecent(response, "manual");
       setVehicle(response);
@@ -1228,14 +1239,9 @@ export default function RescueScreen() {
               <Text style={[styles.vehicleTitle, { color: theme.text }]}>
                 {vehicle.make} {vehicle.model} ({vehicle.year})
               </Text>
-              {vehicle.registrationNumber ? (
+              {vehicle.registrationNumber && vehicle.registrationNumber.trim() && vehicle.inputType !== 'vin' ? (
                 <Text style={{ color: theme.primary, fontFamily: 'monospace', fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>
                   REGISTRATION: {vehicle.registrationNumber}
-                </Text>
-              ) : null}
-              {vehicle.ownerName ? (
-                <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
-                  OWNER: {vehicle.ownerName}
                 </Text>
               ) : null}
               <View style={[styles.fuelBadge, { backgroundColor: theme.primary + '18', marginTop: 8, alignSelf: 'flex-start' }]}>

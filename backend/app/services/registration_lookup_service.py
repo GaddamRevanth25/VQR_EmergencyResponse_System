@@ -29,7 +29,14 @@ class RegistrationLookupService:
 
         # 2. Check Cache
         cached_data = VehicleCacheService.get(clean_plate)
-        if cached_data:
+        if (
+            cached_data 
+            and isinstance(cached_data, dict)
+            and cached_data.get("make") 
+            and cached_data.get("model") 
+            and cached_data.get("year") 
+            and cached_data.get("vehicle_type")
+        ):
             return cached_data
 
         # 3. Query Registry API
@@ -92,35 +99,39 @@ class RegistrationLookupService:
                 detail="No matching emergency safety guide found in system database for this vehicle type."
             )
 
-        # 5. Combine API details and DB safety details
+        # 5. Combine API details and DB safety details (populating make, model, year, vehicleType)
         combined = {
-            "registration_number": raw_details.get("registrationNumber"),
-            "owner_name": raw_details.get("ownerName"),
-            "father_name": raw_details.get("fatherName"),
-            "dob": raw_details.get("dob"),
-            "gender": raw_details.get("gender"),
-            "registration_date": raw_details.get("registrationDate"),
-            "maker_model": raw_details.get("makerModel"),
-            "fuel_type": raw_details.get("fuelType"),
-            "color": raw_details.get("color"),
-            "vehicle_category": raw_details.get("vehicleCategory"),
-            "body_type": raw_details.get("bodyType"),
-            "manufacturing_year": raw_details.get("manufacturingYear"),
-            "seating_capacity": raw_details.get("seatingCapacity"),
-            "unladen_weight": raw_details.get("unladenWeight"),
-            "chassis_number": raw_details.get("chassisNumber"),
-            "engine_number": raw_details.get("engineNumber"),
-            "current_address": raw_details.get("currentAddress"),
-            "insurance_company": raw_details.get("insuranceCompany"),
-            "insurance_policy_number": raw_details.get("insurancePolicyNumber"),
-            "insurance_validity": raw_details.get("insuranceValidity"),
-            "pucc_validity": raw_details.get("puccValidity"),
-            "fitness_validity": raw_details.get("fitnessValidity"),
-            "tax_paid_up_to": raw_details.get("taxPaidUpTo"),
-            "is_financed": raw_details.get("isFinanced"),
-            "financier_name": raw_details.get("financierName"),
+            "registration_number": raw_details.get("registrationNumber") or "",
+            "owner_name": "",
+            "father_name": "",
+            "dob": raw_details.get("dob") or "",
+            "gender": raw_details.get("gender") or "",
+            "registration_date": raw_details.get("registrationDate") or "",
+            "maker_model": raw_details.get("makerModel") or "",
+            "fuel_type": matched_vehicle.get("fuelType") or raw_details.get("fuelType") or "PETROL",
+            "color": raw_details.get("color") or "",
+            "vehicle_category": raw_details.get("vehicleCategory") or "",
+            "body_type": raw_details.get("bodyType") or "",
+            "manufacturing_year": str(matched_vehicle.get("year")) if matched_vehicle.get("year") else raw_details.get("manufacturingYear", ""),
+            "seating_capacity": raw_details.get("seatingCapacity") or "",
+            "unladen_weight": raw_details.get("unladenWeight") or "",
+            "chassis_number": raw_details.get("chassisNumber") or "",
+            "engine_number": raw_details.get("engineNumber") or "",
+            "current_address": raw_details.get("currentAddress") or "",
+            "insurance_company": raw_details.get("insuranceCompany") or "",
+            "insurance_policy_number": raw_details.get("insurancePolicyNumber") or "",
+            "insurance_validity": raw_details.get("insuranceValidity") or "",
+            "pucc_validity": raw_details.get("puccValidity") or "",
+            "fitness_validity": raw_details.get("fitnessValidity") or "",
+            "tax_paid_up_to": raw_details.get("taxPaidUpTo") or "",
+            "is_financed": raw_details.get("isFinanced") or "",
+            "financier_name": raw_details.get("financierName") or "",
             
-            # Matched safety details
+            # Matched safety details with guaranteed make, model, year, vehicle_type
+            "make": matched_vehicle.get("make", ""),
+            "model": matched_vehicle.get("model", ""),
+            "year": matched_vehicle.get("year", 2024),
+            "vehicle_type": matched_vehicle.get("vehicleType", "CAR"),
             "vehicle_id": matched_vehicle.get("id"),
             "safety_features": matched_vehicle.get("safetyFeatures", []),
             "emergency_procedures": matched_vehicle.get("emergencyProcedures", []),

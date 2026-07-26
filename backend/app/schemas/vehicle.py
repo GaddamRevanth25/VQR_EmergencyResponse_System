@@ -89,31 +89,35 @@ class RegistrationLookupResponse(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
     )
-    registration_number: str
-    owner_name: str
-    father_name: str
-    dob: str
-    gender: str
-    registration_date: str
-    maker_model: str
+    registration_number: Optional[str] = None
+    owner_name: Optional[str] = None
+    father_name: Optional[str] = None
+    dob: Optional[str] = None
+    gender: Optional[str] = None
+    registration_date: Optional[str] = None
+    maker_model: Optional[str] = None
     fuel_type: str
-    color: str
-    vehicle_category: str
-    body_type: str
-    manufacturing_year: str
-    seating_capacity: str
-    unladen_weight: str
-    chassis_number: str
-    engine_number: str
-    current_address: str
-    insurance_company: str
-    insurance_policy_number: str
-    insurance_validity: str
-    pucc_validity: str
-    fitness_validity: str
-    tax_paid_up_to: str
-    is_financed: str
-    financier_name: str
+    color: Optional[str] = None
+    vehicle_category: Optional[str] = None
+    body_type: Optional[str] = None
+    manufacturing_year: Optional[str] = None
+    seating_capacity: Optional[str] = None
+    unladen_weight: Optional[str] = None
+    chassis_number: Optional[str] = None
+    engine_number: Optional[str] = None
+    current_address: Optional[str] = None
+    insurance_company: Optional[str] = None
+    insurance_policy_number: Optional[str] = None
+    insurance_validity: Optional[str] = None
+    pucc_validity: Optional[str] = None
+    fitness_validity: Optional[str] = None
+    tax_paid_up_to: Optional[str] = None
+    is_financed: Optional[str] = None
+    financier_name: Optional[str] = None
+    make: str
+    model: str
+    year: int
+    vehicle_type: str
     vehicle_id: str
     safety_features: List[SafetyFeature]
     emergency_procedures: List[EmergencyProcedure]

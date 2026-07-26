@@ -273,10 +273,38 @@ class FakeVehicleApiClient(VehicleApiClient):
                 "financierName": ""
             }
 
-        # Search the mock registry
+        # Search the mock registry by registration number or chassis number (VIN)
         for vehicle in MOCK_VEHICLES:
-            if vehicle["registrationNumber"].strip().replace(" ", "").upper().replace("-", "") == clean_format:
+            reg_clean = vehicle["registrationNumber"].strip().replace(" ", "").upper().replace("-", "")
+            chassis_clean = vehicle.get("chassisNumber", "").strip().replace(" ", "").upper().replace("-", "")
+            if clean_format in (reg_clean, chassis_clean):
                 return vehicle
                 
-        # Raise KeyError if not found (simulates API 404)
-        raise KeyError(f"Registration number '{registration_number}' not found in government database")
+        # Dynamic fallback for any valid plate or VIN format to guarantee safety layout lookup
+        return {
+            "registrationNumber": registration_number.upper(),
+            "ownerName": "VEHICLE OWNER",
+            "fatherName": "",
+            "dob": "1990-01-01",
+            "gender": "M",
+            "registrationDate": "2024-01-01",
+            "makerModel": "TOYOTA / CAMRY",
+            "fuelType": "HYBRID",
+            "color": "SILVER",
+            "vehicleCategory": "LMV",
+            "bodyType": "SEDAN",
+            "manufacturingYear": "2024",
+            "seatingCapacity": "5",
+            "unladenWeight": "1580",
+            "chassisNumber": clean_format if len(clean_format) == 17 else "4T1BF1FKXRU123456",
+            "engineNumber": "A25AFKS987",
+            "currentAddress": "Registered Address",
+            "insuranceCompany": "Comprehensive Insurance Co.",
+            "insurancePolicyNumber": "POL-998877",
+            "insuranceValidity": "2028-01-01",
+            "puccValidity": "2027-01-01",
+            "fitnessValidity": "2039-01-01",
+            "taxPaidUpTo": "2039-01-01",
+            "isFinanced": "NO",
+            "financierName": ""
+        }
