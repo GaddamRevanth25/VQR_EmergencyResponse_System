@@ -47,20 +47,12 @@ class NotificationService:
 
     @staticmethod
     def _send_sms(phone: str, body: str) -> None:
-        """Send an SMS via Twilio. Silently skips if Twilio is not configured."""
-        if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
-            _logger.warning(f"Twilio not configured – SMS to {phone} skipped.")
-            return
-
-        from twilio.rest import Client
-
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        message = client.messages.create(
-            body=body,
-            from_=settings.TWILIO_PHONE_NUMBER,
-            to=phone,
-        )
-        _logger.info(f"Twilio SMS sent to {phone} (SID: {message.sid})")
+        """Send an SMS via Twilio using TwilioService."""
+        from .twilio_service import TwilioService
+        try:
+            TwilioService.send_sms(phone, body)
+        except Exception as e:
+            _logger.error(f"Failed to send SMS to {phone}: {e}")
 
     @staticmethod
     def _send_voice_call(phone: str, spoken_message: str) -> None:
@@ -109,6 +101,7 @@ class NotificationService:
         email: str, phone: Optional[str], code: str
     ) -> None:
         """Send 2FA verification code via email and (optionally) SMS."""
+        _logger.info(f"🔑 [AUTH CODE] 2FA verification code generated for {email}: {code}")
 
         html = f"""\
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;
@@ -125,13 +118,15 @@ class NotificationService:
 
         NotificationService._send_email(email, "VQR – Your 2FA Code", html)
 
-        if phone:
+        if phone and phone.strip():
             try:
                 NotificationService._send_sms(
-                    phone, f"VQR 2FA Code: {code}. Expires in 5 minutes."
+                    phone.strip(), f"VQR 2FA Code: {code}. Expires in 5 minutes."
                 )
             except Exception as e:
                 _logger.error(f"Failed to send 2FA SMS to {phone}: {e}")
+        else:
+            _logger.warning(f"No phone number associated with user account {email} – skipping 2FA SMS dispatch.")
 
     @staticmethod
     def send_sms_otp(phone: str, otp_code: str) -> None:

@@ -257,8 +257,9 @@ export default function VQRLoginScreen({
         setTimeout(() => {
           setShowBiometricModal(false);
           setBiometricStatus('idle');
-          if (res.requires2fa) {
-            onLoginSuccess(true, res.tempToken, email.trim() || res.user?.email, null);
+          const is2FA = Boolean(res.requires2fa || (res as any).requires2Fa || (res as any).requires_2fa);
+          if (is2FA) {
+            onLoginSuccess(true, res.tempToken || (res as any).temp_token, email.trim() || res.user?.email, null);
           } else {
             onLoginSuccess(false, undefined, undefined, { ...res.user, token: res.accessToken });
           }
@@ -313,8 +314,10 @@ export default function VQRLoginScreen({
       const res = await apiClient.login(payload);
       setLoading(false);
       
-      if (res.requires2fa) {
-        onLoginSuccess(true, res.tempToken, email.trim() || res.user?.email, null);
+      const is2FA = Boolean(res.requires2fa || (res as any).requires2Fa || (res as any).requires_2fa);
+      if (is2FA) {
+        const targetEmail = email.trim() || res.user?.email || '';
+        onLoginSuccess(true, res.tempToken || (res as any).temp_token, targetEmail, null);
       } else {
         onLoginSuccess(false, undefined, undefined, { ...res.user, token: res.accessToken });
       }

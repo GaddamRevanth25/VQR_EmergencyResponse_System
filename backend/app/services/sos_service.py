@@ -102,7 +102,7 @@ class SOSService:
             user_name=user.name,
             user_phone=user.phone,
             contact_phone=user.emergency_contact_phone,
-            contact_email=getattr(user, "emergency_contact_email", None) or user.email,
+            contact_email=user.email,
             latitude=crash_event.latitude,
             longitude=crash_event.longitude,
             confidence_score=crash_event.confidence_score,

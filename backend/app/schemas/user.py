@@ -1,7 +1,17 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, model_validator
 from pydantic.alias_generators import to_camel
-from typing import Optional, Literal
+from typing import Optional, Literal, Any, Dict
 from datetime import datetime
+
+class StandardApiResponse(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True
+    )
+    success: bool = True
+    message: str
+    data: Optional[Any] = None
+    error_code: Optional[str] = None
 
 class UserBase(BaseModel):
     model_config = ConfigDict(
@@ -12,7 +22,7 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     phone: str
-    role: Optional[str] = "Users"
+    role: Optional[str] = "User"
     blood_group: Optional[str] = None
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
@@ -20,6 +30,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    verification_type: Optional[Literal["email", "phone"]] = "email"
 
 class UserLogin(BaseModel):
     model_config = ConfigDict(
@@ -50,6 +61,10 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: str
+    is_verified: Optional[bool] = True
+    email_verified: Optional[bool] = True
+    phone_verified: Optional[bool] = False
+    two_factor_enabled: Optional[bool] = False
     created_at: datetime
 
 class Token(BaseModel):
@@ -61,6 +76,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
     user: Optional[UserResponse] = None
     requires_2fa: Optional[bool] = False
+    requires2fa: Optional[bool] = False
     temp_token: Optional[str] = None
 
 class TokenData(BaseModel):
@@ -82,6 +98,24 @@ class EmailConfirm(BaseModel):
     email: EmailStr
     code: str
 
+class SendVerificationRequest(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True
+    )
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    verification_type: Literal["email", "phone"] = "email"
+
+class VerifyRegistrationRequest(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True
+    )
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    code: str
+
 class OTPRequest(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
@@ -89,12 +123,22 @@ class OTPRequest(BaseModel):
     )
     phone: str
 
+class ResendOTPRequest(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True
+    )
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    temp_token: Optional[str] = None
+    type: Literal["registration", "2fa"] = "registration"
+
 class Verify2FA(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True
     )
-    email: EmailStr
+    email: Optional[EmailStr] = None
     code: str
     temp_token: str
 
@@ -119,7 +163,3 @@ class Resend2FARequest(BaseModel):
     )
     email: EmailStr
     temp_token: str
-
-
-
-

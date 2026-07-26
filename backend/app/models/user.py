@@ -19,11 +19,12 @@ class User(Base):
     emergency_contact_name = Column(String(100), nullable=True)
     emergency_contact_phone = Column(String(20), nullable=True)
     emergency_contact_relation = Column(String(50), nullable=True)
-    emergency_contact_email = Column(String(100), nullable=True)
     biometric_public_key = Column(String, nullable=True)
     
     # Advanced Auth & 2FA fields
     is_verified = Column(Boolean, default=False)
+    email_verified = Column(Boolean, default=False)
+    phone_verified = Column(Boolean, default=False)
     two_factor_enabled = Column(Boolean, default=False)
     verification_code = Column(String(6), nullable=True)
     verification_code_expires = Column(DateTime, nullable=True)

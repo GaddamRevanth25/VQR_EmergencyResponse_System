@@ -65,10 +65,14 @@ export interface UserResponse {
 
 export interface TokenResponse {
   accessToken?: string;
+  access_token?: string;
   tokenType: string;
   user?: UserResponse;
   requires2fa?: boolean;
+  requires2Fa?: boolean;
+  requires_2fa?: boolean;
   tempToken?: string;
+  temp_token?: string;
 }
 
 // ── Crash Detection & SOS Types ────────────────────────────────────

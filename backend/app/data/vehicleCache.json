@@ -283,7 +283,7 @@
       "video_url": "/videos/bmw-740li-2012-safety.mp4",
       "thumbnail_url": "/videos/thumbnails/bmw-740li-2012.jpg"
     },
-    "fetchedAt": 1784816884962,
+    "fetchedAt": 1785055309050,
     "ttl": 86400
   },
   "AP39CD7821": {
@@ -503,6 +503,85 @@
       "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
     },
     "fetchedAt": 1784875919907,
+    "ttl": 86400
+  },
+  "TE57VRN": {
+    "data": {
+      "registration_number": "TE57VRN",
+      "owner_name": "JOHN SMITH",
+      "father_name": "ROBERT SMITH",
+      "dob": "1980-05-12",
+      "gender": "M",
+      "registration_date": "2024-01-10",
+      "maker_model": "TOYOTA / CAMRY",
+      "fuel_type": "HYBRID",
+      "color": "SILVER",
+      "vehicle_category": "LMV",
+      "body_type": "SEDAN",
+      "manufacturing_year": "2024",
+      "seating_capacity": "5",
+      "unladen_weight": "1580",
+      "chassis_number": "4T1BF1FKXRU123456",
+      "engine_number": "A25AFKS987",
+      "current_address": "10 Downing St, London, UK - SW1A 2AA",
+      "insurance_company": "Aviva Insurance",
+      "insurance_policy_number": "AVIVA-776655",
+      "insurance_validity": "2028-01-09",
+      "pucc_validity": "2027-01-09",
+      "fitness_validity": "2039-01-09",
+      "tax_paid_up_to": "2039-01-09",
+      "is_financed": "NO",
+      "financier_name": "",
+      "vehicle_id": "toyota-camry-2024",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+          "location": "Driver door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        },
+        {
+          "title": "Emergency Trunk Release",
+          "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
+          "location": "Trunk interior, left side",
+          "icon": "exit",
+          "priority": "critical"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window",
+            "Leave belongings"
+          ],
+          "donts": [
+            "Wait for water to fill",
+            "Try to open door against water pressure",
+            "Call 112 before escaping"
+          ],
+          "videoTimestamp": "45"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Left rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/toyota-camry-2024-traveler-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
+    },
+    "fetchedAt": 1785055430421,
     "ttl": 86400
   }
 }

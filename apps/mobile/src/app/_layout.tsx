@@ -36,9 +36,9 @@ function RootLayoutContent() {
   };
 
   const handleLoginSuccess = (requires2fa: boolean, token?: string, email?: string, user?: any) => {
-    if (requires2fa && token && email) {
+    if (requires2fa && token) {
       setTempToken(token);
-      setEmailAddress(email);
+      if (email) setEmailAddress(email);
       setAuthState('two-factor');
     } else if (user) {
       loginSession(user);

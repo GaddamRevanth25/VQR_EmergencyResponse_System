@@ -60,8 +60,11 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
 
     try {
       const res = await apiClient.login(payload);
-      if (res.requires2fa && res.tempToken) {
-        setTempToken(res.tempToken);
+      const is2FA = Boolean(res.requires2fa || (res as any).requires2Fa || (res as any).requires_2fa);
+      const tokenTemp = res.tempToken || (res as any).temp_token;
+      if (is2FA && tokenTemp) {
+        setTempToken(tokenTemp);
+        if (res.user?.email) setEmail(res.user.email);
         setRequires2fa(true);
         setInfoMsg("Two-factor authentication code sent via Email/SMS.");
       } else if (res.accessToken) {

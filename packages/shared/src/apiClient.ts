@@ -54,20 +54,30 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
       console.error(`- Response Body: ${responseBody}`);
       console.error("======================================");
 
-      let msg = `Request failed with status ${res.status}`;
+      let msg = 'An unexpected error occurred. Please try again.';
       try {
         const errData = JSON.parse(responseBody);
-        msg = errData.detail || errData.message || msg;
-      } catch (e) {}
-
-      // Detailed user-facing error formatting (Task 8)
-      const isDev = !!((globalThis as any).__DEV__ || (globalThis as any).process?.env?.NODE_ENV !== 'production');
-      if (isDev) {
-        msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: ${res.status}\n• Response Body: ${responseBody}\n• Axios error.code: HTTP_ERROR_${res.status}\n• Axios error.message: Request failed with status code ${res.status}\n• Axios response.data: ${responseBody}\n• Stack trace: ${new Error().stack || 'Not available'}`;
+        if (typeof errData.detail === 'string') {
+          msg = errData.detail;
+        } else if (Array.isArray(errData.detail) && errData.detail.length > 0) {
+          const firstErr = errData.detail[0];
+          msg = typeof firstErr === 'string' ? firstErr : (firstErr.msg || firstErr.message || msg);
+          if (msg.startsWith('Value error, ')) {
+            msg = msg.replace('Value error, ', '');
+          }
+        } else if (typeof errData.message === 'string') {
+          msg = errData.message;
+        }
+      } catch (e) {
+        if (res.status === 404) msg = 'Requested resource not found.';
+        else if (res.status === 500) msg = 'Server error occurred. Please try again later.';
+        else if (res.status === 401) msg = 'Session expired or unauthorized. Please log in again.';
+        else if (res.status === 403) msg = 'Access denied.';
       }
 
       const error = new Error(msg);
       (error as any).status = res.status;
+      (error as any).responseBody = responseBody;
       throw error;
     }
 
@@ -77,7 +87,7 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
     console.log(`===========================`);
     return res;
   } catch (err: any) {
-    if (err.message && err.message.includes('[DEBUG INFO]')) {
+    if (err.status) {
       throw err;
     }
 
@@ -88,11 +98,7 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
     console.error(`- Error Stack: ${err.stack || 'Not available'}`);
     console.error("=========================================");
 
-    let msg = `Network connection failed (Unable to connect to server at ${url}). Please ensure the backend is running and reachable on your network.`;
-    const isDev = !!((globalThis as any).__DEV__ || (globalThis as any).process?.env?.NODE_ENV !== 'production');
-    if (isDev) {
-      msg = `${msg}\n\n[DEBUG INFO]\n• HTTP Status Code: Connection Refused / Network Error\n• Response Body: N/A\n• Axios error.code: ERR_NETWORK\n• Axios error.message: ${err.message || err}\n• Axios response.data: N/A\n• Stack trace: ${err.stack || 'Not available'}`;
-    }
+    const msg = "Unable to connect to the server. Please check your network connection or try again later.";
     throw new Error(msg);
   }
 }
@@ -245,7 +251,18 @@ export function createApiClient(baseUrl: string) {
     },
 
     async login(payload: UserLoginPayload): Promise<TokenResponse> {
-      return this._post('/api/auth/login', payload);
+      const res = await this._post('/api/auth/login', payload);
+      const is2FA = Boolean(res.requires2fa || res.requires2Fa || res.requires_2fa);
+      const tempToken = res.tempToken || res.temp_token;
+      const accessToken = res.accessToken || res.access_token;
+      return {
+        ...res,
+        requires2fa: is2FA,
+        requires2Fa: is2FA,
+        requires_2fa: is2FA,
+        tempToken,
+        accessToken,
+      };
     },
 
     async confirmEmail(payload: ConfirmEmailPayload): Promise<UserResponse> {
@@ -261,7 +278,12 @@ export function createApiClient(baseUrl: string) {
     },
 
     async verify2fa(payload: Verify2faPayload): Promise<TokenResponse> {
-      return this._post('/api/auth/verify-2fa', payload);
+      const res = await this._post('/api/auth/verify-2fa', payload);
+      const accessToken = res.accessToken || res.access_token;
+      return {
+        ...res,
+        accessToken,
+      };
     },
 
     async resendVerificationEmail(payload: ResendVerificationEmailPayload): Promise<{ status: string; message: string }> {
