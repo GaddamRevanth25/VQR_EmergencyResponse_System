@@ -116,18 +116,8 @@ export default function ProfileScreen() {
 
     const success = CrashDetectionService.simulateCrash(0.98);
     if (success) {
-      Alert.alert(
-        "Crash Simulated",
-        "Mock sensor impact data successfully injected. Redirecting to Home screen to present the verification countdown.",
-        [
-          {
-            text: "View Confirmation",
-            onPress: () => {
-              router.replace('/');
-            }
-          }
-        ]
-      );
+      // Auto-redirect immediately to emergency countdown screen without confirmation popup
+      router.replace('/');
     } else {
       Alert.alert(
         "Simulation Ignored",

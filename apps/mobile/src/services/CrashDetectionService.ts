@@ -231,41 +231,47 @@ class CrashDetectionServiceClass {
     console.log('[CrashDetection] Service stopped');
   }
 
+  private crashCallbacks: Set<CrashCallback> = new Set();
+
+  registerCrashCallback(cb: CrashCallback): () => void {
+    this.crashCallbacks.add(cb);
+    return () => {
+      this.crashCallbacks.delete(cb);
+    };
+  }
+
   /**
    * Simulate a vehicle crash event programmatically for testing purposes.
    * Feeds fake high G-force statistical readings into the model's callback pipeline.
    */
   simulateCrash(confidence: number = 0.95): boolean {
-    if (!this.state.isActive) {
-      console.warn('[CrashDetection] Simulation ignored: Service is not active.');
-      return false;
-    }
+    this.state.isActive = true;
+    console.log('[CrashDetection] 🚨 Programmatic crash simulation triggered');
+    const crashPayload = {
+      confidence,
+      latitude: this.state.lastLocation?.latitude || 17.5209,
+      longitude: this.state.lastLocation?.longitude || 78.5075,
+      sensorFeatures: [
+        0.1, 0.2, 9.8,  // Accelerometer mean
+        0.05, 0.05, 0.1, // Accelerometer std
+        0.2, 0.3, 10.0, // Accelerometer max
+        0.0, 0.1, 9.6,  // Accelerometer min
+        0.0, 0.0, 0.0,  // Gyroscope mean
+        0.01, 0.01, 0.01, // Gyroscope std
+        0.05, 0.05, 0.05, // Gyroscope max
+        5.8             // Accelerometer magnitude (high-g simulation)
+      ],
+      sensorSnapshot: {
+        accel: [],
+        gyro: []
+      }
+    };
+
     if (this.onCrashDetected) {
-      console.log('[CrashDetection] 🚨 Programmatic crash simulation triggered');
-      this.onCrashDetected({
-        confidence,
-        latitude: this.state.lastLocation?.latitude || 17.4875,
-        longitude: this.state.lastLocation?.longitude || 78.3953,
-        sensorFeatures: [
-          0.1, 0.2, 9.8,  // Accelerometer mean
-          0.05, 0.05, 0.1, // Accelerometer std
-          0.2, 0.3, 10.0, // Accelerometer max
-          0.0, 0.1, 9.6,  // Accelerometer min
-          0.0, 0.0, 0.0,  // Gyroscope mean
-          0.01, 0.01, 0.01, // Gyroscope std
-          0.05, 0.05, 0.05, // Gyroscope max
-          5.8             // Accelerometer magnitude (high-g simulation)
-        ],
-        sensorSnapshot: {
-          accel: [],
-          gyro: []
-        }
-      });
-      return true;
-    } else {
-      console.warn('[CrashDetection] Cannot simulate crash: no callback registered.');
-      return false;
+      this.onCrashDetected(crashPayload);
     }
+    this.crashCallbacks.forEach(cb => cb(crashPayload));
+    return true;
   }
 
   /**

@@ -39,42 +39,55 @@ class CrashAlertManagerClass {
     apiUrl: string,
     authToken: string,
     payload: CrashPayload,
-  ): Promise<{ success: boolean; sessionId?: string; error?: string }> {
-    try {
-      const url = `${apiUrl}/api/v1/sos/trigger`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          latitude: payload.latitude,
-          longitude: payload.longitude,
-          confidenceScore: payload.confidence,
-          sensorFeatures: payload.sensorFeatures,
-          sensorSnapshot: payload.sensorSnapshot,
-        }),
-      });
+  ): Promise<{ success: boolean; sessionId?: string; contactName?: string; contactPhone?: string; message?: string; error?: string }> {
+    const cleanUrl = apiUrl.replace(/\/+$/, '');
+    const endpoints = [
+      `${cleanUrl}/api/v1/sos/trigger`,
+      `${cleanUrl}/api/sos/trigger`,
+    ];
 
-      if (!response.ok) {
-        throw new Error(`SOS trigger failed: ${response.status}`);
+    let lastError: any = null;
+
+    for (const url of endpoints) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            latitude: payload.latitude,
+            longitude: payload.longitude,
+            confidenceScore: payload.confidence,
+            sensorFeatures: payload.sensorFeatures,
+            sensorSnapshot: payload.sensorSnapshot,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[CrashAlertManager] SOS sent successfully via', url, data);
+          return {
+            success: true,
+            sessionId: data.sosSessionId || data.sos_session_id || data.sessionId,
+            contactName: data.contact_notified || data.contact_name || data.contactName,
+            contactPhone: data.emergency_contact_phone || data.contact_phone || data.contactPhone,
+            message: data.message,
+          };
+        }
+      } catch (e) {
+        lastError = e;
       }
-
-      const data = await response.json();
-      console.log('[CrashAlertManager] SOS sent successfully:', data.sosSessionId);
-      return { success: true, sessionId: data.sosSessionId };
-    } catch (error: any) {
-      console.error('[CrashAlertManager] SOS send failed, caching for retry:', error.message);
-
-      // Cache for offline retry
-      await this.cacheEvent(payload);
-
-      // Start retry loop
-      this.scheduleRetry(apiUrl, authToken);
-
-      return { success: false, error: error.message };
     }
+
+    console.error('[CrashAlertManager] SOS send failed across endpoints, caching for retry:', lastError?.message || 'Server unreachable');
+
+    // Cache for offline retry
+    await this.cacheEvent(payload);
+    this.scheduleRetry(apiUrl, authToken);
+
+    return { success: false, error: lastError?.message || 'Failed to trigger SOS' };
   }
 
   /**

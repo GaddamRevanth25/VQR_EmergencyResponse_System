@@ -114,13 +114,8 @@ export function useCrashDetection(
     sensorFeatures: number[];
     sensorSnapshot: any;
   }) => {
-    // Avoid duplicate triggers if already executing a confirmation countdown
-    if (crashDetected) {
-      console.log('[useCrashDetection] Crash already active, ignoring duplicate event.');
-      return;
-    }
-
     console.log('[useCrashDetection] 🚨 Crash detected! Showing alert...');
+    clearTimers();
 
     // 1. Immediately pause sensor subscriptions to prevent overlapping notifications
     try {
@@ -153,7 +148,7 @@ export function useCrashDetection(
 
     // 3. Auto-send SOS after 30 seconds if user doesn't respond
     autoSOSTimer.current = setTimeout(async () => {
-      console.log('[useCrashDetection] Auto-sending SOS (30s timeout)...');
+      console.log('[useCrashDetection] Auto-sending Critical Dispatch SOS (30s timeout)...');
       clearTimers();
       
       try {
@@ -161,7 +156,7 @@ export function useCrashDetection(
         await AsyncStorage.removeItem('@vqr_pending_crash_data');
       } catch (e) {}
 
-      await CrashAlertManager.sendSOS(apiUrl, authToken, crash);
+      const res = await CrashAlertManager.sendSOS(apiUrl, authToken, crash);
       setCrashDetected(false);
       setCrashData(null);
 
@@ -172,12 +167,28 @@ export function useCrashDetection(
         console.error('[useCrashDetection] Failed to restart crash detection service:', e);
       }
 
-      Alert.alert(
-        'SOS Auto-Sent',
-        'No response detected. Emergency contacts have been notified with your location.',
-      );
+      if (res.success) {
+        const contactMsg = res.contactName ? `Alert sent to emergency services and your contact, ${res.contactName} (${res.contactPhone || ''}).` : 'No response detected. Emergency contacts have been notified with your location.';
+        Alert.alert(
+          'SOS Dispatch Alerted',
+          res.message || contactMsg,
+        );
+      } else {
+        Alert.alert(
+          'SOS Cached',
+          'Could not reach the server. Your SOS alert has been saved offline and will be dispatched as soon as connection is restored.',
+        );
+      }
     }, 30000);
-  }, [apiUrl, authToken, crashDetected, clearTimers, startCountdown]);
+  }, [apiUrl, authToken, clearTimers, startCountdown]);
+
+  // Register crash callback on mount so simulated or sensor crash events always trigger UI
+  useEffect(() => {
+    const unregister = CrashDetectionService.registerCrashCallback((data: any) => {
+      handleCrashDetected(data);
+    });
+    return unregister;
+  }, [handleCrashDetected]);
 
   const checkPendingCrashState = useCallback(async () => {
     try {
@@ -325,14 +336,15 @@ export function useCrashDetection(
     if (crashData) {
       const result = await CrashAlertManager.sendSOS(apiUrl, authToken, crashData);
       if (result.success) {
+        const contactMsg = result.contactName ? `Alert sent to emergency services and your contact, ${result.contactName} (${result.contactPhone || ''}).` : 'Emergency contacts have been notified with your location. Help is on the way.';
         Alert.alert(
-          'SOS Sent',
-          'Emergency contacts have been notified with your location. Help is on the way.',
+          'SOS Dispatch Alerted',
+          result.message || contactMsg,
         );
       } else {
         Alert.alert(
           'SOS Cached',
-          'Could not reach the server. Your SOS has been saved and will be sent as soon as connection is restored.',
+          'Could not reach the server. Your SOS alert has been saved offline and will be dispatched as soon as connection is restored.',
         );
       }
     }

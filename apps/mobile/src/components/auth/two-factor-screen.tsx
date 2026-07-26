@@ -386,55 +386,6 @@ export default function VQRTwoFactorScreen({
             {loading ? 'Verifying...' : 'Verify Security Token'}
           </Text>
         </TouchableOpacity>
-
-        {/* Biometric verification alternative */}
-        <TouchableOpacity
-          style={[styles.biometricBtn, { borderColor: theme.backgroundSelected }]}
-          onPress={startBiometricVerification}
-        >
-
-          <Text style={[styles.biometricBtnText, { color: theme.text }]}>Passkey</Text>
-        </TouchableOpacity>
-
-        {/* Biometric Scanning Overlay Modal (iPhone Face ID Prompt Style) */}
-        {showBiometricModal && (
-          <View style={styles.faceIdOverlay}>
-            <Animated.View
-              style={[
-                styles.faceIdHud,
-                {
-                  backgroundColor: 'rgba(28, 28, 30, 0.95)',
-                  transform: [{ scale: pulseAnim }]
-                }
-              ]}
-            >
-              {biometricStatus === 'scanning' ? (
-                <View style={styles.faceIdGraphic}>
-                  {/* Custom CSS Face ID Face */}
-                  <View style={styles.faceIdFace}>
-                    <View style={[styles.faceIdEye, { left: 14 }]} />
-                    <View style={[styles.faceIdEye, { right: 14 }]} />
-                    <View style={styles.faceIdNose} />
-                    <View style={styles.faceIdMouth} />
-                  </View>
-                  {/* Scanner corners */}
-                  <View style={[styles.faceIdCorner, { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 }]} />
-                  <View style={[styles.faceIdCorner, { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 }]} />
-                  <View style={[styles.faceIdCorner, { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 }]} />
-                  <View style={[styles.faceIdCorner, { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 }]} />
-                </View>
-              ) : (
-                <View style={styles.faceIdSuccessGraphic}>
-                  <Text style={styles.faceIdCheckmark}>✓</Text>
-                </View>
-              )}
-
-              <Text style={styles.faceIdHudText}>
-                {biometricStatus === 'scanning' ? 'Face ID' : 'Verified'}
-              </Text>
-            </Animated.View>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
