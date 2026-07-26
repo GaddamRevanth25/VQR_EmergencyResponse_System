@@ -28,6 +28,28 @@ class UserBase(BaseModel):
     emergency_contact_phone: Optional[str] = None
     emergency_contact_relation: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True
+    )
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    blood_group: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relation: Optional[str] = None
+
+class VerifyCredentialRequest(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True
+    )
+    type: Literal["email", "phone"]
+    code: Optional[str] = None
+
 class UserCreate(UserBase):
     password: str
     verification_type: Optional[Literal["email", "phone"]] = "email"

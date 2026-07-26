@@ -51,6 +51,39 @@
     "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
   },
   {
+    "id": "toyota-corolla-2023",
+    "vehicleType": "CAR",
+    "make": "Toyota",
+    "model": "Corolla",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Glass Breaker",
+        "description": "Located in center armrest storage compartment.",
+        "location": "Center console armrest",
+        "icon": "hammer",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Vehicle Submersion",
+        "dos": ["Unbuckle immediately", "Roll down electric windows before water hits door electronics"],
+        "donts": ["Panic", "Attempt to open doors underwater"],
+        "videoTimestamp": "30"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Fuel & Charging",
+        "items": [{ "name": "Fuel Cap", "location": "Left rear quarter panel", "icon": "fuel" }]
+      }
+    ],
+    "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
+  },
+  {
     "id": "bmw-740li-2012",
     "vehicleType": "CAR",
     "make": "BMW",
@@ -69,195 +102,85 @@
     "emergencyProcedures": [
       {
         "scenario": "Vehicle Submersion",
-        "dos": [
-          "Unbuckle immediately",
-          "Open window before water rises",
-          "Escape through window"
-        ],
-        "donts": [
-          "Wait for water to fill"
-        ],
+        "dos": ["Unbuckle immediately", "Open window before water rises", "Escape through window"],
+        "donts": ["Wait for water to fill"],
         "videoTimestamp": "30"
       }
     ],
     "vehicleFeatures": [
       {
         "category": "Fuel & Charging",
-        "items": [
-          { "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }
-        ]
+        "items": [{ "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }]
       }
     ],
     "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
     "thumbnailUrl": "/videos/thumbnails/bmw-740li-2012.jpg"
   },
   {
-    "id": "honda-cbr-2023",
-    "vehicleType": "BIKE",
-    "make": "Honda",
-    "model": "CBR",
+    "id": "bmw-x5-2023",
+    "vehicleType": "CAR",
+    "make": "BMW",
+    "model": "X5",
     "year": 2023,
-    "fuelType": "PETROL",
+    "fuelType": "DIESEL",
     "safetyFeatures": [
       {
-        "title": "Helmet Lock",
-        "description": "Under seat panel. Keeps helmet secure during travel check.",
-        "location": "Under seat, left side",
+        "title": "SOS Overhead Button",
+        "description": "Press overhead SOS button for instant emergency dispatch.",
+        "location": "Overhead console near rearview mirror",
         "icon": "shieldalert",
-        "priority": "medium"
-      }
-    ],
-    "emergencyProcedures": [
-      {
-        "scenario": "Low Side Slide",
-        "dos": [
-          "Let go of handlebars",
-          "Slide away from bike",
-          "Wait for slide to stop completely before standing"
-        ],
-        "donts": [
-          "Try to save the motorcycle during slide",
-          "Stand up while sliding"
-        ],
-        "videoTimestamp": "15"
-      }
-    ],
-    "vehicleFeatures": [
-      {
-        "category": "Controls & Caps",
-        "items": [
-          { "name": "Fuel Cap", "location": "Center top of tank", "icon": "fuel" }
-        ]
-      }
-    ],
-    "videoUrl": "/videos/honda-cbr-safety.mp4",
-    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
-  },
-  {
-    "id": "amtrak-acela-2022",
-    "vehicleType": "TRAIN",
-    "make": "Amtrak",
-    "model": "Acela",
-    "year": 2022,
-    "fuelType": "ELECTRIC",
-    "safetyFeatures": [
-      {
-        "title": "Emergency Brake Pull",
-        "description": "Pull red handle situated at the end of each passenger coach.",
-        "location": "End wall panel near vestibule",
-        "icon": "exit",
         "priority": "critical"
       }
     ],
     "emergencyProcedures": [
       {
-        "scenario": "Derailment or Collision",
-        "dos": [
-          "Hold onto seat frames or handrails",
-          "Brace yourself against seatback",
-          "Evacuate through doors or push-out emergency windows once stopped"
-        ],
-        "donts": [
-          "Stand up while train is violently vibrating",
-          "Exude panic or rush doors before train stops"
-        ],
+        "scenario": "Engine Overheating / Fire",
+        "dos": ["Pull over to safe shoulder", "Shut off ignition", "Evacuate cabin immediately"],
+        "donts": ["Open engine hood completely"],
         "videoTimestamp": "20"
       }
     ],
     "vehicleFeatures": [
       {
-        "category": "Charging & Comfort",
-        "items": [
-          { "name": "Charging Outlet", "location": "Under armrest console", "icon": "battery" }
-        ]
+        "category": "Fuel & Charging",
+        "items": [{ "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }]
       }
     ],
-    "videoUrl": "/videos/amtrak-acela-safety.mp4",
-    "thumbnailUrl": "/videos/thumbnails/amtrak-acela.jpg"
+    "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/bmw-740li-2012.jpg"
   },
   {
-    "id": "boeing-737-2021",
-    "vehicleType": "AIRPLANE",
-    "make": "Boeing",
-    "model": "737",
-    "year": 2021,
-    "fuelType": "KEROSENE",
+    "id": "tesla-model-3-2023",
+    "vehicleType": "CAR",
+    "make": "Tesla",
+    "model": "Model 3",
+    "year": 2023,
+    "fuelType": "ELECTRIC",
     "safetyFeatures": [
       {
-        "title": "Overwing Emergency Exit",
-        "description": "Pull down red handle to release emergency door hatch. Jump onto wing.",
-        "location": "Row 16 and 17 passenger window frames",
+        "title": "Manual Door Release",
+        "description": "Pull mechanical door release lever forward of window switches if power fails.",
+        "location": "Front door armrests",
         "icon": "exit",
         "priority": "critical"
       }
     ],
     "emergencyProcedures": [
       {
-        "scenario": "Cabin Depressurization",
-        "dos": [
-          "Pull mask down fully to start oxygen flow",
-          "Fit mask over nose and mouth first",
-          "Secure your own mask before helping others"
-        ],
-        "donts": [
-          "Wait for cabin crew instructions before placing mask",
-          "Take off seatbelt while signs are lit"
-        ],
-        "videoTimestamp": "5"
+        "scenario": "High Voltage Battery Thermal Emergency",
+        "dos": ["Evacuate vehicle immediately", "Move at least 100 feet away", "Notify first responders of EV battery"],
+        "donts": ["Use water to extinguish battery fire yourself"],
+        "videoTimestamp": "15"
       }
     ],
     "vehicleFeatures": [
       {
-        "category": "Cabin Controls",
-        "items": [
-          { "name": "Oxygen Mask Hatch", "location": "Directly above passenger seat", "icon": "shieldalert" }
-        ]
+        "category": "Fuel & Charging",
+        "items": [{ "name": "Charge Port", "location": "Left rear taillight housing", "icon": "battery" }]
       }
     ],
-    "videoUrl": "/videos/boeing-737-safety.mp4",
-    "thumbnailUrl": "/videos/thumbnails/boeing-737.jpg"
-  },
-  {
-    "id": "yamaha-sx190-2020",
-    "vehicleType": "BOAT",
-    "make": "Yamaha",
-    "model": "SX190",
-    "year": 2020,
-    "fuelType": "PETROL",
-    "safetyFeatures": [
-      {
-        "title": "Life Jacket Locker",
-        "description": "Locker holds approved life vests for all passengers onboard.",
-        "location": "Under deck console locker",
-        "icon": "shieldalert",
-        "priority": "critical"
-      }
-    ],
-    "emergencyProcedures": [
-      {
-        "scenario": "Man Overboard",
-        "dos": [
-          "Throw life buoy immediately near passenger",
-          "Keep eyes locked on victim's position",
-          "Shift motor to neutral before approaching"
-        ],
-        "donts": [
-          "Jump in water without securing safety line",
-          "Keep throttle open near passenger in water"
-        ],
-        "videoTimestamp": "12"
-      }
-    ],
-    "vehicleFeatures": [
-      {
-        "category": "Equipment",
-        "items": [
-          { "name": "Bilge Pump", "location": "Stern engine compartment floor", "icon": "exit" }
-        ]
-      }
-    ],
-    "videoUrl": "/videos/yamaha-boat-safety.mp4",
-    "thumbnailUrl": "/videos/thumbnails/yamaha-boat.jpg"
+    "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/toyota-camry-2024.jpg"
   },
   {
     "id": "maruti-suzuki-baleno-2022",
@@ -278,24 +201,15 @@
     "emergencyProcedures": [
       {
         "scenario": "Vehicle Submersion",
-        "dos": [
-          "Unbuckle immediately",
-          "Open window before water rises",
-          "Escape through window"
-        ],
-        "donts": [
-          "Wait for water to fill",
-          "Try to open door against water pressure"
-        ],
+        "dos": ["Unbuckle immediately", "Open window before water rises", "Escape through window"],
+        "donts": ["Wait for water to fill", "Try to open door against water pressure"],
         "videoTimestamp": "15"
       }
     ],
     "vehicleFeatures": [
       {
         "category": "Fuel & Charging",
-        "items": [
-          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
-        ]
+        "items": [{ "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }]
       }
     ],
     "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
@@ -320,25 +234,15 @@
     "emergencyProcedures": [
       {
         "scenario": "Engine Fire",
-        "dos": [
-          "Pull over safely",
-          "Turn off engine",
-          "Evacuate all passengers",
-          "Use extinguisher from 6 feet away"
-        ],
-        "donts": [
-          "Open hood fully",
-          "Use water on electrical fire"
-        ],
+        "dos": ["Pull over safely", "Turn off engine", "Evacuate all passengers", "Use extinguisher from 6 feet away"],
+        "donts": ["Open hood fully", "Use water on electrical fire"],
         "videoTimestamp": "10"
       }
     ],
     "vehicleFeatures": [
       {
         "category": "Fuel & Charging",
-        "items": [
-          { "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }
-        ]
+        "items": [{ "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }]
       }
     ],
     "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
@@ -363,23 +267,15 @@
     "emergencyProcedures": [
       {
         "scenario": "Vehicle Submersion",
-        "dos": [
-          "Unbuckle immediately",
-          "Open window before water rises",
-          "Escape through window"
-        ],
-        "donts": [
-          "Wait for water to fill"
-        ],
+        "dos": ["Unbuckle immediately", "Open window before water rises", "Escape through window"],
+        "donts": ["Wait for water to fill"],
         "videoTimestamp": "20"
       }
     ],
     "vehicleFeatures": [
       {
         "category": "Fuel & Charging",
-        "items": [
-          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
-        ]
+        "items": [{ "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }]
       }
     ],
     "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
@@ -399,36 +295,20 @@
         "location": "Driver door pocket",
         "icon": "hammer",
         "priority": "high"
-      },
-      {
-        "title": "Emergency Trunk Release",
-        "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
-        "location": "Trunk interior, left side",
-        "icon": "exit",
-        "priority": "critical"
       }
     ],
     "emergencyProcedures": [
       {
         "scenario": "Vehicle Submersion",
-        "dos": [
-          "Unbuckle immediately",
-          "Open window before water rises",
-          "Escape through window"
-        ],
-        "donts": [
-          "Wait for water to fill",
-          "Try to open door against water pressure"
-        ],
+        "dos": ["Unbuckle immediately", "Open window before water rises", "Escape through window"],
+        "donts": ["Wait for water to fill"],
         "videoTimestamp": "45"
       }
     ],
     "vehicleFeatures": [
       {
         "category": "Fuel & Charging",
-        "items": [
-          { "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }
-        ]
+        "items": [{ "name": "Fuel Cap", "location": "Left rear fender", "icon": "fuel" }]
       }
     ],
     "videoUrl": "/videos/toyota-camry-2024-traveler-safety.mp4",
@@ -453,29 +333,487 @@
     "emergencyProcedures": [
       {
         "scenario": "Engine Fire",
-        "dos": [
-          "Pull over safely",
-          "Turn off engine",
-          "Evacuate all passengers",
-          "Use extinguisher from 6 feet away"
-        ],
-        "donts": [
-          "Open hood fully",
-          "Use water on electrical fire"
-        ],
+        "dos": ["Pull over safely", "Turn off engine", "Evacuate all passengers"],
+        "donts": ["Open hood fully"],
         "videoTimestamp": "10"
       }
     ],
     "vehicleFeatures": [
       {
         "category": "Fuel & Charging",
-        "items": [
-          { "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }
-        ]
+        "items": [{ "name": "Fuel Cap", "location": "Right rear fender", "icon": "fuel" }]
       }
     ],
     "videoUrl": "/videos/bmw-740li-2012-safety.mp4",
     "thumbnailUrl": "/videos/thumbnails/bmw-740li-2012.jpg"
+  },
+  {
+    "id": "honda-cbr-2023",
+    "vehicleType": "BIKE",
+    "make": "Honda",
+    "model": "CBR",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Helmet Lock",
+        "description": "Under seat panel. Keeps helmet secure during travel check.",
+        "location": "Under seat, left side",
+        "icon": "shieldalert",
+        "priority": "medium"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Low Side Slide",
+        "dos": ["Let go of handlebars", "Slide away from bike", "Wait for slide to stop completely before standing"],
+        "donts": ["Try to save the motorcycle during slide", "Stand up while sliding"],
+        "videoTimestamp": "15"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Controls & Caps",
+        "items": [{ "name": "Fuel Cap", "location": "Center top of tank", "icon": "fuel" }]
+      }
+    ],
+    "videoUrl": "/videos/honda-cbr-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
+  },
+  {
+    "id": "honda-activa-6g-2023",
+    "vehicleType": "BIKE",
+    "make": "Honda",
+    "model": "Activa 6G",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "External Fuel Lid Lock",
+        "description": "Dual-function switch lock near ignition key slot.",
+        "location": "Rear external lid above taillight",
+        "icon": "fuel",
+        "priority": "medium"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Brake Failure",
+        "dos": ["Use combi-brake lever smoothly", "Drag feet on ground to reduce speed", "Steer towards soft grass shoulder"],
+        "donts": ["Slam front brake aggressively"],
+        "videoTimestamp": "10"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Storage & Fuel",
+        "items": [{ "name": "Underseat Storage", "location": "Beneath main seat panel", "icon": "shieldalert" }]
+      }
+    ],
+    "videoUrl": "/videos/honda-cbr-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
+  },
+  {
+    "id": "yamaha-r15-v4-2023",
+    "vehicleType": "BIKE",
+    "make": "Yamaha",
+    "model": "R15 V4",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Engine Kill Switch",
+        "description": "Red rocker switch on right handlebar console.",
+        "location": "Right handlebar grip switchgear",
+        "icon": "shieldalert",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Tire Blowout",
+        "dos": ["Maintain firm grip on handlebars", "Ease off throttle gradually", "Coast to a stop on shoulder"],
+        "donts": ["Apply hard braking on blown wheel"],
+        "videoTimestamp": "12"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Controls & Caps",
+        "items": [{ "name": "Fuel Tank Cap", "location": "Center top of fuel tank", "icon": "fuel" }]
+      }
+    ],
+    "videoUrl": "/videos/honda-cbr-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
+  },
+  {
+    "id": "royal-enfield-classic-350-2023",
+    "vehicleType": "BIKE",
+    "make": "Royal Enfield",
+    "model": "Classic 350",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Dual-Channel ABS Sensor",
+        "description": "Prevents wheel lockup during emergency braking maneuvers.",
+        "location": "Front & rear brake disc rotors",
+        "icon": "shieldalert",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Skid on Wet Road",
+        "dos": ["Keep handlebars pointed straight", "Release brake pressure until traction recovers"],
+        "donts": ["Incline bike abruptly"],
+        "videoTimestamp": "18"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Controls",
+        "items": [{ "name": "Fuel Cap", "location": "Chrome tank cap top center", "icon": "fuel" }]
+      }
+    ],
+    "videoUrl": "/videos/honda-cbr-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
+  },
+  {
+    "id": "kawasaki-ninja-400-2023",
+    "vehicleType": "BIKE",
+    "make": "Kawasaki",
+    "model": "Ninja 400",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Slipper Clutch Mechanism",
+        "description": "Prevents rear wheel hop during aggressive emergency downshifts.",
+        "location": "Engine transmission case",
+        "icon": "shieldalert",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Low Visibility Rain Ride",
+        "dos": ["Turn on hazard flasher switches", "Increase follow distance"],
+        "donts": ["Tailgate larger vehicles"],
+        "videoTimestamp": "20"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Controls",
+        "items": [{ "name": "Fuel Tank Cap", "location": "Hinged aluminum cap on tank", "icon": "fuel" }]
+      }
+    ],
+    "videoUrl": "/videos/honda-cbr-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/honda-cbr.jpg"
+  },
+  {
+    "id": "amtrak-acela-2022",
+    "vehicleType": "TRAIN",
+    "make": "Amtrak",
+    "model": "Acela Express",
+    "year": 2022,
+    "fuelType": "ELECTRIC",
+    "safetyFeatures": [
+      {
+        "title": "Emergency Brake Pull",
+        "description": "Pull red handle situated at the end of each passenger coach.",
+        "location": "End wall panel near vestibule",
+        "icon": "exit",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Derailment or Collision",
+        "dos": ["Hold onto seat frames or handrails", "Brace yourself against seatback", "Evacuate through doors or push-out emergency windows once stopped"],
+        "donts": ["Stand up while train is violently vibrating", "Exude panic or rush doors before train stops"],
+        "videoTimestamp": "20"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Charging & Comfort",
+        "items": [{ "name": "Charging Outlet", "location": "Under armrest console", "icon": "battery" }]
+      }
+    ],
+    "videoUrl": "/videos/amtrak-acela-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/amtrak-acela.jpg"
+  },
+  {
+    "id": "indian-railways-vande-bharat-2023",
+    "vehicleType": "TRAIN",
+    "make": "Indian Railways",
+    "model": "Vande Bharat Express",
+    "year": 2023,
+    "fuelType": "ELECTRIC",
+    "safetyFeatures": [
+      {
+        "title": "KAVACH Automatic Train Protection",
+        "description": "Automated collision prevention system with emergency audio beacon.",
+        "location": "Driver locomotive cab & coach underframe",
+        "icon": "shieldalert",
+        "priority": "critical"
+      },
+      {
+        "title": "Emergency Window Break Hammer",
+        "description": "Hammer mounted beside emergency escape windows in each coach.",
+        "location": "Adjacent to window frame row 4 & 12",
+        "icon": "hammer",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Smoke Detected in Coach",
+        "dos": ["Cover mouth with damp cloth", "Stay low to floor", "Follow emergency exit lighting to adjacent coach"],
+        "donts": ["Inhale dense smoke standing upright"],
+        "videoTimestamp": "15"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Comfort & Outlets",
+        "items": [{ "name": "Emergency Alarm Chain", "location": "Above coach doorway panel", "icon": "exit" }]
+      }
+    ],
+    "videoUrl": "/videos/amtrak-acela-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/amtrak-acela.jpg"
+  },
+  {
+    "id": "shinkansen-n700s-2023",
+    "vehicleType": "TRAIN",
+    "make": "Shinkansen",
+    "model": "N700S Series Bullet Train",
+    "year": 2023,
+    "fuelType": "ELECTRIC",
+    "safetyFeatures": [
+      {
+        "title": "Lithium-Ion Emergency Battery System",
+        "description": "Allows train to self-propel to safety during power grid outage or earthquake.",
+        "location": "Under-car body battery packs",
+        "icon": "battery",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Earthquake Early Warning Trigger",
+        "dos": ["Duck low and protect head", "Hold seat handgrips firmly until train comes to full stop"],
+        "donts": ["Attempt to move between cars while train is braking"],
+        "videoTimestamp": "25"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Outlets",
+        "items": [{ "name": "AC Power Outlet", "location": "Every passenger seat armrest", "icon": "battery" }]
+      }
+    ],
+    "videoUrl": "/videos/amtrak-acela-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/amtrak-acela.jpg"
+  },
+  {
+    "id": "boeing-737-2021",
+    "vehicleType": "AIRPLANE",
+    "make": "Boeing",
+    "model": "737 MAX",
+    "year": 2021,
+    "fuelType": "KEROSENE",
+    "safetyFeatures": [
+      {
+        "title": "Overwing Emergency Exit",
+        "description": "Pull down red handle to release emergency door hatch. Jump onto wing.",
+        "location": "Row 16 and 17 passenger window frames",
+        "icon": "exit",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Cabin Depressurization",
+        "dos": ["Pull mask down fully to start oxygen flow", "Fit mask over nose and mouth first", "Secure your own mask before helping others"],
+        "donts": ["Wait for cabin crew instructions before placing mask", "Take off seatbelt while signs are lit"],
+        "videoTimestamp": "5"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Cabin Controls",
+        "items": [{ "name": "Oxygen Mask Hatch", "location": "Directly above passenger seat", "icon": "shieldalert" }]
+      }
+    ],
+    "videoUrl": "/videos/boeing-737-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/boeing-737.jpg"
+  },
+  {
+    "id": "airbus-a320neo-2023",
+    "vehicleType": "AIRPLANE",
+    "make": "Airbus",
+    "model": "A320neo",
+    "year": 2023,
+    "fuelType": "KEROSENE",
+    "safetyFeatures": [
+      {
+        "title": "Inflatable Emergency Escape Slide",
+        "description": "Deploys automatically within 6 seconds of opening cabin door in armed state.",
+        "location": "Main entry & exit passenger doors",
+        "icon": "exit",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Emergency Evacuation",
+        "dos": ["Leave all hand luggage behind", "Remove high-heeled footwear", "Slide down evacuation slide feet first"],
+        "donts": ["Stop to retrieve carry-on bags"],
+        "videoTimestamp": "10"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Safety Equipment",
+        "items": [{ "name": "Life Vest", "location": "Underneath individual passenger seat pouch", "icon": "shieldalert" }]
+      }
+    ],
+    "videoUrl": "/videos/boeing-737-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/boeing-737.jpg"
+  },
+  {
+    "id": "cessna-172-2022",
+    "vehicleType": "AIRPLANE",
+    "make": "Cessna",
+    "model": "172 Skyhawk",
+    "year": 2022,
+    "fuelType": "AVGAS",
+    "safetyFeatures": [
+      {
+        "title": "ELT (Emergency Locator Transmitter)",
+        "description": "Transmits 406 MHz emergency distress signal to satellites upon impact.",
+        "location": "Aft fuselage tailcone compartment",
+        "icon": "shieldalert",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Engine Power Loss In-Flight",
+        "dos": ["Establish best glide airspeed (68 knots)", "Select suitable landing field", "Execute emergency restart checklist"],
+        "donts": ["Stall the aircraft attempting to maintain altitude"],
+        "videoTimestamp": "12"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Cockpit Controls",
+        "items": [{ "name": "Fuel Selector Valve", "location": "Cockpit floor panel between seats", "icon": "fuel" }]
+      }
+    ],
+    "videoUrl": "/videos/boeing-737-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/boeing-737.jpg"
+  },
+  {
+    "id": "yamaha-sx190-2020",
+    "vehicleType": "BOAT",
+    "make": "Yamaha",
+    "model": "SX190",
+    "year": 2020,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Life Jacket Locker",
+        "description": "Locker holds approved life vests for all passengers onboard.",
+        "location": "Under deck console locker",
+        "icon": "shieldalert",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Man Overboard",
+        "dos": ["Throw life buoy immediately near passenger", "Keep eyes locked on victim's position", "Shift motor to neutral before approaching"],
+        "donts": ["Jump in water without securing safety line", "Keep throttle open near passenger in water"],
+        "videoTimestamp": "12"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Equipment",
+        "items": [{ "name": "Bilge Pump", "location": "Stern engine compartment floor", "icon": "exit" }]
+      }
+    ],
+    "videoUrl": "/videos/yamaha-boat-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/yamaha-boat.jpg"
+  },
+  {
+    "id": "sea-doo-gtx-2023",
+    "vehicleType": "BOAT",
+    "make": "Sea-Doo",
+    "model": "GTX Limited",
+    "year": 2023,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Safety Lanyard Cutoff Switch",
+        "description": "Attach clip to wrist/jacket. Shuts off engine instantly if driver falls off.",
+        "location": "Handlebar center ignition post",
+        "icon": "exit",
+        "priority": "critical"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Capsizing in Water",
+        "dos": ["Right the watercraft clockwise by grabbing grate", "Reboard from rear boarding step"],
+        "donts": ["Rotate hull counter-clockwise into intake manifold"],
+        "videoTimestamp": "15"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Controls",
+        "items": [{ "name": "Watertight Phone Box", "location": "Front glove compartment", "icon": "shieldalert" }]
+      }
+    ],
+    "videoUrl": "/videos/yamaha-boat-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/yamaha-boat.jpg"
+  },
+  {
+    "id": "boston-whaler-270-2022",
+    "vehicleType": "BOAT",
+    "make": "Boston Whaler",
+    "model": "270 Dauntless",
+    "year": 2022,
+    "fuelType": "PETROL",
+    "safetyFeatures": [
+      {
+        "title": "Unsinkable Foam Core Hull",
+        "description": "Closed-cell foam injection provides positive flotation even if flooded.",
+        "location": "Entire double-hull structure",
+        "icon": "shieldalert",
+        "priority": "high"
+      }
+    ],
+    "emergencyProcedures": [
+      {
+        "scenario": "Hull Flooding",
+        "dos": ["Activate automatic bilge pumps", "Direct all passengers to wear USCG life jackets", "Radio VHF Channel 16 Mayday"],
+        "donts": ["Abandon ship while hull remains floating"],
+        "videoTimestamp": "20"
+      }
+    ],
+    "vehicleFeatures": [
+      {
+        "category": "Deck Equipment",
+        "items": [{ "name": "Anchor Locker", "location": "Bow deck hatch", "icon": "exit" }]
+      }
+    ],
+    "videoUrl": "/videos/yamaha-boat-safety.mp4",
+    "thumbnailUrl": "/videos/thumbnails/yamaha-boat.jpg"
   }
 ]
-

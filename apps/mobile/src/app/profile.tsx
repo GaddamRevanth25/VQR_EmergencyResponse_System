@@ -7,6 +7,8 @@ import {
   ScrollView,
   Platform,
   Alert,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/use-theme';
@@ -108,13 +110,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const user = userInfo || {
-    name: 'Officer Davis',
-    email: 'davis@vqr-response.gov',
-    phone: '+91 88xxx xx921',
-    role: 'Primary First Responder',
-  };
-
   const handleSimulateCrash = async () => {
     const { CrashDetectionService } = require('@/services/CrashDetectionService');
     const { router } = require('expo-router');
@@ -145,6 +140,139 @@ export default function ProfileScreen() {
     setThemePreference(pref);
   };
 
+  // Edit mode toggles
+  const [isEditingPersonal, setIsEditingPersonal] = React.useState(false);
+  const [isEditingEmergency, setIsEditingEmergency] = React.useState(false);
+  const [savingPersonal, setSavingPersonal] = React.useState(false);
+  const [savingEmergency, setSavingEmergency] = React.useState(false);
+  const [verifyingEmail, setVerifyingEmail] = React.useState(false);
+  const [verifyingPhone, setVerifyingPhone] = React.useState(false);
+
+  // Editable Form fields initialized from userInfo
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [bloodGroup, setBloodGroup] = React.useState('');
+
+  const [emergencyName, setEmergencyName] = React.useState('');
+  const [emergencyPhone, setEmergencyPhone] = React.useState('');
+  const [emergencyRelation, setEmergencyRelation] = React.useState('');
+
+  // Sync with userInfo
+  React.useEffect(() => {
+    if (userInfo) {
+      setName(userInfo.name || '');
+      setEmail(userInfo.email || '');
+      setPhone(userInfo.phone || '');
+      setBloodGroup((userInfo as any).bloodGroup || (userInfo as any).blood_group || '');
+      setEmergencyName((userInfo as any).emergencyContactName || (userInfo as any).emergency_contact_name || '');
+      setEmergencyPhone((userInfo as any).emergencyContactPhone || (userInfo as any).emergency_contact_phone || '');
+      setEmergencyRelation((userInfo as any).emergencyContactRelation || (userInfo as any).emergency_contact_relation || '');
+    }
+  }, [userInfo]);
+
+  const token = (userInfo as any)?.token || '';
+
+  const handleSavePersonal = async () => {
+    if (!token) {
+      Alert.alert('Error', 'Session expired. Please log in again.');
+      return;
+    }
+    setSavingPersonal(true);
+    try {
+      const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+      const apiUrl = savedUrl || DEFAULT_API_URL;
+      const apiClient = createApiClient(apiUrl);
+
+      const updated = await apiClient.updateProfile({
+        name,
+        email,
+        phone,
+        blood_group: bloodGroup,
+        bloodGroup: bloodGroup,
+      } as any, token);
+
+      const merged = { ...userInfo, ...updated, token };
+      await AsyncStorage.setItem('@vqr_user_info', JSON.stringify(merged));
+      loginSession(merged);
+      setIsEditingPersonal(false);
+      Alert.alert('Success', 'Personal credentials updated successfully!');
+    } catch (e: any) {
+      Alert.alert('Update Failed', e.message || 'Could not update personal profile.');
+    } finally {
+      setSavingPersonal(false);
+    }
+  };
+
+  const handleSaveEmergency = async () => {
+    if (!token) {
+      Alert.alert('Error', 'Session expired. Please log in again.');
+      return;
+    }
+    setSavingEmergency(true);
+    try {
+      const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+      const apiUrl = savedUrl || DEFAULT_API_URL;
+      const apiClient = createApiClient(apiUrl);
+
+      const updated = await apiClient.updateProfile({
+        emergency_contact_name: emergencyName,
+        emergencyContactName: emergencyName,
+        emergency_contact_phone: emergencyPhone,
+        emergencyContactPhone: emergencyPhone,
+        emergency_contact_relation: emergencyRelation,
+        emergencyContactRelation: emergencyRelation,
+      } as any, token);
+
+      const merged = { ...userInfo, ...updated, token };
+      await AsyncStorage.setItem('@vqr_user_info', JSON.stringify(merged));
+      loginSession(merged);
+      setIsEditingEmergency(false);
+      Alert.alert('Success', 'Emergency contact details updated successfully!');
+    } catch (e: any) {
+      Alert.alert('Update Failed', e.message || 'Could not update emergency contacts.');
+    } finally {
+      setSavingEmergency(false);
+    }
+  };
+
+  const handleVerifyCredential = async (type: 'email' | 'phone') => {
+    if (!token) {
+      Alert.alert('Error', 'Session expired. Please log in again.');
+      return;
+    }
+    if (type === 'email') setVerifyingEmail(true);
+    else setVerifyingPhone(true);
+
+    try {
+      const savedUrl = await AsyncStorage.getItem('vqr_api_url');
+      const apiUrl = savedUrl || DEFAULT_API_URL;
+      const apiClient = createApiClient(apiUrl);
+
+      const updated = await apiClient.verifyCredentials(type, token);
+
+      const merged = { ...userInfo, ...updated, token };
+      await AsyncStorage.setItem('@vqr_user_info', JSON.stringify(merged));
+      loginSession(merged);
+      Alert.alert('Verified', `${type === 'email' ? 'Email' : 'Mobile number'} has been verified in the users table!`);
+    } catch (e: any) {
+      Alert.alert('Verification Failed', e.message || 'Could not verify credential.');
+    } finally {
+      if (type === 'email') setVerifyingEmail(false);
+      else setVerifyingPhone(false);
+    }
+  };
+
+  const user = userInfo || {
+    name: 'Officer Davis',
+    email: 'davis@vqr-response.gov',
+    phone: '+91 88xxx xx921',
+    role: 'Primary First Responder',
+  };
+
+  const isEmailVerified = !!(user as any).email_verified || !!(user as any).emailVerified || !!(user as any).is_verified || !!(user as any).isVerified;
+  const isPhoneVerified = !!(user as any).phone_verified || !!(user as any).phoneVerified;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Background neon blobs */}
@@ -164,47 +292,207 @@ export default function ProfileScreen() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Personal Credentials</Text>
           <TouchableOpacity 
-            onPress={() => Alert.alert("Edit Profile", "To update your profile credentials, please log out and register a new account.")}
+            onPress={() => setIsEditingPersonal(!isEditingPersonal)}
+            style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: theme.primary + '18' }}
           >
-            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.primary }}>✎ Edit</Text>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.primary }}>
+              {isEditingPersonal ? '✕ Cancel' : '✎ Edit'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* User Card */}
-        <View style={[styles.profileCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-          <View style={[styles.avatarContainer, { backgroundColor: theme.primary + '22' }]}>
-            <Text style={styles.avatarText}>👮</Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: theme.text }]}>{user.name}</Text>
-            <Text style={[styles.userMeta, { color: theme.textSecondary }]}>✉ {user.email}</Text>
-            <Text style={[styles.userMeta, { color: theme.textSecondary }]}>📞 {user.phone}</Text>
-            <Text style={[styles.userMeta, { color: theme.destructive, fontWeight: 'bold', marginTop: 4 }]}>🩸 Blood Group: {user.bloodGroup || 'Not Specified'}</Text>
-          </View>
-        </View>
+        {/* User Card / Editable Form */}
+        {!isEditingPersonal ? (
+          <View style={[styles.profileCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected, flexDirection: 'column', alignItems: 'stretch' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <View style={[styles.avatarContainer, { backgroundColor: theme.primary + '22' }]}>
+                <Text style={styles.avatarText}>👮</Text>
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={[styles.userName, { color: theme.text }]}>{user.name}</Text>
+                <Text style={[styles.userMeta, { color: theme.destructive, fontWeight: 'bold', marginTop: 2 }]}>🩸 Blood Group: {(user as any).bloodGroup || (user as any).blood_group || 'Not Specified'}</Text>
+              </View>
+            </View>
 
-        {/* Emergency Info Card */}
+            {/* Email with Verification Badge */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: theme.backgroundSelected }}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: '700' }}>EMAIL ADDRESS</Text>
+                <Text style={{ color: theme.text, fontSize: 13, fontWeight: '800', marginTop: 2 }}>{user.email}</Text>
+              </View>
+              {isEmailVerified ? (
+                <View style={{ backgroundColor: '#10B98118', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#10B98130' }}>
+                  <Text style={{ color: '#10B981', fontSize: 11, fontWeight: 'bold' }}>✓ Verified</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  disabled={verifyingEmail}
+                  onPress={() => handleVerifyCredential('email')}
+                  style={{ backgroundColor: theme.primary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
+                    {verifyingEmail ? 'Verifying...' : 'Verify Email'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Phone with Verification Badge */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: theme.backgroundSelected }}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: '700' }}>MOBILE NUMBER</Text>
+                <Text style={{ color: theme.text, fontSize: 13, fontWeight: '800', marginTop: 2 }}>{user.phone}</Text>
+              </View>
+              {isPhoneVerified ? (
+                <View style={{ backgroundColor: '#10B98118', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                  <Text style={{ color: '#10B981', fontSize: 11, fontWeight: 'bold' }}>✓ Verified</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  disabled={verifyingPhone}
+                  onPress={() => handleVerifyCredential('phone')}
+                  style={{ backgroundColor: theme.primary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
+                    {verifyingPhone ? 'Verifying...' : 'Verify Mobile'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.primary, marginBottom: 24 }]}>
+            <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>NAME</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Full Name"
+              placeholderTextColor={theme.textSecondary}
+              style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 12, borderWidth: 1, borderColor: theme.backgroundSelected }}
+            />
+
+            <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>EMAIL</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email Address"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholderTextColor={theme.textSecondary}
+              style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 12, borderWidth: 1, borderColor: theme.backgroundSelected }}
+            />
+
+            <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>MOBILE NUMBER</Text>
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Phone Number"
+              keyboardType="phone-pad"
+              placeholderTextColor={theme.textSecondary}
+              style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 12, borderWidth: 1, borderColor: theme.backgroundSelected }}
+            />
+
+            <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>BLOOD GROUP</Text>
+            <TextInput
+              value={bloodGroup}
+              onChangeText={setBloodGroup}
+              placeholder="e.g. O+, A+, B-"
+              placeholderTextColor={theme.textSecondary}
+              style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 16, borderWidth: 1, borderColor: theme.backgroundSelected }}
+            />
+
+            <TouchableOpacity
+              disabled={savingPersonal}
+              onPress={handleSavePersonal}
+              style={{ backgroundColor: theme.primary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+            >
+              {savingPersonal ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>Save Personal Credentials</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Emergency Info Card / Editable Form */}
         <View style={styles.section}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>Emergency Contact Details</Text>
             <TouchableOpacity 
-              onPress={() => Alert.alert("Edit Emergency Contacts", "To update emergency details, please log out and register a new account.")}
+              onPress={() => setIsEditingEmergency(!isEditingEmergency)}
+              style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: theme.primary + '18' }}
             >
-              <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.primary }}>✎ Edit</Text>
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: theme.primary }}>
+                {isEditingEmergency ? '✕ Cancel' : '✎ Edit'}
+              </Text>
             </TouchableOpacity>
           </View>
-          <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Name</Text>
-              <Text style={[styles.infoValue, { color: theme.text }]}>
-                {user.emergencyContactName || 'None'}{user.emergencyContactRelation ? ` (${user.emergencyContactRelation})` : ''}
-              </Text>
+
+          {!isEditingEmergency ? (
+            <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Contact Name</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>
+                  {(user as any).emergencyContactName || (user as any).emergency_contact_name || 'None'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Relationship</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>
+                  {(user as any).emergencyContactRelation || (user as any).emergency_contact_relation || 'Not Specified'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Contact Phone</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>
+                  {(user as any).emergencyContactPhone || (user as any).emergency_contact_phone || 'N/A'}
+                </Text>
+              </View>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Contact</Text>
-              <Text style={[styles.infoValue, { color: theme.text }]}>{user.emergencyContactPhone || 'N/A'}</Text>
+          ) : (
+            <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderColor: theme.primary }]}>
+              <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>CONTACT NAME</Text>
+              <TextInput
+                value={emergencyName}
+                onChangeText={setEmergencyName}
+                placeholder="Emergency Contact Name"
+                placeholderTextColor={theme.textSecondary}
+                style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 12, borderWidth: 1, borderColor: theme.backgroundSelected }}
+              />
+
+              <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>RELATIONSHIP</Text>
+              <TextInput
+                value={emergencyRelation}
+                onChangeText={setEmergencyRelation}
+                placeholder="e.g. Father, Spouse, Sibling"
+                placeholderTextColor={theme.textSecondary}
+                style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 12, borderWidth: 1, borderColor: theme.backgroundSelected }}
+              />
+
+              <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>CONTACT PHONE</Text>
+              <TextInput
+                value={emergencyPhone}
+                onChangeText={setEmergencyPhone}
+                placeholder="Emergency Phone Number"
+                keyboardType="phone-pad"
+                placeholderTextColor={theme.textSecondary}
+                style={{ backgroundColor: theme.background, color: theme.text, borderRadius: 10, padding: 10, fontSize: 14, fontWeight: 'bold', marginBottom: 16, borderWidth: 1, borderColor: theme.backgroundSelected }}
+              />
+
+              <TouchableOpacity
+                disabled={savingEmergency}
+                onPress={handleSaveEmergency}
+                style={{ backgroundColor: theme.primary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+              >
+                {savingEmergency ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>Save Emergency Contacts</Text>
+                )}
+              </TouchableOpacity>
             </View>
-          </View>
+          )}
         </View>
 
         {/* Theme Settings Selector */}

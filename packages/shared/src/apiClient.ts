@@ -298,6 +298,32 @@ export function createApiClient(baseUrl: string) {
       return this._post('/api/auth/toggle-2fa', payload, token);
     },
 
+    async updateProfile(payload: Partial<UserResponse>, token: string): Promise<UserResponse> {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetchWithLogging(`${cleanUrl}/api/auth/profile`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      return res.json() as any;
+    },
+
+    async verifyCredentials(type: 'email' | 'phone', token: string, code?: string): Promise<UserResponse> {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetchWithLogging(`${cleanUrl}/api/auth/verify-credentials`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ type, code }),
+      });
+      return res.json() as any;
+    },
+
     async triggerManualSOS(latitude?: number, longitude?: number, token?: string): Promise<{ success: boolean; message: string; contactName: string; contactPhone: string }> {
       return this._post('/api/sos/trigger', { latitude, longitude }, token);
     },

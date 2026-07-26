@@ -14,7 +14,8 @@ from ...models.two_factor_session import TwoFactorSession
 from ...schemas.user import (
     UserCreate, UserLogin, UserResponse, Token, BiometricRegister,
     EmailConfirm, OTPRequest, Verify2FA, Toggle2FA, ResendEmailRequest, Resend2FARequest,
-    SendVerificationRequest, VerifyRegistrationRequest, ResendOTPRequest, StandardApiResponse
+    SendVerificationRequest, VerifyRegistrationRequest, ResendOTPRequest, StandardApiResponse,
+    UserUpdate, VerifyCredentialRequest
 )
 from ...services.auth_service import AuthService
 from ...services.notification_service import NotificationService
@@ -579,6 +580,67 @@ def resend_otp(req: ResendOTPRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.put("/profile", response_model=UserResponse)
+def update_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update authenticated user's personal credentials and emergency details."""
+    if user_update.name is not None and user_update.name.strip():
+        current_user.name = user_update.name.strip()
+    if user_update.email is not None and user_update.email.strip():
+        new_email = user_update.email.strip().lower()
+        if new_email != current_user.email:
+            existing = db.query(User).filter(User.email.ilike(new_email), User.id != current_user.id).first()
+            if existing:
+                raise UserAlreadyExistsException("An account with this email address is already registered.")
+            current_user.email = new_email
+            current_user.email_verified = False  # Mark unverified if email changed
+    if user_update.phone is not None and user_update.phone.strip():
+        new_phone = user_update.phone.strip()
+        if new_phone != current_user.phone:
+            existing = db.query(User).filter(User.phone == new_phone, User.id != current_user.id).first()
+            if existing:
+                raise UserAlreadyExistsException("An account with this phone number is already registered.")
+            current_user.phone = new_phone
+            current_user.phone_verified = False  # Mark unverified if phone changed
+    if user_update.blood_group is not None:
+        current_user.blood_group = user_update.blood_group.strip()
+    if user_update.emergency_contact_name is not None:
+        current_user.emergency_contact_name = user_update.emergency_contact_name.strip()
+    if user_update.emergency_contact_phone is not None:
+        current_user.emergency_contact_phone = user_update.emergency_contact_phone.strip()
+    if user_update.emergency_contact_relation is not None:
+        current_user.emergency_contact_relation = user_update.emergency_contact_relation.strip()
+
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/verify-credentials", response_model=UserResponse)
+def verify_credentials(
+    req: VerifyCredentialRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Verify mobile or email credential for the authenticated user.
+    Updates email_verified = True or phone_verified = True in users table.
+    """
+    if req.type == "email":
+        current_user.email_verified = True
+        current_user.is_verified = True
+    elif req.type == "phone":
+        current_user.phone_verified = True
+        current_user.is_verified = True
+
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 

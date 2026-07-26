@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { ThemeAndAuthPropsProvider, useThemeAndAuth } from '../context/ThemeAndAuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -124,10 +125,53 @@ function RootLayoutContent() {
   );
 }
 
+class UIErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("UI Error caught by boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a', padding: 24 }}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>⚠️</Text>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff', textAlign: 'center', marginBottom: 8 }}>
+            Application Error Caught
+          </Text>
+          <Text style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', marginBottom: 24, paddingHorizontal: 16 }}>
+            {this.state.error?.message || 'An unexpected rendering error occurred.'}
+          </Text>
+          <TouchableOpacity
+            onPress={() => this.setState({ hasError: false, error: null })}
+            style={{ backgroundColor: '#2563eb', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>Reload Application</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function TabLayout() {
   return (
     <ThemeAndAuthPropsProvider>
-      <RootLayoutContent />
+      <UIErrorBoundary>
+        <RootLayoutContent />
+      </UIErrorBoundary>
     </ThemeAndAuthPropsProvider>
   );
 }
