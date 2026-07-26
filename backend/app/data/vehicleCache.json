@@ -72,5 +72,88 @@
     },
     "fetchedAt": 1785064655093,
     "ttl": 86400
+  },
+  "MHO2CL0555": {
+    "data": {
+      "registration_number": "MHO2CL0555",
+      "owner_name": "",
+      "father_name": "",
+      "dob": "1990-01-01",
+      "gender": "M",
+      "registration_date": "2024-01-01",
+      "maker_model": "TOYOTA / CAMRY",
+      "fuel_type": "HYBRID",
+      "color": "SILVER",
+      "vehicle_category": "LMV",
+      "body_type": "SEDAN",
+      "manufacturing_year": "2024",
+      "seating_capacity": "5",
+      "unladen_weight": "1580",
+      "chassis_number": "4T1BF1FKXRU123456",
+      "engine_number": "A25AFKS987",
+      "current_address": "Registered Address",
+      "insurance_company": "Comprehensive Insurance Co.",
+      "insurance_policy_number": "POL-998877",
+      "insurance_validity": "2028-01-01",
+      "pucc_validity": "2027-01-01",
+      "fitness_validity": "2039-01-01",
+      "tax_paid_up_to": "2039-01-01",
+      "is_financed": "NO",
+      "financier_name": "",
+      "make": "Toyota",
+      "model": "Camry",
+      "year": 2024,
+      "vehicle_type": "CAR",
+      "vehicle_id": "toyota-camry-2024",
+      "safety_features": [
+        {
+          "title": "Emergency Glass Hammer",
+          "description": "Located in driver's door pocket. Strike corners of side windows, not center.",
+          "location": "Driver door pocket",
+          "icon": "hammer",
+          "priority": "high"
+        },
+        {
+          "title": "Emergency Trunk Release",
+          "description": "Glow-in-the-dark handle inside trunk. Pull to escape if locked in.",
+          "location": "Trunk interior, left side",
+          "icon": "exit",
+          "priority": "critical"
+        }
+      ],
+      "emergency_procedures": [
+        {
+          "scenario": "Vehicle Submersion",
+          "dos": [
+            "Unbuckle immediately",
+            "Open window before water rises",
+            "Escape through window",
+            "Leave belongings"
+          ],
+          "donts": [
+            "Wait for water to fill",
+            "Try to open door against water pressure",
+            "Call 112 before escaping"
+          ],
+          "videoTimestamp": "45"
+        }
+      ],
+      "vehicle_features": [
+        {
+          "category": "Fuel & Charging",
+          "items": [
+            {
+              "name": "Fuel Cap",
+              "location": "Left rear fender",
+              "icon": "fuel"
+            }
+          ]
+        }
+      ],
+      "video_url": "/videos/toyota-camry-2024-traveler-safety.mp4",
+      "thumbnail_url": "/videos/thumbnails/toyota-camry-2024.jpg"
+    },
+    "fetchedAt": 1785069875326,
+    "ttl": 86400
   }
 }

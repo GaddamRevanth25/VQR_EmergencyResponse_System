@@ -281,7 +281,7 @@ export default function ProfileScreen() {
         {/* Personal Credentials Header with Edit */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <Text style={{ fontSize: 13, fontWeight: '800', color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Personal Credentials</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setIsEditingPersonal(!isEditingPersonal)}
             style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: theme.primary + '18' }}
           >
@@ -409,7 +409,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>Emergency Contact Details</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsEditingEmergency(!isEditingEmergency)}
               style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: theme.primary + '18' }}
             >

@@ -245,7 +245,10 @@ class CrashDetectionServiceClass {
    * Feeds fake high G-force statistical readings into the model's callback pipeline.
    */
   simulateCrash(confidence: number = 0.95): boolean {
-    this.state.isActive = true;
+    if (!this.state.isActive) {
+      console.log('[CrashDetection] Cannot simulate crash – Crash Detection service is currently OFF');
+      return false;
+    }
     console.log('[CrashDetection] 🚨 Programmatic crash simulation triggered');
     const crashPayload = {
       confidence,

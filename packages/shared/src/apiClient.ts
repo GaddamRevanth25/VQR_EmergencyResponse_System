@@ -46,7 +46,7 @@ async function fetchWithLogging(url: string, options: RequestInit = {}): Promise
       let responseBody = '';
       try {
         responseBody = await res.clone().text();
-      } catch (e) {}
+      } catch (e) { }
 
       console.error("=== API REQUEST FAILED (HTTP ERROR) ===");
       console.error(`- Full Request URL: ${url}`);
@@ -147,8 +147,8 @@ export function createApiClient(baseUrl: string) {
     },
 
     async getMakes(vehicleType?: string): Promise<string[]> {
-      const url = vehicleType 
-        ? `${cleanUrl}/api/makes?vehicleType=${encodeURIComponent(vehicleType)}` 
+      const url = vehicleType
+        ? `${cleanUrl}/api/makes?vehicleType=${encodeURIComponent(vehicleType)}`
         : `${cleanUrl}/api/makes`;
       const res = await fetchWithLogging(url);
       return res.json() as any;
