@@ -52,7 +52,7 @@ export function RegisterScreen() {
     try {
       await apiClient.register(payload);
       setVerifyMode(true);
-      setInfoMsg("Registration successful! A 6-digit confirmation code has been generated. Please check your email or auth logs.");
+      setInfoMsg("Verification OTP dispatched! Please enter your 6-digit confirmation code below.");
     } catch (err: any) {
       setErrorMsg(err.message || "Registration failed. Email or phone number might already be in use.");
     } finally {
@@ -69,7 +69,7 @@ export function RegisterScreen() {
         email: email.trim(),
         code: verificationCode,
       });
-      setInfoMsg("Email verified successfully! Redirecting to login...");
+      setInfoMsg("Account registered and verified successfully! Redirecting to login...");
       setVerifyMode(false);
       setTimeout(() => {
         navigate("/login");

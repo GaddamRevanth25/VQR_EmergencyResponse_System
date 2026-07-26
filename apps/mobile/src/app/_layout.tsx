@@ -32,6 +32,7 @@ function RootLayoutContent() {
   }
 
   const handleSplashFinish = () => {
+    setRegSuccessMsg('');
     setAuthState('login');
   };
 
@@ -47,7 +48,7 @@ function RootLayoutContent() {
 
   const handleRegisterSuccess = (email: string) => {
     setEmailAddress(email);
-    setRegSuccessMsg('Registration successful! Please confirm your email address.');
+    setRegSuccessMsg('');
     setAuthState('verify-email');
   };
 
@@ -56,7 +57,7 @@ function RootLayoutContent() {
   };
 
   const handleEmailVerifySuccess = () => {
-    setRegSuccessMsg('Email confirmed! You can now log in.');
+    setRegSuccessMsg('Account registered and verified successfully! You can now log in.');
     setAuthState('login');
   };
 
@@ -69,9 +70,13 @@ function RootLayoutContent() {
       {authState === 'login' && (
         <VQRLoginScreen
           onLoginSuccess={handleLoginSuccess}
-          onGoToRegister={() => setAuthState('register')}
+          onGoToRegister={() => {
+            setRegSuccessMsg('');
+            setAuthState('register');
+          }}
           onGoToVerifyEmail={(email) => {
             setEmailAddress(email);
+            setRegSuccessMsg('');
             setAuthState('verify-email');
           }}
           registrationSuccessMsg={regSuccessMsg}
@@ -82,7 +87,10 @@ function RootLayoutContent() {
       {authState === 'register' && (
         <VQRRegisterScreen
           onRegisterSuccess={handleRegisterSuccess}
-          onGoToLogin={() => setAuthState('login')}
+          onGoToLogin={() => {
+            setRegSuccessMsg('');
+            setAuthState('login');
+          }}
         />
       )}
 
@@ -90,7 +98,10 @@ function RootLayoutContent() {
         <VQRVerifyEmailScreen
           email={emailAddress}
           onVerifySuccess={handleEmailVerifySuccess}
-          onGoBack={() => setAuthState('register')}
+          onGoBack={() => {
+            setRegSuccessMsg('');
+            setAuthState('login');
+          }}
         />
       )}
 
@@ -99,7 +110,10 @@ function RootLayoutContent() {
           email={emailAddress}
           tempToken={tempToken}
           onVerifySuccess={handleVerifySuccess}
-          onGoBack={() => setAuthState('login')}
+          onGoBack={() => {
+            setRegSuccessMsg('');
+            setAuthState('login');
+          }}
         />
       )}
 
