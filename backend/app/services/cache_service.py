@@ -71,6 +71,11 @@ class VehicleCacheService:
             ttl_seconds = entry.get("ttl", TTL_SECONDS)
             current_time_ms = int(time.time() * 1000)
 
+            # In mock/development mode, bypass expiration to allow persistent custom testing via vehicleCache.json
+            use_fake = os.getenv("USE_FAKE_VEHICLE_API", "true").lower() == "true"
+            if use_fake:
+                return entry.get("data")
+
             # Check if expired: fetchedAt + (ttl * 1000) < current_time
             if fetched_at_ms + (ttl_seconds * 1000) < current_time_ms:
                 return None  # Expired

@@ -40,7 +40,7 @@ const INFERENCE_INTERVAL_MS = 500;
 const MAGNITUDE_THRESHOLD = 3.0;
 
 /** Crash confidence threshold (probability from model) */
-const CONFIDENCE_THRESHOLD = 0.85;
+const CONFIDENCE_THRESHOLD = 0.55;
 
 /** Number of consecutive positive detections required */
 const REQUIRED_CONSECUTIVE_DETECTIONS = 2;
@@ -240,30 +240,67 @@ class CrashDetectionServiceClass {
     };
   }
 
-  /**
-   * Simulate a vehicle crash event programmatically for testing purposes.
-   * Feeds fake high G-force statistical readings into the model's callback pipeline.
-   */
-  simulateCrash(confidence: number = 0.95): boolean {
+  async simulateCrash(customFeatures?: number[]): Promise<boolean> {
     if (!this.state.isActive) {
       console.log('[CrashDetection] Cannot simulate crash – Crash Detection service is currently OFF');
       return false;
     }
-    console.log('[CrashDetection] 🚨 Programmatic crash simulation triggered');
+
+
+    const mockFeatures = [
+      // Accel mean (x, y, z) - heavy deceleration baseline during the window
+      -152.340129, 12.459012, 8.921345,
+      // Accel std (x, y, z) - huge variance during impact
+      340.128745, 120.542310, 180.914567,
+      // Accel max (x, y, z) - rebound/whiplash spikes
+      50.123456, 180.239871, 210.451234,
+      // Accel min (x, y, z) - massive negative spike (the primary impact)
+      -850.457812, -150.342319, -190.228745,
+      // Gyro mean (x, y, z) - moderate rotation from the vehicle pitching forward
+      45.129845, -22.341290, 15.674523,
+      // Gyro std (x, y, z) - high variance from sudden jolts
+      210.451234, 180.238745, 140.561290,
+      // Gyro max (x, y, z) - peak rotational forces
+      450.239812, 380.451234, 310.128745,
+      // Accel magnitude - massive combined force vector
+      865.124590
+    ];
+    console.log("======================================================================");
+    console.log("⚡⚡⚡ DEVELOPER CRASH SIMULATION PIPELINE STARTED ⚡⚡⚡");
+    console.log("======================================================================");
+    console.log("• Telemetry Signature: 5.0G High-Impact Multi-Axis Collision");
+    console.log("• Features list being dispatched to backend ONNX model...");
+    console.log(`• Raw Feature Values: [${mockFeatures.map(f => f.toFixed(4)).join(', ')}]`);
+    console.log("----------------------------------------------------------------------");
+
+    let confidence = 0.95;
+    let isCrashDetected = true; // default fallback if backend fails
+
+    try {
+      const response = await this.callBackendInference(mockFeatures);
+      confidence = response.probability;
+      console.log(confidence);
+      isCrashDetected = (response.isCrash || response.label === 1) && response.probability >= CONFIDENCE_THRESHOLD;
+
+      console.log("• Backend ML model inference result received:");
+      console.log(`  - label: ${response.label} (${isCrashDetected ? "CRASH DETECTED" : "NO_CRASH"})`);
+      console.log(`  - probability: ${(response.probability * 100).toFixed(2)}%`);
+      console.log("======================================================================");
+    } catch (err: any) {
+      console.warn("[CrashDetection] Simulation inference call to backend failed, falling back to local trigger:", err.message);
+      console.log("======================================================================");
+    }
+
+    if (!isCrashDetected) {
+      console.log("[CrashDetection] ML Model classified telemetry as SAFE / NO CRASH. Aborting SOS alert launch.");
+      throw new Error(`Model prediction: NO CRASH (Confidence: ${(confidence * 100).toFixed(2)}%)`);
+    }
+
     const crashPayload = {
       confidence,
       latitude: this.state.lastLocation?.latitude || 17.5209,
       longitude: this.state.lastLocation?.longitude || 78.5075,
-      sensorFeatures: [
-        0.1, 0.2, 9.8,  // Accelerometer mean
-        0.05, 0.05, 0.1, // Accelerometer std
-        0.2, 0.3, 10.0, // Accelerometer max
-        0.0, 0.1, 9.6,  // Accelerometer min
-        0.0, 0.0, 0.0,  // Gyroscope mean
-        0.01, 0.01, 0.01, // Gyroscope std
-        0.05, 0.05, 0.05, // Gyroscope max
-        5.8             // Accelerometer magnitude (high-g simulation)
-      ],
+      sensorFeatures: mockFeatures,
       sensorSnapshot: {
         accel: [],
         gyro: []

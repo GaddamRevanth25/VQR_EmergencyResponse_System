@@ -75,15 +75,44 @@ class CrashAlertManagerClass {
             contactPhone: data.emergency_contact_phone || data.contact_phone || data.contactPhone,
             message: data.message,
           };
+        } else {
+          // Explicit HTTP error from backend - parse the error detail
+          let errorDetail = 'Server error';
+          try {
+            const errData = await response.json();
+            errorDetail = errData.detail || errData.message || errorDetail;
+          } catch (e) {}
+
+          console.warn(`[CrashAlertManager] Server responded with status ${response.status} via ${url}: ${errorDetail}`);
+
+          // 429: Too Many Requests (Rate limit active).
+          // Treat as handled (do not cache or retry).
+          if (response.status === 429) {
+            return {
+              success: true,
+              message: errorDetail,
+            };
+          }
+
+          // 400 (Bad Request), 401 (Unauthorized), 404 (Not Found).
+          // Client or configuration errors should not be retried.
+          if (response.status >= 400 && response.status < 500) {
+            return {
+              success: false,
+              error: errorDetail,
+            };
+          }
+
+          lastError = new Error(`Server returned status ${response.status}: ${errorDetail}`);
         }
-      } catch (e) {
+      } catch (e: any) {
         lastError = e;
       }
     }
 
     console.error('[CrashAlertManager] SOS send failed across endpoints, caching for retry:', lastError?.message || 'Server unreachable');
 
-    // Cache for offline retry
+    // Cache for offline retry only on actual network failures or server 5xx errors
     await this.cacheEvent(payload);
     this.scheduleRetry(apiUrl, authToken);
 
@@ -133,6 +162,12 @@ class CrashAlertManagerClass {
 
           if (response.ok) {
             console.log(`[CrashAlertManager] Synced offline event ${event.id}`);
+          } else if (response.status === 429) {
+            console.log(`[CrashAlertManager] Offline event ${event.id} bypassed: server rate limit active`);
+            // Discard since the warning was already triggered
+          } else if (response.status >= 400 && response.status < 500) {
+            console.warn(`[CrashAlertManager] Dropping offline event ${event.id} due to client error ${response.status}`);
+            // Discard since retrying will fail forever
           } else {
             throw new Error(`Status ${response.status}`);
           }

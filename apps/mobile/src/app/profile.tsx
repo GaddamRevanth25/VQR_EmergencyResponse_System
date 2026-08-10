@@ -114,16 +114,28 @@ export default function ProfileScreen() {
     const { CrashDetectionService } = require('@/services/CrashDetectionService');
     const { router } = require('expo-router');
 
-    const success = CrashDetectionService.simulateCrash(0.98);
-    if (success) {
-      // Auto-redirect immediately to emergency countdown screen without confirmation popup
-      router.replace('/');
-    } else {
+    if (!CrashDetectionService.state.isActive) {
       Alert.alert(
         "Simulation Ignored",
         "Crash detection service is currently inactive. Please toggle 'Crash Detection' to ON in the Home screen settings before simulating a crash."
       );
+      return;
     }
+
+    // Redirect to Home screen first
+    router.replace('/');
+
+    // Fire simulated telemetry after 600ms once Home screen renders
+    setTimeout(async () => {
+      try {
+        await CrashDetectionService.simulateCrash();
+      } catch (err: any) {
+        Alert.alert(
+          "Safety Verification",
+          `The ONNX machine learning model analyzed the telemetry signature and classified the event as:\n\nSAFE / NO CRASH\n\n(${err.message || 'Low confidence'})`
+        );
+      }
+    }, 600);
   };
 
   const handleThemeChange = (pref: ThemePreference) => {

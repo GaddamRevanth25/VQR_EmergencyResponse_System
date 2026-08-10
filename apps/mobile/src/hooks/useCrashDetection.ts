@@ -114,7 +114,22 @@ export function useCrashDetection(
     sensorFeatures: number[];
     sensorSnapshot: any;
   }) => {
-    console.log('[useCrashDetection] 🚨 Crash detected! Showing alert...');
+    console.log("======================================================================");
+    console.log("🚨🚨🚨 VQR CRASH DETECTION PIPELINE ACTIVE 🚨🚨🚨");
+    console.log("======================================================================");
+    console.log(`- Alert Timestamp: ${new Date().toLocaleTimeString()}`);
+    console.log(`- Model Confidence: ${(data.confidence * 100).toFixed(1)}%`);
+    console.log(`- GPS Latitude: ${data.latitude || 'Unavailable'}`);
+    console.log(`- GPS Longitude: ${data.longitude || 'Unavailable'}`);
+    console.log(`- Statistical Features Matrix (22 items):`, JSON.stringify(data.sensorFeatures));
+    console.log("----------------------------------------------------------------------");
+    console.log("ACTIONS UNDERTAKEN:");
+    console.log("• Stopped background hardware sensor polling");
+    console.log("• Initiated SOS vibration motor feedback pattern");
+    console.log("• Saved pending crash context state to AsyncStorage for recovery");
+    console.log("• Rendered full-screen overlays with 30s confirmation countdown");
+    console.log("======================================================================");
+
     clearTimers();
 
     // 1. Immediately pause sensor subscriptions to prevent overlapping notifications
@@ -148,7 +163,11 @@ export function useCrashDetection(
 
     // 3. Auto-send SOS after 30 seconds if user doesn't respond
     autoSOSTimer.current = setTimeout(async () => {
-      console.log('[useCrashDetection] Auto-sending Critical Dispatch SOS (30s timeout)...');
+      console.log("======================================================================");
+      console.log("🚨🚨🚨 CRASH CONFIRMATION TIMEOUT EXPIRED (30s) 🚨🚨🚨");
+      console.log("======================================================================");
+      console.log("• Auto-dispatching emergency alert payload to VQR API Gateway...");
+      console.log("======================================================================");
       clearTimers();
       
       try {
@@ -300,7 +319,13 @@ export function useCrashDetection(
   }, [clearTimers]);
 
   const dismissCrashAlert = useCallback(async () => {
-    console.log('[useCrashDetection] User dismissed crash alert (I\'m OK)');
+    console.log("======================================================================");
+    console.log("✓✓✓ CRASH ALERT CANCELLED BY USER ('I'M OK') ✓✓✓");
+    console.log("======================================================================");
+    console.log("• Removed pending crash details from AsyncStorage");
+    console.log("• Silenced emergency vibration feedback");
+    console.log("• Resumed background accelerometer and gyroscope model polling loop");
+    console.log("======================================================================");
 
     clearTimers();
     try {
@@ -325,7 +350,12 @@ export function useCrashDetection(
   }, [apiUrl, authToken, handleCrashDetected, clearTimers]);
 
   const confirmSOS = useCallback(async () => {
-    console.log('[useCrashDetection] User confirmed SOS');
+    console.log("======================================================================");
+    console.log("🆘🆘🆘 SOS DISPATCH FORCE-TRIGGERED BY USER 🆘🆘🆘");
+    console.log("======================================================================");
+    console.log("• Bypassing remaining countdown duration");
+    console.log("• Dispatching immediate emergency payload to VQR API Gateway...");
+    console.log("======================================================================");
 
     clearTimers();
     try {

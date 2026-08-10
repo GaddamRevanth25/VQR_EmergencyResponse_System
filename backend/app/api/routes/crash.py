@@ -55,15 +55,38 @@ def detect_crash(
             detail=f"Expected exactly 22 features, got {len(request.features)}.",
         )
 
+    logger.info("======================================================================")
+    logger.info(">>> INCOMING CRASH DETECTION INFERENCE TRIGGER <<<")
+    logger.info("======================================================================")
+    logger.info(f"User: {current_user.email} (ID: {current_user.id})")
+    logger.info("Features Payload:")
+    logger.info(f" - Accel Mean (x,y,z):  {request.features[0]:.3f}, {request.features[1]:.3f}, {request.features[2]:.3f}")
+    logger.info(f" - Accel Std  (x,y,z):  {request.features[3]:.3f}, {request.features[4]:.3f}, {request.features[5]:.3f}")
+    logger.info(f" - Accel Max  (x,y,z):  {request.features[6]:.3f}, {request.features[7]:.3f}, {request.features[8]:.3f}")
+    logger.info(f" - Accel Min  (x,y,z):  {request.features[9]:.3f}, {request.features[10]:.3f}, {request.features[11]:.3f}")
+    logger.info(f" - Gyro Mean  (x,y,z):  {request.features[12]:.3f}, {request.features[13]:.3f}, {request.features[14]:.3f}")
+    logger.info(f" - Gyro Std   (x,y,z):  {request.features[15]:.3f}, {request.features[16]:.3f}, {request.features[17]:.3f}")
+    logger.info(f" - Gyro Max   (x,y,z):  {request.features[18]:.3f}, {request.features[19]:.3f}, {request.features[20]:.3f}")
+    logger.info(f" - Accel Magnitude:     {request.features[21]:.3f}g")
+    logger.info("----------------------------------------------------------------------")
+
     try:
         result = crash_detection_service.predict(request.features)
+        logger.info("OUTCOME:")
+        logger.info(f" - Label:       {result['label']} ({'CRASH DETECTED' if result['is_crash'] else 'NO CRASH'})")
+        logger.info(f" - Probability: {result['probability']*100:.2f}%")
+        logger.info("======================================================================")
     except FileNotFoundError:
+        logger.info("OUTCOME: FAILED (Model File Not Found)")
+        logger.info("======================================================================")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Crash detection model is not available.",
         )
     except Exception as e:
         logger.error(f"CrashDetect: Inference failed: {e}")
+        logger.info(f"OUTCOME: FAILED ({str(e)})")
+        logger.info("======================================================================")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Crash detection inference failed.",

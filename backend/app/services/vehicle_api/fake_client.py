@@ -242,36 +242,6 @@ class FakeVehicleApiClient(VehicleApiClient):
         # Simulate API failures for test scenarios
         if clean_format == "APIFAIL":
             raise Exception("Simulated connection timeout from government API Setu server")
-            
-        # Simulate a vehicle that exists in registry but has no matching safety entry in vehicles.json
-        if clean_format == "NOTFOUNDPLATE":
-            return {
-                "registrationNumber": "NOTFOUNDPLATE",
-                "ownerName": "TEST ACCOUNT",
-                "fatherName": "TEST PARENT",
-                "dob": "1990-01-01",
-                "gender": "M",
-                "registrationDate": "2025-01-01",
-                "makerModel": "TESLA / MODEL 3",
-                "fuelType": "ELECTRIC",
-                "color": "WHITE",
-                "vehicleCategory": "SPACESHIP",
-                "bodyType": "ROCKET",
-                "manufacturingYear": "2025",
-                "seatingCapacity": "5",
-                "unladenWeight": "1600",
-                "chassisNumber": "5YJ3E1EA8KF123456",
-                "engineNumber": "3D1123456",
-                "currentAddress": "1 Infinite Loop, Cupertino, CA 95014",
-                "insuranceCompany": "Geico",
-                "insurancePolicyNumber": "GEICO-12345",
-                "insuranceValidity": "2028-01-01",
-                "puccValidity": "2027-01-01",
-                "fitnessValidity": "2040-01-01",
-                "taxPaidUpTo": "2040-01-01",
-                "isFinanced": "NO",
-                "financierName": ""
-            }
 
         # Search the mock registry by registration number or chassis number (VIN)
         for vehicle in MOCK_VEHICLES:
@@ -280,31 +250,5 @@ class FakeVehicleApiClient(VehicleApiClient):
             if clean_format in (reg_clean, chassis_clean):
                 return vehicle
                 
-        # Dynamic fallback for any valid plate or VIN format to guarantee safety layout lookup
-        return {
-            "registrationNumber": registration_number.upper(),
-            "ownerName": "VEHICLE OWNER",
-            "fatherName": "",
-            "dob": "1990-01-01",
-            "gender": "M",
-            "registrationDate": "2024-01-01",
-            "makerModel": "TOYOTA / CAMRY",
-            "fuelType": "HYBRID",
-            "color": "SILVER",
-            "vehicleCategory": "LMV",
-            "bodyType": "SEDAN",
-            "manufacturingYear": "2024",
-            "seatingCapacity": "5",
-            "unladenWeight": "1580",
-            "chassisNumber": clean_format if len(clean_format) == 17 else "4T1BF1FKXRU123456",
-            "engineNumber": "A25AFKS987",
-            "currentAddress": "Registered Address",
-            "insuranceCompany": "Comprehensive Insurance Co.",
-            "insurancePolicyNumber": "POL-998877",
-            "insuranceValidity": "2028-01-01",
-            "puccValidity": "2027-01-01",
-            "fitnessValidity": "2039-01-01",
-            "taxPaidUpTo": "2039-01-01",
-            "isFinanced": "NO",
-            "financierName": ""
-        }
+        # Raise KeyError if not found in mock vehicles, triggering a 404 Not Found error
+        raise KeyError(f"Registration '{registration_number}' not found in government database.")

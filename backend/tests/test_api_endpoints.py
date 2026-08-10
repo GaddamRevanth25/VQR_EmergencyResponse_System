@@ -123,7 +123,7 @@ def test_api_full_flow():
     assert res_login2.status_code == 200
     assert res_login2.json().get("accessToken") is not None or res_login2.json().get("access_token") is not None
 
-    print("\n✅ All in-process API test cases passed cleanly!")
+    print("\n[SUCCESS] All in-process API test cases passed cleanly!")
 
 if __name__ == "__main__":
     test_api_full_flow()
